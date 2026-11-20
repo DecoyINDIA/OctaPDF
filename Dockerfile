@@ -10,15 +10,15 @@ COPY build/libs/*.jar app.jar
 
 ARG VERSION_TAG
 
-LABEL org.opencontainers.image.title="Stirling-PDF"
+LABEL org.opencontainers.image.title="XolverLabs PDF"
 LABEL org.opencontainers.image.description="A powerful locally hosted web-based PDF manipulation tool supporting 50+ operations including merging, splitting, conversion, OCR, watermarking, and more."
-LABEL org.opencontainers.image.source="https://github.com/Stirling-Tools/Stirling-PDF"
+LABEL org.opencontainers.image.source="https://github.com/DecoyINDIA/pdf-editor-project"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.vendor="Stirling-Tools"
-LABEL org.opencontainers.image.url="https://www.stirlingpdf.com"
-LABEL org.opencontainers.image.documentation="https://docs.stirlingpdf.com"
-LABEL maintainer="Stirling-Tools"
-LABEL org.opencontainers.image.authors="Stirling-Tools"
+LABEL org.opencontainers.image.vendor="XolverLabs"
+LABEL org.opencontainers.image.url="https://github.com/DecoyINDIA/pdf-editor-project"
+LABEL org.opencontainers.image.documentation="https://github.com/DecoyINDIA/pdf-editor-project#readme"
+LABEL maintainer="XolverLabs (DecoyINDIA)"
+LABEL org.opencontainers.image.authors="XolverLabs (DecoyINDIA)"
 LABEL org.opencontainers.image.version="${VERSION_TAG}"
 LABEL org.opencontainers.image.keywords="PDF, manipulation, merge, split, convert, OCR, watermark"
 

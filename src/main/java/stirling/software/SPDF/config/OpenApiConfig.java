@@ -21,7 +21,7 @@ public class OpenApiConfig {
 
     private final ApplicationProperties applicationProperties;
 
-    private static final String DEFAULT_TITLE = "Stirling PDF API";
+    private static final String DEFAULT_TITLE = "XolverLabs PDF API";
     private static final String DEFAULT_DESCRIPTION =
             "API documentation for all Server-Side processing.\n"
                     + "Please note some functionality might be UI only and missing from here.";
@@ -37,18 +37,11 @@ public class OpenApiConfig {
                 new Info()
                         .title(DEFAULT_TITLE)
                         .version(version)
-                        .license(
-                                new License()
-                                        .name("MIT")
-                                        .url(
-                                                "https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/refs/heads/main/LICENSE")
-                                        .identifier("MIT"))
-                        .termsOfService("https://www.stirlingpdf.com/terms")
+                        .license(new License().name("MIT").identifier("MIT"))
                         .contact(
                                 new Contact()
-                                        .name("Stirling Software")
-                                        .url("https://www.stirlingpdf.com")
-                                        .email("contact@stirlingpdf.com"))
+                                        .name("XolverLabs (DecoyINDIA)")
+                                        .url("https://github.com/DecoyINDIA/pdf-editor-project"))
                         .description(DEFAULT_DESCRIPTION);
         if (!applicationProperties.getSecurity().getEnableLogin()) {
             return new OpenAPI().components(new Components()).info(info);
