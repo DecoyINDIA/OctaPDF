@@ -475,7 +475,7 @@ dependencies {
         implementation 'com.coveo:saml-client:5.0.0'
 
     }
-    implementation 'org.snakeyaml:snakeyaml-engine:2.9'
+    implementation 'org.snakeyaml:snakeyaml-engine:3.2'
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
 
