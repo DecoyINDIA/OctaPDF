@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<define name="LOG_PATH" class="stirling.software.SPDF.config.LogbackPropertyLoader" />
+
+    <!-- Console Appender (Structured ISO-8601 formatting, OPS-05) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Rolling File Appender for Auth Logs (14-day retention, OPS-05) -->
+    <appender name="AUTHLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/invalid-auths.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %p %c{1} [%thread] %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/auth-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Rolling File Appender for General Logs (14-day retention, OPS-05) -->
+    <appender name="GENERAL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/info.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %p %c{1} [%thread] %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/info-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>14</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="GENERAL"/>
+    </root>
+
+    <!-- Specific Logger -->
+    <logger name="stirling.software.SPDF.config.security.CustomAuthenticationFailureHandler" 
+            level="ERROR" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="AUTHLOG"/>
+    </logger>
+</configuration>

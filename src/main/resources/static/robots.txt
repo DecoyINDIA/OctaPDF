@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /actuator/
+Disallow: /configs/
+Disallow: /pipeline/
+Disallow: /login
+Disallow: /error
+
+Sitemap: /sitemap.xml

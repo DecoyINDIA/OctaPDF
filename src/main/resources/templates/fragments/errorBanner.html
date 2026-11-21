@@ -1,0 +1,29 @@
+<th:block th:fragment="errorBanner">
+
+  <br th:if="${message}">
+  <div id="errorContainer" th:if="${message}" class="alert alert-danger alert-dismissible alert-container fade show" role="alert">
+    <div class="alert-header d-flex justify-content-between align-items-center">
+      <span class="alert-heading" th:text="'Error:  ' + ${status} + '  ' + ${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="dismissError()">
+        <span class="material-symbols-rounded">
+          close
+        </span>
+      </button>
+    </div>
+    <p class="mt-2 mb-1" th:text="${message}"></p>
+    <div th:if="${errorId}" class="mb-2">
+      <small class="text-muted" th:text="'Reference ID: ' + ${errorId}"></small>
+    </div>
+    <div class="mt-2">
+      <a href="https://github.com/DecoyINDIA/OctaPDF/issues" id="github-button" class="btn btn-sm btn-outline-danger" target="_blank" th:text="#{error.github}"></a>
+    </div>
+  </div>
+  <script>
+    function dismissError() {
+      var errorContainer = document.getElementById("errorContainer");
+      if (errorContainer) {
+        errorContainer.remove();
+      }
+    }
+  </script>
+</th:block>

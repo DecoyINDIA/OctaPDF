@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="#{language.direction}" th:data-language="${#locale.toString()}" xmlns:th="https://www.thymeleaf.org">
+  <head>
+  <th:block th:insert="~{fragments/common :: head(title=#{about.title}, header=#{about.title})}"></th:block>
+  </head>
+
+  <body>
+    <div id="page-container">
+      <div id="content-wrap">
+        <th:block th:insert="~{fragments/navbar.html :: navbar}"></th:block>
+        <br><br>
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-md-8 bg-card p-4">
+              <div class="tool-header mb-4">
+                <span class="material-symbols-rounded tool-header-icon organize">info</span>
+                <span class="tool-header-text" th:text="${@appName} + ' (' + ${@appVersion} + ')'">OctaPDF</span>
+              </div>
+              <div class="text-start">
+                <p class="lead">OctaPDF is a secure, local-first web application for editing, converting, and manipulating PDF documents.</p>
+                
+                <h5 class="mt-4 fw-bold">Open Source Attribution</h5>
+                <p>OctaPDF is based on and forked from <a href="https://github.com/Stirling-Tools/Stirling-PDF" target="_blank" rel="noopener noreferrer"><strong>Stirling-PDF</strong></a>, licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">MIT License</a>.</p>
+                <p class="text-muted">Copyright &copy; 2023-2026 Stirling Tools / Anthony Stirling &amp; OctaPDF Contributors.</p>
+
+                <h5 class="mt-4 fw-bold">Third-Party Notices</h5>
+                <p>For a detailed breakdown of all bundled open-source dependencies and their licenses, please view our <a th:href="@{'/licenses'}">Third-Party Licenses</a> page or inspect <a th:href="@{'/3rdPartyLicenses.json'}" target="_blank">3rdPartyLicenses.json</a>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <th:block th:insert="~{fragments/footer.html :: footer}"></th:block>
+    </div>
+  </body>
+</html>
