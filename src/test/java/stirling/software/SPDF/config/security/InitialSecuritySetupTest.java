@@ -91,13 +91,14 @@ class InitialSecuritySetupTest {
 
     @Test
     void testProdProfileWithLoginDisabledDoesNotRefuseStartup() throws Exception {
+        when(environment.getActiveProfiles()).thenReturn(new String[] {"prod"});
         applicationProperties.getSecurity().setEnableLogin(false);
-        when(userService.findByUsernameIgnoreCase("admin")).thenReturn(Optional.empty());
 
         InitialSecuritySetup setup =
                 new InitialSecuritySetup(
                         userService, applicationProperties, databaseService, environment);
 
         assertDoesNotThrow(setup::initializeAdminUser);
+        verify(userService, never()).saveUser(eq("admin"), eq("stirling"), anyString(), eq(true));
     }
 }

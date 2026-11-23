@@ -1,5 +1,5 @@
 # Main stage
-FROM alpine:3.21.3@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
+FROM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
 # Copy necessary files
 COPY scripts /scripts
@@ -32,7 +32,7 @@ ENV DOCKER_ENABLE_SECURITY=false \
     PGID=1000 \
     UMASK=022 \
     TESSDATA_PREFIX=/usr/share/tessdata \
-    PYTHONPATH=/usr/lib/libreoffice/program:/opt/venv/lib/python3.12/site-packages \
+    PYTHONPATH=/usr/lib/libreoffice/program \
     UNO_PATH=/usr/lib/libreoffice/program \
     URE_BOOTSTRAP=file:///usr/lib/libreoffice/program/fundamentalrc \
     PATH=$PATH:/opt/venv/bin
@@ -78,12 +78,13 @@ RUN apk upgrade --no-cache -a && \
     python3 \
     py3-pip \
     py3-pillow && \
-    python3 -m venv /opt/venv && \
+    python3 -m venv --system-site-packages /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
-    /opt/venv/bin/pip install --no-cache-dir unoserver==3.7 weasyprint==64.1 pdf2image==1.17.0 pillow==11.1.0 && \
-    ln -s /usr/lib/libreoffice/program/uno.py /opt/venv/lib/python3.12/site-packages/ && \
-    ln -s /usr/lib/libreoffice/program/unohelper.py /opt/venv/lib/python3.12/site-packages/ && \
-    ln -s /usr/lib/libreoffice/program /opt/venv/lib/python3.12/site-packages/LibreOffice && \
+    /opt/venv/bin/pip install --no-cache-dir unoserver==3.7 weasyprint==64.1 pdf2image==1.17.0 && \
+    VENV_SITE_PACKAGES="$(/opt/venv/bin/python -c 'import site; print(site.getsitepackages()[0])')" && \
+    ln -s /usr/lib/libreoffice/program/uno.py "$VENV_SITE_PACKAGES/" && \
+    ln -s /usr/lib/libreoffice/program/unohelper.py "$VENV_SITE_PACKAGES/" && \
+    ln -s /usr/lib/libreoffice/program "$VENV_SITE_PACKAGES/LibreOffice" && \
     mkdir -p $HOME /configs /logs /customFiles /pipeline/watchedFolders /pipeline/finishedFolders /usr/share/tessdata && \
     fc-cache -f -v && \
     chmod +x /scripts/* && \

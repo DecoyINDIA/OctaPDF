@@ -101,7 +101,9 @@ public class ProductionServerControlsIntegrationTest {
             "/actuator/metrics",
             "/api/v1/convert/file/pdf",
             "/api/v1/convert/html/pdf",
-            "/api/v1/convert/markdown/pdf"
+            "/api/v1/convert/markdown/pdf",
+            "/api/v1/security/redact",
+            "/api/v1/security/auto-redact"
         };
 
         for (String endpoint : disabledEndpoints) {
@@ -120,6 +122,19 @@ public class ProductionServerControlsIntegrationTest {
                             + " must be blocked with 404 or 403, but returned "
                             + status);
         }
+    }
+
+    @Test
+    void testAnonymousModeBlocksAccountWrites() throws IOException, InterruptedException {
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/user/register"))
+                        .POST(HttpRequest.BodyPublishers.ofString("username=test&password=test"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(403, response.statusCode(), "Anonymous mode must block account mutations");
     }
 
     @Test

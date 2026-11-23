@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import io.github.pixee.security.BoundedLineReader;
 import io.github.pixee.security.Filenames;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import stirling.software.SPDF.model.ApplicationProperties;
 import stirling.software.SPDF.model.api.misc.ProcessPdfWithOcrRequest;
 import stirling.software.SPDF.service.CustomPDFDocumentFactory;
+import stirling.software.SPDF.utils.ProcessExecutor;
+import stirling.software.SPDF.utils.ProcessExecutor.Processes;
 
 @RestController
 @RequestMapping("/api/v1/misc")
@@ -80,7 +81,6 @@ public class OCRController {
         Path finalOutputFile = tempDir.resolve("final_output.pdf");
         Files.createDirectories(tempOutputDir);
         Files.createDirectories(tempImagesDir);
-        Process process = null;
         try {
             // Save input file
             inputFile.transferTo(tempInputFile.toFile());
@@ -124,22 +124,8 @@ public class OCRController {
                         command.add(String.join("+", languages));
                         // Always output PDF
                         command.add("pdf");
-                        ProcessBuilder pb = new ProcessBuilder(command);
-                        process = pb.start();
-                        // Capture any error output
-                        try (BufferedReader reader =
-                                new BufferedReader(
-                                        new InputStreamReader(process.getErrorStream()))) {
-                            String line;
-                            while ((line = BoundedLineReader.readLine(reader, 5_000_000)) != null) {
-                                log.debug("Tesseract: {}", line);
-                            }
-                        }
-                        int exitCode = process.waitFor();
-                        if (exitCode != 0) {
-                            throw new RuntimeException(
-                                    "Tesseract failed with exit code: " + exitCode);
-                        }
+                        ProcessExecutor.getInstance(Processes.TESSERACT)
+                                .runCommandWithOutputHandling(command);
                         // Add OCR'd PDF to merger
                         merger.addSource(pageOutputPath.toFile());
                     } else {
@@ -167,9 +153,6 @@ public class OCRController {
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfContent);
         } finally {
-            if (process != null) {
-                process.destroy();
-            }
             // Clean up temporary files
             deleteDirectory(tempDir);
         }

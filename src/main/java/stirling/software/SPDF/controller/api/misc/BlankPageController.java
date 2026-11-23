@@ -143,7 +143,6 @@ public class BlankPageController {
 
             zos.close();
 
-            log.info("Returning ZIP file: {}", filename + "_processed.zip");
             return WebResponseUtils.boasToWebResponse(
                     baos, filename + "_processed.zip", MediaType.APPLICATION_OCTET_STREAM);
 

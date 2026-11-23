@@ -337,7 +337,12 @@ public class SecurityConfiguration {
             http.addFilterBefore(
                     rateLimitingFilter(),
                     org.springframework.security.web.access.intercept.AuthorizationFilter.class);
-            http.authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+            http.authorizeHttpRequests(
+                    authz ->
+                            authz.requestMatchers("/api/v1/user/**", "/register", "/account/**")
+                                    .denyAll()
+                                    .anyRequest()
+                                    .permitAll());
         }
         return http.build();
     }

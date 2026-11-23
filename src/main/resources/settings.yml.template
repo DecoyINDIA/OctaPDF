@@ -133,7 +133,7 @@ ui:
   languages: ["en_GB"] # British English is enabled for launch per BR-06 / D7. If empty, all languages are enabled.
 
 endpoints:
-  toRemove: ['pipeline', 'html-to-pdf', 'markdown-to-pdf', 'file-to-pdf'] # list endpoints to disable (e.g. ['img-to-pdf', 'remove-pages'])
+  toRemove: ['pipeline', 'html-to-pdf', 'markdown-to-pdf', 'file-to-pdf', 'redact', 'auto-redact'] # list endpoints to disable (e.g. ['img-to-pdf', 'remove-pages'])
   groupsToRemove: [] # list groups to disable (e.g. ['LibreOffice'])
 
 metrics:

@@ -46,6 +46,9 @@ public class ContainerLockdownTest {
         assertTrue(
                 content.contains("nginx.conf"),
                 "Compose must mount nginx.conf into reverse-proxy service");
+        assertTrue(
+                content.contains("SECURITY_RATELIMIT_TRUSTEDPROXIES=172.16.0.0/12"),
+                "Compose must trust the internal reverse-proxy network for client IP resolution");
     }
 
     @Test
@@ -59,7 +62,9 @@ public class ContainerLockdownTest {
                 "Must proxy to backend upstream");
         assertTrue(content.contains("listen 443 ssl;"), "Must configure HTTPS/TLS");
         assertTrue(content.contains("return 301 https://"), "Must redirect HTTP to HTTPS");
-        assertTrue(content.contains("client_max_body_size 100m;"), "Must enforce 100m body limit");
+        assertTrue(
+                content.contains("client_max_body_size 250m;"),
+                "Proxy body limit must match the application's 250MB multipart request limit");
         assertTrue(
                 content.contains("proxy_set_header X-Forwarded-For $remote_addr;"),
                 "Must overwrite X-Forwarded-For with $remote_addr");

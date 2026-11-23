@@ -8,7 +8,7 @@ echo "[SUPERVISOR] Starting unoserver and OctaPDF..."
 # Ensure LibreOffice user installation directory exists in writable tmpfs
 mkdir -p /tmp/libreoffice_profile 2>/dev/null || true
 
-/opt/venv/bin/unoserver --port 2003 --interface 127.0.0.1 --libreoffice-options="-env:UserInstallation=file:///tmp/libreoffice_profile" &
+/opt/venv/bin/unoserver --port 2003 --interface 127.0.0.1 --user-installation /tmp/libreoffice_profile &
 UNOSERVER_PID=$!
 
 java -Dfile.encoding=UTF-8 -jar /app.jar &

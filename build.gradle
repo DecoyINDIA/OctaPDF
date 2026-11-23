@@ -82,6 +82,7 @@ sourceSets {
         java {
             if (System.getenv("DOCKER_ENABLE_SECURITY") == "false") {
                 exclude "stirling/software/SPDF/config/security/**"
+                exclude "stirling/software/SPDF/config/ProductionServerControlsIntegrationTest.java"
                 exclude "stirling/software/SPDF/model/ApiKeyAuthenticationTokenTest.java"
                 exclude "stirling/software/SPDF/controller/api/EmailControllerTest.java"
                 exclude "stirling/software/SPDF/repository/**"

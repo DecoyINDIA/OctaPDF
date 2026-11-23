@@ -35,7 +35,7 @@ jobs:
           gradle-version: 8.14
 
       - name: Build OctaPDF Application
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean build
         env:
           DOCKER_ENABLE_SECURITY: true
           STIRLING_PDF_DESKTOP_UI: false

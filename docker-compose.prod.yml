@@ -1,6 +1,6 @@
 services:
   octapdf:
-    image: ghcr.io/decoyindia/octapdf:latest
+    image: ${OCTAPDF_IMAGE:-ghcr.io/decoyindia/octapdf:latest}
     read_only: true # SEC-11: Read-only root filesystem
     security_opt:
       - no-new-privileges:true # SEC-11: Prevent privilege escalation
@@ -27,12 +27,13 @@ services:
       - octapdf-pipeline:/pipeline:rw
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DOCKER_ENABLE_SECURITY=false
       - SECURITY_ENABLELOGIN=false
       - SYSTEM_DEFAULTLOCALE=en-GB
       - UI_APPNAME=OctaPDF
       - METRICS_ENABLED=false
       - TESSDATA_PREFIX=/usr/share/tessdata
+      - SECURITY_RATELIMIT_TRUSTEDPROXIES=172.16.0.0/12
+      - ENDPOINTS_TOREMOVE=pipeline,html-to-pdf,markdown-to-pdf,file-to-pdf,redact,auto-redact
     networks:
       - octapdf-internal # SEC-02: Isolated network with zero egress
     restart: unless-stopped

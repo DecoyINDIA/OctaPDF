@@ -22,6 +22,8 @@ public class ProductionDockerfileTest {
                 content.contains("@testing"), "Dockerfile should not use unstable @testing repo");
         assertFalse(
                 content.contains("edge/main"), "Dockerfile should not use edge repo in production");
+        assertFalse(
+                content.contains("alpine:3.21"), "Dockerfile must use a supported Alpine branch");
         assertTrue(content.contains("HEALTHCHECK"), "Dockerfile must declare HEALTHCHECK (OPS-02)");
         assertTrue(
                 content.contains("/actuator/health"),
@@ -59,7 +61,12 @@ public class ProductionDockerfileTest {
         Path supervisorPath = Paths.get("scripts", "supervise.sh");
         assertTrue(Files.exists(supervisorPath), "scripts/supervise.sh must exist");
         String content = Files.readString(supervisorPath);
-
+        assertTrue(
+                content.contains("--user-installation /tmp/libreoffice_profile"),
+                "Supervisor must use the unoserver 3.7 user installation option");
+        assertFalse(
+                content.contains("--libreoffice-options"),
+                "Supervisor must not pass unsupported unoserver options");
         assertTrue(content.contains("unoserver"), "Supervisor must launch unoserver");
         assertTrue(content.contains("app.jar"), "Supervisor must launch java app.jar");
         assertTrue(content.contains("kill -0"), "Supervisor must monitor process liveness");

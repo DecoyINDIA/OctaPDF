@@ -78,13 +78,16 @@ public class InitialSecuritySetup {
             userService.saveUser(initialUsername, initialPassword, Role.ADMIN.getRoleId());
             log.info("Admin user created: {}", initialUsername);
         } else if (!hasCustomCredentials) {
-            if (loginEnabled && isProdProfile()) {
-                String errorMsg =
-                        "Login is enabled in the 'prod' profile but initial admin credentials are not set "
-                                + "(set SECURITY_INITIALLOGIN_USERNAME and SECURITY_INITIALLOGIN_PASSWORD). "
-                                + "Refusing to create default admin/stirling credentials.";
-                log.error(errorMsg);
-                throw new IllegalStateException(errorMsg);
+            if (isProdProfile()) {
+                if (loginEnabled) {
+                    String errorMsg =
+                            "Login is enabled in the 'prod' profile but initial admin credentials are not set "
+                                    + "(set SECURITY_INITIALLOGIN_USERNAME and SECURITY_INITIALLOGIN_PASSWORD). "
+                                    + "Refusing to create default admin/stirling credentials.";
+                    log.error(errorMsg);
+                    throw new IllegalStateException(errorMsg);
+                }
+                return;
             }
             createDefaultAdminUser();
         }
