@@ -1,0 +1,266 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="960" height="350" viewBox="0 0 960 350" role="img" aria-labelledby="archTitle archDesc">
+    <title id="archTitle">OctaPDF Zero-Egress Engine Architecture</title>
+    <desc id="archDesc">Technical diagram of OctaPDF internal architecture: Local client interface, Spring Security isolation perimeter with blocked external egress, native engine cluster, and ephemeral memory deck.</desc>
+
+    <defs>
+        <linearGradient id="archPaper" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FCFAF6"/>
+            <stop offset="100%" stop-color="#F3ECE2"/>
+        </linearGradient>
+
+        <linearGradient id="packetTerra" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E8501C"/>
+            <stop offset="100%" stop-color="#FE9114"/>
+        </linearGradient>
+
+        <filter id="archShadow" x="-10%" y="-10%" width="120%" height="125%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#5A3A28" flood-opacity="0.08"/>
+        </filter>
+
+        <clipPath id="archClip"><rect width="960" height="350" rx="20"/></clipPath>
+    </defs>
+
+    <style>
+        .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            /* Signal Packets Traveling Along Circuit Conduits */
+            .signal-dot-1 {
+                animation: travelConduitA 3.6s linear infinite;
+            }
+            .signal-dot-2 {
+                animation: travelConduitB 3.6s linear infinite 0.9s;
+            }
+            .signal-dot-3 {
+                animation: travelConduitC 3.6s linear infinite 1.8s;
+            }
+            .signal-dot-4 {
+                animation: travelConduitD 3.6s linear infinite 2.7s;
+            }
+
+            /* Firewall Pulsing Shield */
+            .firewall-halo {
+                animation: firewallPulse 2.8s ease-in-out infinite;
+                transform-origin: 360px 185px;
+            }
+
+            /* Engine Activity Lights */
+            .engine-light-1 { animation: blinkA 2.2s infinite; }
+            .engine-light-2 { animation: blinkB 1.8s infinite; }
+            .engine-light-3 { animation: blinkA 2.5s infinite 0.5s; }
+            .engine-light-4 { animation: blinkB 2.0s infinite 0.7s; }
+        }
+
+        @keyframes travelConduitA {
+            0% { transform: translate(190px, 120px); opacity: 0; }
+            10% { opacity: 1; }
+            40% { transform: translate(320px, 120px); }
+            70% { transform: translate(470px, 90px); }
+            95% { transform: translate(720px, 90px); opacity: 1; }
+            100% { transform: translate(740px, 90px); opacity: 0; }
+        }
+
+        @keyframes travelConduitB {
+            0% { transform: translate(190px, 185px); opacity: 0; }
+            10% { opacity: 1; }
+            40% { transform: translate(320px, 185px); }
+            70% { transform: translate(470px, 155px); }
+            95% { transform: translate(720px, 155px); opacity: 1; }
+            100% { transform: translate(740px, 155px); opacity: 0; }
+        }
+
+        @keyframes travelConduitC {
+            0% { transform: translate(190px, 185px); opacity: 0; }
+            10% { opacity: 1; }
+            40% { transform: translate(320px, 185px); }
+            70% { transform: translate(470px, 220px); }
+            95% { transform: translate(720px, 220px); opacity: 1; }
+            100% { transform: translate(740px, 220px); opacity: 0; }
+        }
+
+        @keyframes travelConduitD {
+            0% { transform: translate(190px, 250px); opacity: 0; }
+            10% { opacity: 1; }
+            40% { transform: translate(320px, 250px); }
+            70% { transform: translate(470px, 280px); }
+            95% { transform: translate(720px, 280px); opacity: 1; }
+            100% { transform: translate(740px, 280px); opacity: 0; }
+        }
+
+        @keyframes firewallPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        @keyframes blinkA { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        @keyframes blinkB { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+        @media (prefers-color-scheme: dark) {
+            .arch-bg { fill: #161412 !important; }
+            .arch-frame { stroke: #36312B !important; }
+            .arch-card { fill: #1F1C19 !important; stroke: #36312B !important; }
+            .arch-title { fill: #F5EFE6 !important; }
+            .arch-body { fill: #C8BFB5 !important; }
+            .wire-track { stroke: #2E2724 !important; }
+        }
+    </style>
+
+    <g clip-path="url(#archClip)">
+        <rect class="arch-bg" width="960" height="350" fill="url(#archPaper)"/>
+
+        <!-- Top Title Bar -->
+        <g transform="translate(42, 24)">
+            <text class="font-sans arch-title" x="0" y="16" font-size="16" font-weight="800" fill="#241E1B">ZERO-EGRESS RUNTIME ARCHITECTURE</text>
+            <text class="font-mono arch-body" x="380" y="16" font-size="10.5" font-weight="600" fill="#8C7E72">Docker Bridge (internal: true) · All engines executed in isolated sandbox</text>
+        </g>
+
+        <!-- Connecting Bus Wire Lines -->
+        <g class="wire-track" stroke="#DFD5C6" stroke-width="2" fill="none" stroke-linecap="round">
+            <path d="M190 120 L320 120 L470 90 L740 90"/>
+            <path d="M190 185 L320 185 L470 155 L740 155"/>
+            <path d="M190 185 L320 185 L470 220 L740 220"/>
+            <path d="M190 250 L320 250 L470 280 L740 280"/>
+        </g>
+
+        <!-- Flowing Signal Packets -->
+        <circle class="signal-dot-1" r="4.5" fill="#E8501C"/>
+        <circle class="signal-dot-2" r="4.5" fill="#10B981"/>
+        <circle class="signal-dot-3" r="4.5" fill="#FE9114"/>
+        <circle class="signal-dot-4" r="4.5" fill="#E8501C"/>
+
+        <!-- ======================================================== -->
+        <!-- ZONE 1: LOCAL CLIENT PLANE (Left)                        -->
+        <!-- ======================================================== -->
+        <g transform="translate(42, 72)">
+            <rect class="arch-card" width="150" height="236" rx="12" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#archShadow)"/>
+            <rect x="12" y="12" width="126" height="22" rx="6" fill="#FAF6F0"/>
+            <text class="font-sans" x="22" y="27" font-size="9.5" font-weight="800" fill="#5A4E45">1. LOCAL CLIENT</text>
+
+            <!-- Node A: Browser GUI -->
+            <g transform="translate(12, 44)">
+                <rect class="arch-card" width="126" height="52" rx="8" fill="#FAF6F0" stroke="#E5DDD0" stroke-width="1"/>
+                <text class="font-sans" x="10" y="20" font-size="10" font-weight="700" fill="#241E1B">Paper Desk GUI</text>
+                <text class="font-mono" x="10" y="34" font-size="8" font-weight="500" fill="#8C7E72">localhost:8080</text>
+                <circle cx="112" cy="18" r="3.5" fill="#10B981"/>
+            </g>
+
+            <!-- Node B: Command Palette -->
+            <g transform="translate(12, 104)">
+                <rect class="arch-card" width="126" height="52" rx="8" fill="#FAF6F0" stroke="#E5DDD0" stroke-width="1"/>
+                <text class="font-sans" x="10" y="20" font-size="10" font-weight="700" fill="#241E1B">⌘K Palette</text>
+                <text class="font-mono" x="10" y="34" font-size="8" font-weight="500" fill="#8C7E72">50+ Operations</text>
+                <rect x="94" y="10" width="22" height="14" rx="3" fill="#E8501C" opacity="0.15"/>
+                <text class="font-mono" x="97" y="20" font-size="7.5" font-weight="700" fill="#E8501C">⌘K</text>
+            </g>
+
+            <!-- Node C: Local REST API -->
+            <g transform="translate(12, 164)">
+                <rect class="arch-card" width="126" height="56" rx="8" fill="#FAF6F0" stroke="#E5DDD0" stroke-width="1"/>
+                <text class="font-sans" x="10" y="20" font-size="10" font-weight="700" fill="#241E1B">Local REST API</text>
+                <text class="font-mono" x="10" y="34" font-size="8" font-weight="500" fill="#8C7E72">OpenAPI / CLI</text>
+                <circle cx="112" cy="18" r="3.5" fill="#FE9114"/>
+            </g>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- ZONE 2: ISOLATION PERIMETER (Center-Left)                -->
+        <!-- ======================================================== -->
+        <g transform="translate(230, 72)">
+            <rect class="arch-card" width="180" height="236" rx="12" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#archShadow)"/>
+            <rect x="12" y="12" width="156" height="22" rx="6" fill="#10B981" opacity="0.12"/>
+            <text class="font-sans" x="22" y="27" font-size="9.5" font-weight="800" fill="#0D825A">2. SECURITY SHIELD</text>
+
+            <!-- Firewall Graphic -->
+            <g class="firewall-halo" transform="translate(90, 80)">
+                <circle cx="0" cy="0" r="32" fill="#10B981" opacity="0.08"/>
+                <circle cx="0" cy="0" r="26" fill="none" stroke="#10B981" stroke-width="1.4" stroke-dasharray="3 3"/>
+                <path d="M-10 -12 L10 -12 L14 -4 C14 8, 0 16, 0 16 C 0 16, -14 8, -14 -4 Z" fill="#10B981"/>
+                <path d="M-4 -2 L-1 2 L5 -4" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+            </g>
+
+            <g transform="translate(14, 130)">
+                <text class="font-sans arch-title" x="0" y="0" font-size="10.5" font-weight="700" fill="#241E1B">Zero Outbound Telemetry</text>
+                <text class="font-mono arch-body" x="0" y="16" font-size="8.5" font-weight="500" fill="#6B5F55">No Tracking Pixels</text>
+                <text class="font-mono arch-body" x="0" y="30" font-size="8.5" font-weight="500" fill="#6B5F55">SSRF Filter: Active</text>
+                <text class="font-mono arch-body" x="0" y="44" font-size="8.5" font-weight="500" fill="#6B5F55">Rate Limit: Token Bucket</text>
+                
+                <!-- Blocked Route Tag -->
+                <rect x="0" y="58" width="152" height="24" rx="6" fill="#FEE2E2"/>
+                <text class="font-mono" x="10" y="74" font-size="8" font-weight="700" fill="#B91C1C">WAN ROUTE: 0.0 KB (BLOCKED)</text>
+            </g>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- ZONE 3: ENGINE CLUSTER (Center-Right)                    -->
+        <!-- ======================================================== -->
+        <g transform="translate(450, 60)">
+            <rect class="arch-card" width="250" height="260" rx="12" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#archShadow)"/>
+            <rect x="14" y="12" width="222" height="22" rx="6" fill="#E8501C" opacity="0.12"/>
+            <text class="font-sans" x="24" y="27" font-size="9.5" font-weight="800" fill="#E8501C">3. NATIVE ENGINE CLUSTER</text>
+
+            <!-- Engine 1: PDFBox -->
+            <g transform="translate(14, 42)">
+                <rect class="arch-card" width="222" height="44" rx="6" fill="#FAF6F0" stroke="#DFD5C6" stroke-width="1"/>
+                <circle class="engine-light-1" cx="16" cy="22" r="3.5" fill="#10B981"/>
+                <text class="font-sans" x="28" y="20" font-size="10.5" font-weight="700" fill="#241E1B">Apache PDFBox 3.0</text>
+                <text class="font-mono" x="28" y="32" font-size="8" font-weight="500" fill="#8C7E72">DOM, Merge, Redaction, Stamps</text>
+            </g>
+
+            <!-- Engine 2: QPDF -->
+            <g transform="translate(14, 94)">
+                <rect class="arch-card" width="222" height="44" rx="6" fill="#FAF6F0" stroke="#DFD5C6" stroke-width="1"/>
+                <circle class="engine-light-2" cx="16" cy="22" r="3.5" fill="#FE9114"/>
+                <text class="font-sans" x="28" y="20" font-size="10.5" font-weight="700" fill="#241E1B">QPDF Stream Engine</text>
+                <text class="font-mono" x="28" y="32" font-size="8" font-weight="500" fill="#8C7E72">Linearization &amp; Stream Compaction</text>
+            </g>
+
+            <!-- Engine 3: Tesseract -->
+            <g transform="translate(14, 146)">
+                <rect class="arch-card" width="222" height="44" rx="6" fill="#FAF6F0" stroke="#DFD5C6" stroke-width="1"/>
+                <circle class="engine-light-3" cx="16" cy="22" r="3.5" fill="#10B981"/>
+                <text class="font-sans" x="28" y="20" font-size="10.5" font-weight="700" fill="#241E1B">Tesseract OCR v5</text>
+                <text class="font-mono" x="28" y="32" font-size="8" font-weight="500" fill="#8C7E72">Neural Text Recognition (100+ langs)</text>
+            </g>
+
+            <!-- Engine 4: LibreOffice -->
+            <g transform="translate(14, 198)">
+                <rect class="arch-card" width="222" height="44" rx="6" fill="#FAF6F0" stroke="#DFD5C6" stroke-width="1"/>
+                <circle class="engine-light-4" cx="16" cy="22" r="3.5" fill="#0284C7"/>
+                <text class="font-sans" x="28" y="20" font-size="10.5" font-weight="700" fill="#241E1B">LibreOffice / unoconv</text>
+                <text class="font-mono" x="28" y="32" font-size="8" font-weight="500" fill="#8C7E72">Office to PDF Vector Transcoder</text>
+            </g>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- ZONE 4: EPHEMERAL OUTPUT (Right)                         -->
+        <!-- ======================================================== -->
+        <g transform="translate(740, 72)">
+            <rect class="arch-card" width="178" height="236" rx="12" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#archShadow)"/>
+            <rect x="12" y="12" width="154" height="22" rx="6" fill="#FAF6F0"/>
+            <text class="font-sans" x="22" y="27" font-size="9.5" font-weight="800" fill="#5A4E45">4. EPHEMERAL DECK</text>
+
+            <g transform="translate(16, 52)">
+                <rect width="36" height="42" rx="6" fill="#10B981" opacity="0.14"/>
+                <path d="M12 16 L24 16 M12 22 L20 22 M12 28 L24 28" stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
+                <text class="font-sans arch-title" x="46" y="22" font-size="11" font-weight="700" fill="#241E1B">Processed PDF</text>
+                <text class="font-mono" x="46" y="36" font-size="9" font-weight="700" fill="#10B981">HTTP Stream</text>
+            </g>
+
+            <g transform="translate(16, 116)">
+                <line x1="0" y1="0" x2="146" y2="0" stroke="#EFE8DE" stroke-width="1"/>
+                <text class="font-sans arch-title" x="0" y="20" font-size="10" font-weight="700" fill="#241E1B">Auto-Wipe Policy</text>
+                <text class="font-mono arch-body" x="0" y="36" font-size="8.5" font-weight="500" fill="#8C7E72">Temp files shredded</text>
+                <text class="font-mono arch-body" x="0" y="48" font-size="8.5" font-weight="500" fill="#8C7E72">immediately upon</text>
+                <text class="font-mono arch-body" x="0" y="60" font-size="8.5" font-weight="500" fill="#8C7E72">stream delivery.</text>
+
+                <rect x="0" y="74" width="146" height="22" rx="5" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1"/>
+                <text class="font-mono" x="12" y="89" font-size="8" font-weight="700" fill="#15803D">PERSISTENCE: NONE</text>
+            </g>
+        </g>
+    </g>
+
+    <!-- Outer Border -->
+    <rect class="arch-frame" x="0.5" y="0.5" width="959" height="349" rx="19.5" fill="none" stroke="#E2D8CA" stroke-width="1.2"/>
+</svg>

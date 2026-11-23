@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="880" height="160" viewBox="0 0 880 160" role="img" aria-labelledby="logoTitle logoDesc">
+    <title id="logoTitle">OctaPDF Identity in Motion</title>
+    <desc id="logoDesc">Animated OctaPDF brand mark: drawing the geometric octagonal shield, intelligent radiant core, fluid tentacles, and vector wordmark with light shimmer.</desc>
+
+    <defs>
+        <linearGradient id="terracottaH" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E8501C"/>
+            <stop offset="50%" stop-color="#FF6B35"/>
+            <stop offset="100%" stop-color="#FE9114"/>
+        </linearGradient>
+
+        <linearGradient id="shimmerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#241E1B" stop-opacity="0.95"/>
+            <stop offset="45%" stop-color="#241E1B" stop-opacity="0.95"/>
+            <stop offset="50%" stop-color="#FF6B35" stop-opacity="1"/>
+            <stop offset="55%" stop-color="#241E1B" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#241E1B" stop-opacity="0.95"/>
+        </linearGradient>
+
+        <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#E8501C" flood-opacity="0.25"/>
+        </filter>
+
+        <clipPath id="logoClip"><rect width="880" height="160" rx="18"/></clipPath>
+    </defs>
+
+    <style>
+        .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            /* Octagon stroke drawing */
+            .oct-stroke {
+                stroke-dasharray: 280;
+                stroke-dashoffset: 280;
+                animation: drawOctagon 4s ease-in-out infinite alternate;
+            }
+            /* Eye core pulsation */
+            .eye-core {
+                animation: eyePulse 3s ease-in-out infinite;
+                transform-origin: 74px 80px;
+            }
+            /* Tentacles fluid breathing */
+            .tentacle-wave-1 {
+                animation: waveA 3.6s ease-in-out infinite;
+                transform-origin: 74px 80px;
+            }
+            .tentacle-wave-2 {
+                animation: waveB 4.2s ease-in-out infinite;
+                transform-origin: 74px 80px;
+            }
+            /* Wordmark shimmer flare */
+            .wordmark-shimmer {
+                animation: shimmerSweep 4.5s ease-in-out infinite;
+            }
+            /* Blinking green status dot */
+            .live-dot {
+                animation: dotBlink 2.0s ease-in-out infinite;
+            }
+        }
+
+        @keyframes drawOctagon {
+            0% { stroke-dashoffset: 280; opacity: 0.4; }
+            50%, 100% { stroke-dashoffset: 0; opacity: 1; }
+        }
+        @keyframes eyePulse {
+            0%, 100% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes waveA {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(3deg); }
+        }
+        @keyframes waveB {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-3deg); }
+        }
+        @keyframes shimmerSweep {
+            0%, 20% { transform: translateX(-160px); opacity: 0; }
+            30% { opacity: 1; }
+            70%, 100% { transform: translateX(360px); opacity: 0; }
+        }
+        @keyframes dotBlink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .logo-bg { fill: #161412 !important; }
+            .logo-border { stroke: #36312B !important; }
+            .word-main { fill: #F5EFE6 !important; }
+            .tagline { fill: #A89B8F !important; }
+            .meta-box { fill: #1F1C19 !important; stroke: #36312B !important; }
+            .meta-text { fill: #C8BFB5 !important; }
+        }
+    </style>
+
+    <g clip-path="url(#logoClip)">
+        <!-- Background Canvas -->
+        <rect class="logo-bg" width="880" height="160" fill="#FAF6F0"/>
+
+        <!-- ======================================================== -->
+        <!-- LEFT: Geometric Animated Octagon Emblem                  -->
+        <!-- ======================================================== -->
+        <g transform="translate(42, 28)">
+            <!-- Outer Glow Backdrop -->
+            <polygon points="52,0 96,0 148,52 148,96 96,148 52,148 0,96 0,52" fill="none" stroke="#E8501C" stroke-width="1.5" opacity="0.2" transform="scale(0.7) translate(-10,-10)"/>
+
+            <!-- The Drawing Octagon Shield -->
+            <polygon class="oct-stroke" points="36,4 72,4 104,36 104,72 72,104 36,104 4,72 4,36"
+                     fill="#FFFFFF" stroke="#E8501C" stroke-width="2.6" stroke-linejoin="round" filter="url(#logoGlow)"/>
+
+            <!-- Fluid Tentacle Arcs -->
+            <g class="tentacle-wave-1" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" fill="none">
+                <path d="M40 76 C 32 86, 26 92, 18 90 C 12 88, 14 80, 20 78"/>
+                <path d="M48 80 C 44 92, 40 98, 34 100 C 28 102, 28 94, 34 90"/>
+                <path d="M60 80 C 64 92, 68 98, 74 100 C 80 102, 80 94, 74 90"/>
+                <path d="M68 76 C 76 86, 82 92, 90 90 C 96 88, 94 80, 88 78"/>
+            </g>
+
+            <!-- Octopus Head Silhouette -->
+            <path d="M34 52 C 34 36, 42 26, 54 26 C 66 26, 74 36, 74 52 C 74 62, 68 70, 54 70 C 40 70, 34 62, 34 52 Z"
+                  fill="url(#terracottaH)"/>
+
+            <!-- Inner Intelligent Eye / Core -->
+            <ellipse class="eye-core" cx="54" cy="48" rx="8" ry="6" fill="#FFFFFF"/>
+            <circle cx="54" cy="48" r="3.5" fill="#241E1B"/>
+            <circle cx="56" cy="46" r="1.4" fill="#FFFFFF"/>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- CENTER: Typography & Shimmering Wordmark                 -->
+        <!-- ======================================================== -->
+        <g transform="translate(178, 48)">
+            <!-- Brand Wordmark -->
+            <text class="font-sans word-main" x="0" y="44" font-size="46" font-weight="900" fill="#241E1B" letter-spacing="-0.04em">OCTAPDF</text>
+
+            <!-- Shimmer Light Flare Bar -->
+            <g clip-path="url(#wordmarkClip)">
+                <rect class="wordmark-shimmer" x="0" y="0" width="30" height="60" fill="url(#terracottaH)" opacity="0.4" transform="skewX(-20)"/>
+            </g>
+
+            <!-- Subtitle Philosophy -->
+            <text class="font-sans tagline" x="2" y="68" font-size="11.5" font-weight="700" fill="#8C7E72" letter-spacing="0.12em">A CALM, PRIVATE, LOCAL-FIRST DOCUMENT WORKSPACE</text>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- RIGHT: Technical Spec Meta Card                          -->
+        <!-- ======================================================== -->
+        <g transform="translate(630, 26)">
+            <rect class="meta-box" width="216" height="108" rx="12" fill="#FFFFFF" stroke="#E5DDD0" stroke-width="1.2"/>
+            
+            <g transform="translate(16, 24)">
+                <!-- Indicator Light -->
+                <circle class="live-dot" cx="0" cy="0" r="3.5" fill="#10B981"/>
+                <text class="font-mono meta-text" x="10" y="3.5" font-size="9.5" font-weight="700" fill="#4A3F36">ARCHITECTURE: LOCAL-ONLY</text>
+            </g>
+
+            <g transform="translate(16, 48)">
+                <circle cx="0" cy="0" r="3" fill="#E8501C"/>
+                <text class="font-mono meta-text" x="10" y="3.5" font-size="9.5" font-weight="600" fill="#6B5F55">EGRESS ROUTE: 0.00 KB (LOCKED)</text>
+            </g>
+
+            <g transform="translate(16, 72)">
+                <circle cx="0" cy="0" r="3" fill="#10B981"/>
+                <text class="font-mono meta-text" x="10" y="3.5" font-size="9.5" font-weight="600" fill="#6B5F55">SECURITY: AES-256 / SHA-256</text>
+            </g>
+
+            <g transform="translate(16, 94)">
+                <circle cx="0" cy="0" r="3" fill="#FE9114"/>
+                <text class="font-mono meta-text" x="10" y="3.5" font-size="9.5" font-weight="600" fill="#6B5F55">LICENSE: MIT PERMISSIVE</text>
+            </g>
+        </g>
+    </g>
+
+    <!-- Outer Border -->
+    <rect class="logo-border" x="0.5" y="0.5" width="879" height="159" rx="17.5" fill="none" stroke="#E2D8CA" stroke-width="1.2"/>
+</svg>

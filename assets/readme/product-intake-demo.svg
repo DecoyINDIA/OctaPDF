@@ -1,0 +1,237 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    width="940" height="330" viewBox="0 0 940 330" role="img" aria-labelledby="intakeTitle intakeDesc">
+    <title id="intakeTitle">Universal Intake Deck in Action</title>
+    <desc id="intakeDesc">Live demonstration of OctaPDF intake deck: file drop, instant page breakdown, automated blank page removal, PII redaction, and one-pass stream compression.</desc>
+
+    <defs>
+        <linearGradient id="deckPaper" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FCFAF6"/>
+            <stop offset="100%" stop-color="#F4ECE1"/>
+        </linearGradient>
+
+        <linearGradient id="terraButton" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E8501C"/>
+            <stop offset="100%" stop-color="#FF6B35"/>
+        </linearGradient>
+
+        <filter id="intakeShadow" x="-10%" y="-10%" width="120%" height="125%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#5A3A28" flood-opacity="0.08"/>
+        </filter>
+
+        <clipPath id="intakeFrame"><rect width="940" height="330" rx="20"/></clipPath>
+    </defs>
+
+    <style>
+        .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            /* File Drop Sequence */
+            .dropped-file {
+                animation: fileDropIn 8.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+            }
+            /* Intake Deck Ripple Pulse */
+            .drop-zone-border {
+                animation: borderPulse 8.5s ease-in-out infinite;
+            }
+            /* Pages Breakdown Reveal */
+            .breakdown-pages {
+                animation: pagesBreakout 8.5s ease-in-out infinite;
+            }
+            /* Blank Page Auto-Eject */
+            .blank-page-eject {
+                animation: ejectBlank 8.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            }
+            /* Redaction Bar Application */
+            .redaction-bar-anim {
+                animation: redactReveal 8.5s ease-in-out infinite;
+            }
+            /* Process Button Click */
+            .process-btn-unit {
+                animation: buttonPress 8.5s ease-in-out infinite;
+            }
+            /* Output File Arrival */
+            .output-file-unit {
+                animation: outputSlideIn 8.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+            }
+            /* Success Checkmark Pop */
+            .check-pop {
+                animation: checkPopAnim 8.5s ease-in-out infinite;
+            }
+        }
+
+        @keyframes fileDropIn {
+            0% { transform: translateY(-70px); opacity: 0; }
+            10%, 25% { transform: translateY(0px); opacity: 1; }
+            32%, 100% { transform: translateY(0px) scale(0.9); opacity: 0; }
+        }
+
+        @keyframes borderPulse {
+            0%, 8% { stroke: #DECFC0; stroke-dasharray: 6 6; }
+            12%, 30% { stroke: #E8501C; stroke-dasharray: 0; }
+            35%, 100% { stroke: #DECFC0; stroke-dasharray: 6 6; }
+        }
+
+        @keyframes pagesBreakout {
+            0%, 28% { opacity: 0; transform: translateY(12px) scale(0.96); }
+            36%, 76% { opacity: 1; transform: translateY(0px) scale(1); }
+            84%, 100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+        }
+
+        @keyframes ejectBlank {
+            0%, 42% { opacity: 1; transform: translateY(0px); }
+            52%, 76% { opacity: 0.15; transform: translateY(32px) scale(0.92); }
+            84%, 100% { opacity: 0; }
+        }
+
+        @keyframes redactReveal {
+            0%, 46% { width: 0px; }
+            56%, 76% { width: 56px; }
+            84%, 100% { width: 0px; }
+        }
+
+        @keyframes buttonPress {
+            0%, 60% { transform: scale(1); filter: none; }
+            64% { transform: scale(0.94); }
+            68%, 76% { transform: scale(1); }
+            84%, 100% { transform: scale(1); }
+        }
+
+        @keyframes outputSlideIn {
+            0%, 66% { opacity: 0; transform: translateY(20px); }
+            74%, 90% { opacity: 1; transform: translateY(0px); }
+            96%, 100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        @keyframes checkPopAnim {
+            0%, 72% { transform: scale(0); opacity: 0; }
+            78%, 90% { transform: scale(1.1); opacity: 1; }
+            96%, 100% { opacity: 0; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .desk-base { fill: #161412 !important; }
+            .deck-border { stroke: #36312B !important; }
+            .hdr-text { fill: #F5EFE6 !important; }
+            .body-text { fill: #C8BFB5 !important; }
+            .panel-card { fill: #1F1C19 !important; stroke: #36312B !important; }
+            .line-subtle { fill: #2E2724 !important; }
+            .badge-dark { fill: #26201B !important; }
+        }
+    </style>
+
+    <g clip-path="url(#intakeFrame)">
+        <!-- Paper Desk Surface -->
+        <rect class="desk-base" width="940" height="330" fill="url(#deckPaper)"/>
+
+        <!-- Header Bar -->
+        <g transform="translate(40, 24)">
+            <rect class="panel-card" width="860" height="38" rx="10" fill="#FFFFFF" stroke="#E5DDD0" stroke-width="1.1" filter="url(#intakeShadow)"/>
+            <circle cx="20" cy="19" r="4.5" fill="#10B981"/>
+            <text class="font-sans hdr-text" x="32" y="23" font-size="12" font-weight="700" fill="#241E1B">UNIVERSAL INTAKE DECK</text>
+            <text class="font-mono body-text" x="220" y="23" font-size="10.5" font-weight="500" fill="#8C7E72">— Drop any PDF to immediately view, split, redact, and shrink in one pass</text>
+            <!-- Hotkey Tag -->
+            <rect class="badge-dark" x="780" y="8" width="66" height="22" rx="5" fill="#FAF5ED" stroke="#DFD5C6" stroke-width="1"/>
+            <text class="font-mono body-text" x="792" y="23" font-size="10" font-weight="700" fill="#5A4E45">⌘K PALETTE</text>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- STATE 1: Dropped Input File Simulation                   -->
+        <!-- ======================================================== -->
+        <g class="dropped-file" transform="translate(370, 100)">
+            <g filter="url(#intakeShadow)">
+                <rect class="panel-card" width="200" height="120" rx="14" fill="#FFFFFF" stroke="#E5DDD0" stroke-width="1.4"/>
+            </g>
+            <rect x="18" y="18" width="34" height="40" rx="4" fill="#E8501C" opacity="0.12"/>
+            <path d="M28 28 L42 28 M28 34 L38 34 M28 40 L42 40" stroke="#E8501C" stroke-width="1.8" stroke-linecap="round"/>
+            <text class="font-sans hdr-text" x="62" y="34" font-size="12" font-weight="700" fill="#241E1B">Audit_2026.pdf</text>
+            <text class="font-mono body-text" x="62" y="50" font-size="10" font-weight="500" fill="#8C7E72">18.4 MB · 4 Pages</text>
+            <line x1="18" y1="72" x2="182" y2="72" stroke="#EFE8DE" stroke-width="1"/>
+            <text class="font-sans" x="18" y="92" font-size="10" font-weight="600" fill="#E8501C">⇣ Dropping onto intake...</text>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- STATE 2: Expanded Page Breakdown (Breakout View)         -->
+        <!-- ======================================================== -->
+        <g class="breakdown-pages" transform="translate(40, 80)">
+            <!-- Dropzone Container Outline -->
+            <rect class="drop-zone-border" width="860" height="165" rx="14" fill="none" stroke="#DECFC0" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+            <!-- Thumbnail 1: Cover Page -->
+            <g transform="translate(36, 18)">
+                <rect class="panel-card" width="168" height="128" rx="10" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#intakeShadow)"/>
+                <rect class="line-subtle" x="14" y="14" width="80" height="6" rx="3" fill="#E8DFD3"/>
+                <rect class="line-subtle" x="14" y="26" width="138" height="4" rx="2" fill="#EFE8DE"/>
+                <rect class="line-subtle" x="14" y="36" width="120" height="4" rx="2" fill="#EFE8DE"/>
+                <rect class="line-subtle" x="14" y="46" width="95" height="4" rx="2" fill="#EFE8DE"/>
+                <!-- Page Label Pill -->
+                <rect x="14" y="96" width="76" height="18" rx="9" fill="#10B981" opacity="0.14"/>
+                <text class="font-sans" x="24" y="108.5" font-size="8.5" font-weight="700" fill="#0D825A">PG 1 · CLEAN</text>
+            </g>
+
+            <!-- Thumbnail 2: Blank Page (Auto-Eject) -->
+            <g class="blank-page-eject" transform="translate(236, 18)">
+                <rect class="panel-card" width="168" height="128" rx="10" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#intakeShadow)"/>
+                <!-- Empty document lines -->
+                <line x1="20" y1="20" x2="148" y2="108" stroke="#E8501C" stroke-width="1.2" opacity="0.3" stroke-dasharray="4 4"/>
+                <line x1="148" y1="20" x2="20" y2="108" stroke="#E8501C" stroke-width="1.2" opacity="0.3" stroke-dasharray="4 4"/>
+                <!-- Blank Removal Pill -->
+                <rect x="14" y="96" width="124" height="18" rx="9" fill="#EF4444" opacity="0.15"/>
+                <text class="font-sans" x="24" y="108.5" font-size="8.5" font-weight="700" fill="#DC2626">BLANK · AUTO-EJECT</text>
+            </g>
+
+            <!-- Thumbnail 3: Data Table (Redacted PII) -->
+            <g transform="translate(436, 18)">
+                <rect class="panel-card" width="168" height="128" rx="10" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#intakeShadow)"/>
+                <rect class="line-subtle" x="14" y="16" width="140" height="4" rx="2" fill="#E8DFD3"/>
+                <rect class="line-subtle" x="14" y="26" width="60" height="4" rx="2" fill="#E8DFD3"/>
+                <!-- Dynamic Redaction Bar -->
+                <rect class="redaction-bar-anim" x="80" y="24" width="0" height="8" rx="2" fill="#241E1B"/>
+                
+                <rect class="line-subtle" x="14" y="38" width="50" height="4" rx="2" fill="#E8DFD3"/>
+                <rect class="redaction-bar-anim" x="70" y="36" width="0" height="8" rx="2" fill="#241E1B"/>
+
+                <rect class="line-subtle" x="14" y="50" width="138" height="4" rx="2" fill="#E8DFD3"/>
+                <!-- Redacted Pill -->
+                <rect x="14" y="96" width="120" height="18" rx="9" fill="#E8501C" opacity="0.14"/>
+                <text class="font-sans" x="24" y="108.5" font-size="8.5" font-weight="700" fill="#E8501C">PII SANITIZED</text>
+            </g>
+
+            <!-- Thumbnail 4: Signatures Page -->
+            <g transform="translate(636, 18)">
+                <rect class="panel-card" width="168" height="128" rx="10" fill="#FFFFFF" stroke="#E2D8CA" stroke-width="1.2" filter="url(#intakeShadow)"/>
+                <rect class="line-subtle" x="14" y="16" width="136" height="4" rx="2" fill="#E8DFD3"/>
+                <rect class="line-subtle" x="14" y="26" width="108" height="4" rx="2" fill="#E8DFD3"/>
+                <!-- Signature line -->
+                <path d="M20 54 Q 30 40, 42 52 T 65 48 T 88 52" fill="none" stroke="#E8501C" stroke-width="1.6" stroke-linecap="round"/>
+                <!-- Sign & Seal Pill -->
+                <rect x="14" y="96" width="104" height="18" rx="9" fill="#10B981" opacity="0.14"/>
+                <text class="font-sans" x="24" y="108.5" font-size="8.5" font-weight="700" fill="#0D825A">AUTHENTICATED</text>
+            </g>
+        </g>
+
+        <!-- ======================================================== -->
+        <!-- ACTION BAR & OUTPUT RESULT                               -->
+        <!-- ======================================================== -->
+        <g transform="translate(40, 262)">
+            <!-- Action Button -->
+            <g class="process-btn-unit">
+                <rect width="210" height="38" rx="10" fill="url(#terraButton)" filter="url(#intakeShadow)"/>
+                <text class="font-sans" x="24" y="23" font-size="11.5" font-weight="700" fill="#FFFFFF">⚡ RUN ONE-PASS PIPELINE</text>
+            </g>
+
+            <!-- Dynamic Result Card -->
+            <g class="output-file-unit" transform="translate(230, 0)">
+                <rect class="panel-card" width="630" height="38" rx="10" fill="#FFFFFF" stroke="#10B981" stroke-width="1.4" filter="url(#intakeShadow)"/>
+                <circle class="check-pop" cx="22" cy="19" r="9" fill="#10B981"/>
+                <path d="M18 19 L21 22 L27 16" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <text class="font-sans hdr-text" x="40" y="23" font-size="11.5" font-weight="700" fill="#241E1B">Audit_2026_Sanitized.pdf</text>
+                <text class="font-mono" x="260" y="23" font-size="10.5" font-weight="700" fill="#10B981">2.1 MB (-88% COMPACTED)</text>
+                <text class="font-mono body-text" x="460" y="23" font-size="10" font-weight="500" fill="#6B5F55">Local Run Time: 0.38s</text>
+            </g>
+        </g>
+    </g>
+
+    <!-- Outer Frame Border -->
+    <rect class="deck-border" x="0.5" y="0.5" width="939" height="329" rx="19.5" fill="none" stroke="#E2D8CA" stroke-width="1.2"/>
+</svg>
