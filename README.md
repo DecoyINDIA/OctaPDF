@@ -1,7 +1,7 @@
 # OctaPDF
 
 <p align="center">
-  <img src="images/octapdf-readme.svg" alt="Your PDFs, in working order. The orange OctaPDF octopus floats between two sheets of paper." width="820">
+  <img src="images/octapdf-readme.svg" alt="OctaPDF — Powerful PDF tools. Beautifully simple. The orange OctaPDF octopus in a kinetic document workspace." width="820">
 </p>
 
 <p align="center">
