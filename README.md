@@ -1,105 +1,137 @@
 # OctaPDF
 
-![Your PDFs, in working order. The orange OctaPDF octopus floats between two sheets of paper.](images/octapdf-readme.svg)
+<p align="center">
+  <img src="images/octapdf-readme.svg" alt="Your PDFs, in working order. The orange OctaPDF octopus floats between two sheets of paper." width="820">
+</p>
 
-OctaPDF is a self-hosted PDF reader and editor. Mark up a draft, turn a stack of scans into searchable documents,
-or assemble a packet from several PDFs in your browser. Run it on your own machine or server.
+<p align="center">
+  <strong>Powerful PDF tools. Beautifully simple.</strong><br>
+  A calm, private, local-first document workspace for editing, organizing, converting, and securing PDFs.
+</p>
 
-[Everyday tools](#everyday-pdf-tools) · [Standout workflows](#standout-workflows) · [Run OctaPDF](#run-octapdf)
+<p align="center">
+  <a href="#quickstart">Quickstart</a> &middot;
+  <a href="#guided-workflows">Guided Workflows</a> &middot;
+  <a href="#the-experience">The Experience</a> &middot;
+  <a href="#deployment">Deployment</a> &middot;
+  <a href="docs/OctaPDF-Logo-Guidelines.pdf">Brand Guidelines</a> &middot;
+  <a href="LICENSE">License (MIT)</a>
+</p>
 
-## Everyday PDF tools
+---
 
-- **Read and mark up.** Search a PDF, draw on pages, add text or images, and place a signature.
-- **Organize pages visually.** Merge documents, reorder and rotate pages, remove extras, or extract the pages you need.
-- **Convert and compress.** Create PDFs from images and Office files, export PDFs to images, or shrink a file before sharing it.
-- **Prepare documents to share.** Add passwords, redact text, apply watermarks, or flatten forms and annotations.
+## Why OctaPDF?
 
-## Standout workflows
+OctaPDF is engineered for people who work with documents every day and value privacy, precision, and craft. 
 
-- **Split a stack of scans in one pass.** Put printed divider sheets between documents before scanning.
-  Auto Split detects the dividers and creates individual PDFs from the batch.
-- **Make scans searchable.** Run OCR on scanned contracts or archived paperwork so you can find and copy text.
-- **Compare revisions side by side.** See which text changed between two PDFs, such as updated terms in a revised agreement.
-- **Repeat a workflow with Pipelines.** Save a sequence such as removing blank pages, running OCR, and compressing the result.
-  Reuse it on future batches or call the REST API from a script.
+Instead of routing sensitive agreements, medical forms, or financial drafts through third-party cloud converters, OctaPDF runs entirely on your local machine or private server. Your files never leave your control.
 
-## Run OctaPDF
+- **100% Local-First & Private:** All document parsing, rendering, OCR, and transformations execute locally. Zero external network telemetry.
+- **Universal Intake Deck:** Drop a PDF onto the workspace to immediately view, reorder, annotate, redact, or shrink it—no hunting through menus.
+- **Unified Workflows:** Group complex multi-step operations (e.g. merge $\rightarrow$ remove blank pages $\rightarrow$ OCR $\rightarrow$ compress) into fluid, single-pass routines.
+- **Command Palette (`⌘K`):** Jump to any of the 50+ specialized PDF operations in seconds with keyboard navigation.
+- **The Paper Desk Aesthetic:** A refined interface built on warm eggshell paper tones, rich espresso and bone-white ink, and deliberate, quiet interaction details.
 
-From this checkout, start the app with the Gradle wrapper using JDK 21.
+---
+
+## Guided Workflows
+
+OctaPDF organizes over 50 operations into four human-centered document jobs:
+
+### 1. Assemble & Clean
+- **Multi-Tool Workspace:** Visually drag, reorder, rotate, duplicate, and delete pages using interactive thumbnails.
+- **Merge & Split:** Combine disparate PDFs into unified packets, or split by chapters, fixed page counts, or file size.
+- **Auto-Split Scans:** Insert printed barcode or blank divider sheets into a physical scan stack; OctaPDF detects the dividers and creates separated documents automatically.
+
+### 2. Sign & Annotate
+- **Digital Signatures:** Draw authentic signatures with smooth pressure simulation, type styled cursive approvals, or upload signature assets.
+- **Draft Markups & Highlights:** Annotate text, add comments, insert callouts, and apply date or approval stamps.
+- **Watermarking & Flattening:** Apply custom diagonal watermarks and flatten interactive form fields or annotations before sharing.
+
+### 3. Redact & Secure
+- **True Redaction:** Permanently black out sensitive text, account numbers, and figures, sanitizing the underlying PDF content streams.
+- **Metadata Scrubbing:** Strip author identities, edit histories, printer metadata, and software fingerprints in one click.
+- **Encryption & Permissions:** Lock PDFs with AES passwords and restrict printing, modification, or content copying.
+- **Archival PDF/A:** Convert modern PDFs into standardized PDF/A documents for long-term legal and institutional preservation.
+
+### 4. Compress & OCR
+- **Smart Compression:** Reduce file weights for email delivery using optimized `qpdf` stream compaction without sacrificing legibility.
+- **Searchable OCR:** Turn scanned contracts, receipts, and image archives into fully searchable, selectable text layers powered by Tesseract.
+- **Two-Way Conversion:** Transform images, Markdown, and Office files into clean PDFs, or export pages as high-resolution PNGs and JPEGs.
+- **Automated Pipelines:** Chain repetitive sequences into reusable workflows and trigger them via batch uploads or the local REST API.
+
+---
+
+## Quickstart
+
+### Prerequisites
+- **Java JDK 21** or later
+- Optional local utilities for advanced features:
+  - `qpdf` (for PDF compression and linearization)
+  - `tesseract-ocr` (for OCR text recognition)
+  - `libreoffice` (for Office-to-PDF conversions)
+
+### Run from Source
+
+Clone the repository and launch with the Gradle wrapper:
 
 ```sh
+# Clone repository
+git clone https://github.com/DecoyINDIA/OctaPDF.git
+cd OctaPDF
+
+# Run on macOS / Linux
 ./gradlew bootRun
+
+# Run on Windows (PowerShell)
+.\gradlew.bat bootRun
 ```
 
-On Windows, run `gradlew.bat bootRun` from Command Prompt or `.\gradlew.bat bootRun` from PowerShell.
-Open <http://localhost:8080> when the app starts. Some tools require locally installed utilities, such as Tesseract
-for OCR, LibreOffice for Office conversions, and qpdf for compression. See the setup and configuration guides.
-[Developer Guide](DeveloperGuide.md) · [Upstream documentation](https://docs.stirlingpdf.com)
+Once started, open **<http://localhost:8080>** in your browser.
 
-OctaPDF is maintained by XolverLabs (DecoyINDIA) and based on Stirling-PDF v0.46.2. Stirling Tools publishes the
-upstream Docker images and hosted services. [Maintainer](https://github.com/DecoyINDIA) ·
-[Upstream release](https://github.com/Stirling-Tools/Stirling-PDF/releases/tag/v0.46.2) ·
-[MIT license](LICENSE) · [OctaPDF logo guidelines](docs/OctaPDF-Logo-Guidelines.pdf)
+---
 
-## Supported Languages
+## Deployment
 
-Language coverage inherited from Stirling-PDF v0.46.2.
+### Docker (Recommended for Production)
 
-| Language                                     | Progress                               |
-| -------------------------------------------- | -------------------------------------- |
-| Arabic (العربية) (ar_AR)                        | ![83%](https://geps.dev/progress/83)   |
-| Azerbaijani (Azərbaycan Dili) (az_AZ)        | ![82%](https://geps.dev/progress/82)   |
-| Basque (Euskara) (eu_ES)                     | ![48%](https://geps.dev/progress/48)   |
-| Bulgarian (Български) (bg_BG)                | ![92%](https://geps.dev/progress/92)   |
-| Catalan (Català) (ca_CA)                     | ![89%](https://geps.dev/progress/89)   |
-| Croatian (Hrvatski) (hr_HR)                  | ![81%](https://geps.dev/progress/81)   |
-| Czech (Česky) (cs_CZ)                        | ![91%](https://geps.dev/progress/91)   |
-| Danish (Dansk) (da_DK)                       | ![80%](https://geps.dev/progress/80)   |
-| Dutch (Nederlands) (nl_NL)                   | ![79%](https://geps.dev/progress/79)   |
-| English (English) (en_GB)                    | ![100%](https://geps.dev/progress/100) |
-| English (US) (en_US)                         | ![100%](https://geps.dev/progress/100) |
-| French (Français) (fr_FR)                    | ![92%](https://geps.dev/progress/92)   |
-| German (Deutsch) (de_DE)                     | ![99%](https://geps.dev/progress/99)   |
-| Greek (Ελληνικά) (el_GR)                     | ![91%](https://geps.dev/progress/91)   |
-| Hindi (हिंदी) (hi_IN)                          | ![91%](https://geps.dev/progress/91)   |
-| Hungarian (Magyar) (hu_HU)                   | ![99%](https://geps.dev/progress/99)   |
-| Indonesian (Bahasa Indonesia) (id_ID)        | ![80%](https://geps.dev/progress/80)   |
-| Irish (Gaeilge) (ga_IE)                      | ![91%](https://geps.dev/progress/91)   |
-| Italian (Italiano) (it_IT)                   | ![99%](https://geps.dev/progress/99)   |
-| Japanese (日本語) (ja_JP)                    | ![93%](https://geps.dev/progress/93)   |
-| Korean (한국어) (ko_KR)                      | ![92%](https://geps.dev/progress/92)   |
-| Norwegian (Norsk) (no_NB)                    | ![86%](https://geps.dev/progress/86)   |
-| Persian (فارسی) (fa_IR)                      | ![87%](https://geps.dev/progress/87)   |
-| Polish (Polski) (pl_PL)                      | ![95%](https://geps.dev/progress/95)   |
-| Portuguese (Português) (pt_PT)               | ![91%](https://geps.dev/progress/91)   |
-| Portuguese Brazilian (Português) (pt_BR)     | ![97%](https://geps.dev/progress/97)   |
-| Romanian (Română) (ro_RO)                    | ![75%](https://geps.dev/progress/75)   |
-| Russian (Русский) (ru_RU)                    | ![93%](https://geps.dev/progress/93)   |
-| Serbian Latin alphabet (Srpski) (sr_LATN_RS) | ![60%](https://geps.dev/progress/60)   |
-| Simplified Chinese (简体中文) (zh_CN)         | ![93%](https://geps.dev/progress/93)   |
-| Slovakian (Slovensky) (sk_SK)                | ![69%](https://geps.dev/progress/69)   |
-| Slovenian (Slovenščina) (sl_SI)              | ![94%](https://geps.dev/progress/94)   |
-| Spanish (Español) (es_ES)                    | ![99%](https://geps.dev/progress/99)   |
-| Swedish (Svenska) (sv_SE)                    | ![87%](https://geps.dev/progress/87)   |
-| Thai (ไทย) (th_TH)                           | ![80%](https://geps.dev/progress/80)   |
-| Tibetan (བོད་ཡིག་) (zh_BO)                     | ![88%](https://geps.dev/progress/88) |
-| Traditional Chinese (繁體中文) (zh_TW)        | ![99%](https://geps.dev/progress/99)   |
-| Turkish (Türkçe) (tr_TR)                     | ![97%](https://geps.dev/progress/97)   |
-| Ukrainian (Українська) (uk_UA)               | ![96%](https://geps.dev/progress/96)   |
-| Vietnamese (Tiếng Việt) (vi_VN)              | ![73%](https://geps.dev/progress/73)   |
-| Malayalam (മലയാളം) (ml_ML)              | ![99%](https://geps.dev/progress/99)   |
+Run OctaPDF in an isolated container with all underlying OCR and conversion engines pre-configured:
 
-## Stirling PDF Enterprise
+```sh
+# Start with production compose configuration
+docker compose -f docker-compose.prod.yml up -d
+```
 
-Stirling PDF offers an Enterprise edition of its software. This is the same great software but with added features, support and comforts.
-Check out our [Enterprise docs](https://docs.stirlingpdf.com/Pro)
+For hardened environments, OctaPDF supports:
+- Read-only root filesystem (`read_only: true`)
+- Non-root user execution
+- Internal bridge networking with zero external egress
 
+---
 
-## 🤝 Looking to contribute?
+## The Design System
 
-Join our community:
-- [Contribution Guidelines](CONTRIBUTING.md)
-- [Translation Guide (How to add custom languages)](HowToAddNewLanguage.md)
-- [Issue Tracker](https://github.com/Stirling-Tools/Stirling-PDF/issues)
-- [Discord Community](https://discord.gg/HYmhKj45pU)
-- [Developer Guide](DeveloperGuide.md)
+OctaPDF is designed around **"The Paper Desk"** aesthetic:
+- **Light Mode:** Warm eggshell canvas (`#FAF7F2`), pure paper surfaces (`#FFFFFF`), subtle hairlines (`#E8E2D8`), and deep espresso ink (`#241E1B`).
+- **Dark Mode:** Warm obsidian canvas (`#161412`), elevated charcoal tiles (`#1F1C19`), warm rims (`#36312B`), and bone-white ink (`#F5EFE6`).
+- **Brand Accent:** Radiant Terracotta Octa (`#E8501C` / `#FF6B35`), used sparingly as a functional signal color for primary actions and active focus rings.
+
+For full logo usage, geometry, and spacing rules, see [OctaPDF Logo Guidelines](docs/OctaPDF-Logo-Guidelines.pdf).
+
+---
+
+## Community & Contributing
+
+We welcome contributions, bug reports, and UX feedback:
+- **Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Developer Guide:** [DeveloperGuide.md](DeveloperGuide.md)
+- **Translations:** [HowToAddNewLanguage.md](HowToAddNewLanguage.md)
+- **Repository & Issues:** [github.com/DecoyINDIA/OctaPDF](https://github.com/DecoyINDIA/OctaPDF)
+
+---
+
+## Attribution & License
+
+- **Maintainer:** OctaPDF is maintained by [XolverLabs (DecoyINDIA)](https://github.com/DecoyINDIA) & Contributors.
+- **Open-Source Lineage:** OctaPDF is forked from and based on [Stirling-PDF](https://github.com/Stirling-Tools/Stirling-PDF) v0.46.2 by Anthony Stirling & Stirling Tools.
+- **License:** Licensed under the [MIT License](LICENSE). Third-party dependencies and their respective licenses are cataloged in `3rdPartyLicenses.json`.
