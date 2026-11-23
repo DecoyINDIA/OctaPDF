@@ -24,12 +24,13 @@
   border-bottom-width: 1px;
   border-color: var(--md-nav-color-on-seperator)">
     <div class="container ">
-      <a class="navbar-brand" th:href="${@contextPath}" style="display: flex;">
+      <a class="navbar-brand" th:href="${@contextPath}" style="display: flex; align-items: center;">
         <img class="main-icon" th:src="@{'/favicon.png'}" alt="">
         <span class="icon-text" th:switch="${@navBarText}">
           <span class="brand-wordmark" th:case="'OctaPDF'">Octa<span class="brand-wordmark-accent">PDF</span></span>
           <span th:case="*" th:text="${@navBarText}"></span>
         </span>
+        <span class="badge-privacy d-none d-sm-inline-flex">Local-First</span>
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

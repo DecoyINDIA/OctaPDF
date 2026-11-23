@@ -591,3 +591,62 @@ html[dir="rtl"] .dropdown-menu[data-bs-popper] {
 .hidden {
   visibility: hidden;
 }
+
+/* OctaPDF Modern Shell Enhancements */
+.badge-privacy {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.search-pill-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.85rem;
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 1px 2px var(--md-sys-color-shadow);
+  text-decoration: none;
+  min-width: 240px;
+  transition: all 0.15s ease;
+}
+
+.search-pill-trigger:hover {
+  border-color: var(--octapdf-border-focus);
+  color: var(--md-sys-color-on-surface);
+}
+
+.kbd-shortcut {
+  font-family: monospace, sans-serif;
+  font-size: 0.72rem;
+  padding: 0.12rem 0.35rem;
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.navbar .dropdown-menu {
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--md-sys-color-shadow);
+  padding: 0.5rem;
+}
+

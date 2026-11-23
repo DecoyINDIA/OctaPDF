@@ -45,7 +45,8 @@ textarea {
 
 /* Alerts */
 .alert {
-  border-radius: 3rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline);
 }
 
 /* Table */
@@ -63,45 +64,50 @@ td {
 }
 
 .bg-card {
-  background-color: var(--md-sys-color-surface-5);
-  border-radius: 3rem;
-  padding: 2.5rem;
+  background-color: var(--md-sys-color-surface);
+  border-radius: 14px;
+  border: 1px solid var(--md-sys-color-outline);
+  padding: 2rem;
+  box-shadow: 0 4px 16px var(--md-sys-color-shadow);
 }
 
 .card {
   padding: 1.25rem;
-  border-radius: 2rem;
-  background-color: var(--md-sys-color-surface-5);
-  border: none;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  box-shadow: 0 1px 3px var(--md-sys-color-shadow);
 }
 
 /* Modal */
 .modal-content {
   background-color: var(--md-sys-color-surface);
-  border-radius: 2rem;
-  border: transparent;
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline);
+  box-shadow: 0 12px 28px var(--md-sys-color-shadow);
 }
 
 .modal-header,
 .modal-body,
 .modal-footer {
-  background-color: var(--md-sys-color-surface-5);
-
+  background-color: var(--md-sys-color-surface);
   border: none;
 }
 
 .modal-header {
-  border-radius: 2rem 2rem 0rem 0rem;
-  padding: 1.5rem 2rem 0.5rem;
+  border-radius: 16px 16px 0rem 0rem;
+  padding: 1.25rem 1.75rem 0.75rem;
+  border-bottom: 1px solid var(--md-sys-color-outline);
 }
 
 .modal-body{
-  padding: 0.5rem 2rem;
+  padding: 1rem 1.75rem;
 }
 
 .modal-footer {
-  border-radius: 0rem 0rem 2rem 2rem;
-  padding: 0.5rem 2rem 1.5rem;
+  border-radius: 0rem 0rem 16px 16px;
+  padding: 0.75rem 1.75rem 1.25rem;
+  border-top: 1px solid var(--md-sys-color-outline);
 }
 
 /* Icon fill */
@@ -177,16 +183,21 @@ td {
 
 /* Tool Page Header*/
 .tool-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
 }
 
 .tool-header .tool-header-icon {
-  margin: 0px 1rem;
-  height: 4rem;
-  width: 4rem;
-  border-radius: 25px;
-  font-size: 3rem;
-  padding: 0.5rem;
+  margin-right: 0.875rem;
+  height: 3rem;
+  width: 3rem;
+  border-radius: 10px;
+  font-size: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
   vertical-align: middle;
   pointer-events: none;
   user-select: none;
@@ -195,8 +206,9 @@ td {
 }
 
 .tool-header .tool-header-text {
-  font-size: 2.5rem;
-  font-weight: 400;
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   vertical-align: middle;
 }
 
@@ -261,7 +273,9 @@ td {
 
 /* Buttons Components */
 .btn {
-  border-radius: 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.15s ease;
 }
 
 .btn-close {

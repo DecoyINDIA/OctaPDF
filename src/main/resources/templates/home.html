@@ -7,159 +7,319 @@
 </head>
 
 <body>
-  <div id="page-container">  
-        <th:block th:insert="~{fragments/navbar.html :: navbar}"></th:block>
-    <div style="transform-origin: top;"
-    id="scale-wrap">
-      <br class="d-md-none">
-      <!-- Features -->
+  <div id="page-container">
+    <th:block th:insert="~{fragments/navbar.html :: navbar}"></th:block>
+
+    <div id="content-wrap" class="container py-4">
       <script th:src="@{'/js/homecard.js'}"></script>
-      <div style="
-      width: 100%;
-      display: flex;
-      flex-direction: column;"
-      >
-        <div>
-          <br>
-          <div style="justify-content: center; display: flex;">
-            <div style="margin:0 3rem">
-              <div>
-                <div
-                  style="display:flex; flex-direction: column; justify-content: center; width:100%; margin-bottom:1rem">
-                  <div style="width:fit-content; margin: 0 auto; padding: 0 3rem">
-                    <p class="lead fs-4"
-                      th:text="${@homeText != 'null' and @homeText != null and @homeText != ''} ? ${@homeText} : #{home.desc}">
-                    </p>
-                  </div>
-                  <div id="groupRecent" style="width: fit-content; margin: 0 auto">
-                    <div
-                      th:replace="~{fragments/featureGroupHeader :: featureGroupHeader(groupTitle=#{navbar.recent})}">
-                    </div>
-                    <div class="recent-features">
-                      <div class="newfeature"
-                        th:insert="~{fragments/navbarEntryCustom :: navbarEntry('redact', '/images/redact-manual.svg#icon-redact-manual', 'home.redact.title', 'home.redact.desc', 'redact.tags', 'security')}">
-                      </div>
-                      <div class="newfeature"
-                        th:insert="~{fragments/navbarEntry :: navbarEntry ('multi-tool', 'construction', 'home.multiTool.title', 'home.multiTool.desc', 'multiTool.tags', 'organize')}">
-                      </div>
-                      <div class="newfeature"
-                        th:insert="~{fragments/navbarEntry :: navbarEntry('compress-pdf', 'zoom_in_map', 'home.compressPdfs.title', 'home.compressPdfs.desc', 'compressPDFs.tags', 'advance')}">
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-              </div>
-              <span class="material-symbols-rounded search-icon">
-                search
-              </span>
-              <input type="text" id="searchBar" onkeyup="filterCards()" th:placeholder="#{home.searchBar}" autofocus>
+      <!-- Hero & Universal Intake Deck -->
+      <section class="octa-hero">
+        <h1 class="octa-hero-title">Your PDFs, in working order.</h1>
+        <p class="octa-hero-sub"
+          th:text="${@homeText != 'null' and @homeText != null and @homeText != ''} ? ${@homeText} : 'Calm, private, local-first document workspace. Drop a file to begin or select a guided workflow below.'">
+        </p>
 
-              <div style="display: flex; column-gap: 3rem; flex-wrap: wrap; margin-left:1rem">
-                <div
-                  style="height:2.5rem;  display: flex; align-items: center; cursor: pointer; justify-content: center;">
-                  <label for="sort-options" th:text="#{home.sortBy}">Sort by:</label>
-                  <select id="sort-options" style="border:none;">
-                    <option value="alphabetical" th:text="#{home.alphabetical}"> </option>
-                    <!-- <option value="personal">Your most used</option> -->
-                    <option value="global" th:text="#{home.globalPopularity}"></option>
-                    <!-- <option value="server">Popularity in organisation</option> -->
-                  </select>
-                </div>
-                <div
-                  style="display: flex; align-items: center; flex-wrap: wrap; align-content: flex-start; width: fit-content; max-width: 100%; gap:2rem;  justify-content: center;">
-                  <div th:title="#{home.setFavorites}" style="display: flex; align-items: center; cursor: pointer;"
-                    onclick="toggleFavoritesMode()">
-                    <span class="material-symbols-rounded toggle-favourites"
-                      style="font-size: 2rem;  margin-left: 0.2rem;">
-                      star
-                    </span>
-                  </div>
-                  <div onclick="toggleFavoritesView()" th:title="#{home.hideFavorites}" id="favouritesVisibility"
-                    style="display: flex; align-items: center; cursor: pointer;">
-                    <span id="toggle-favourites-icon" class="material-symbols-rounded toggle-favourites"
-                      style="font-size: 2rem;  margin-left: 0.2rem;">
-                      visibility
-                    </span>
-                  </div>
-                  <a th:if="${@shouldShow}" href="https://github.com/DecoyINDIA/OctaPDF/releases"
-                    target="_blank" id="update-link" rel="noopener" th:title="#{settings.update}"
-                    style="text-decoration: none; color: inherit; cursor: pointer; display: flex; align-items: center;">
-                    <span class="material-symbols-rounded toggle-favourites"
-                      style="font-size: 2rem; margin-left: 0.2rem;">
-                      update
-                    </span>
-                  </a>
-                </div>
+        <!-- Universal Intake Dropzone -->
+        <div class="intake-deck" id="universalIntakeDeck" onclick="document.getElementById('universalFileInput').click()">
+          <input type="file" id="universalFileInput" accept="application/pdf" style="display: none">
+          <div class="intake-icon">
+            <span class="material-symbols-rounded" style="font-size: 2rem;">upload_file</span>
+          </div>
+          <h3 class="intake-heading">Drop a PDF here to begin</h3>
+          <p class="intake-sub">View, reorder pages, rotate, redact, sign, or compress immediately in your browser.</p>
+          <span class="intake-pill">
+            <span class="material-symbols-rounded" style="font-size: 1.15rem; vertical-align: middle;">add</span>
+            Choose PDF File
+          </span>
+        </div>
+      </section>
 
-              </div>
+      <!-- Curated Workflow Hubs -->
+      <section class="mb-5">
+        <div class="octa-section-header">
+          <h2 class="octa-section-title">Guided Workflows</h2>
+          <span class="octa-section-sub">Common document operations grouped into natural jobs</span>
+        </div>
+
+        <div class="hubs-grid">
+          <!-- Hub 1: Assemble & Clean -->
+          <a th:href="@{'/multi-tool'}" class="hub-card">
+            <span class="hub-badge">Assemble & Clean</span>
+            <h3 class="hub-title">Organize & Merge</h3>
+            <p class="hub-desc">Visually combine multiple documents, reorder sheets, rotate orientations, or strip out blank pages.</p>
+            <div class="hub-tools-list">
+              <span class="tool-chip">Multi-Tool</span>
+              <span class="tool-chip">Merge</span>
+              <span class="tool-chip">Split</span>
+              <span class="tool-chip">Rotate</span>
+            </div>
+          </a>
+
+          <!-- Hub 2: Sign & Review -->
+          <a th:href="@{'/sign'}" class="hub-card">
+            <span class="hub-badge">Signatures & Review</span>
+            <h3 class="hub-title">Sign & Annotate</h3>
+            <p class="hub-desc">Place digital signatures, draw or type authentic approvals, add text callouts, and stamp documents.</p>
+            <div class="hub-tools-list">
+              <span class="tool-chip">Sign</span>
+              <span class="tool-chip">View & Edit</span>
+              <span class="tool-chip">Watermark</span>
+            </div>
+          </a>
+
+          <!-- Hub 3: Privacy & Compliance -->
+          <a th:href="@{'/redact'}" class="hub-card">
+            <span class="hub-badge">Privacy & Compliance</span>
+            <h3 class="hub-title">Redact & Secure</h3>
+            <p class="hub-desc">Permanently black out confidential numbers, sanitize hidden metadata, set passwords, and format for PDF/A.</p>
+            <div class="hub-tools-list">
+              <span class="tool-chip">Redact</span>
+              <span class="tool-chip">Sanitize</span>
+              <span class="tool-chip">Password</span>
+              <span class="tool-chip">Permissions</span>
+            </div>
+          </a>
+
+          <!-- Hub 4: Batch & Delivery -->
+          <a th:href="@{'/compress-pdf'}" class="hub-card">
+            <span class="hub-badge">Batch & Delivery</span>
+            <h3 class="hub-title">Compress & OCR</h3>
+            <p class="hub-desc">Reduce file weight for email delivery, convert scans into selectable searchable text, and export images.</p>
+            <div class="hub-tools-list">
+              <span class="tool-chip">Compress</span>
+              <span class="tool-chip">OCR</span>
+              <span class="tool-chip">PDF to Image</span>
+              <span class="tool-chip">Pipelines</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Tool Directory Section -->
+      <section>
+        <div class="octa-section-header">
+          <h2 class="octa-section-title">All PDF Tools</h2>
+          <span class="octa-section-sub">Direct access to all 50+ operations &middot; Press <kbd class="kbd-shortcut">⌘K</kbd> to search</span>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="material-symbols-rounded search-icon">search</span>
+          <input type="text" id="searchBar" onkeyup="filterCards()" th:placeholder="#{home.searchBar}" autofocus>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 px-2">
+          <div class="d-flex align-items-center gap-2">
+            <label for="sort-options" class="small text-muted mb-0" th:text="#{home.sortBy}">Sort by:</label>
+            <select id="sort-options" class="form-select form-select-sm" style="width: auto;">
+              <option value="alphabetical" th:text="#{home.alphabetical}"></option>
+              <option value="global" th:text="#{home.globalPopularity}"></option>
+            </select>
+          </div>
+
+          <div class="d-flex align-items-center gap-3">
+            <div th:title="#{home.setFavorites}" class="d-flex align-items-center cursor-pointer" onclick="toggleFavoritesMode()">
+              <span class="material-symbols-rounded toggle-favourites" style="font-size: 1.5rem;">star</span>
+            </div>
+            <div onclick="toggleFavoritesView()" th:title="#{home.hideFavorites}" id="favouritesVisibility" class="d-flex align-items-center cursor-pointer">
+              <span id="toggle-favourites-icon" class="material-symbols-rounded toggle-favourites" style="font-size: 1.5rem;">visibility</span>
+            </div>
+            <a th:if="${@shouldShow}" href="https://github.com/DecoyINDIA/OctaPDF/releases"
+              target="_blank" id="update-link" rel="noopener" th:title="#{settings.update}"
+              class="text-decoration-none text-muted d-flex align-items-center">
+              <span class="material-symbols-rounded toggle-favourites" style="font-size: 1.5rem;">update</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent Features Group -->
+        <div id="groupRecent" class="mb-4" style="display: none;">
+          <div th:replace="~{fragments/featureGroupHeader :: featureGroupHeader(groupTitle=#{navbar.recent})}"></div>
+          <div class="recent-features">
+            <div class="newfeature"
+              th:insert="~{fragments/navbarEntryCustom :: navbarEntry('redact', '/images/redact-manual.svg#icon-redact-manual', 'home.redact.title', 'home.redact.desc', 'redact.tags', 'security')}">
+            </div>
+            <div class="newfeature"
+              th:insert="~{fragments/navbarEntry :: navbarEntry ('multi-tool', 'construction', 'home.multiTool.title', 'home.multiTool.desc', 'multiTool.tags', 'organize')}">
+            </div>
+            <div class="newfeature"
+              th:insert="~{fragments/navbarEntry :: navbarEntry('compress-pdf', 'zoom_in_map', 'home.compressPdfs.title', 'home.compressPdfs.desc', 'compressPDFs.tags', 'advance')}">
             </div>
           </div>
         </div>
-        <div>
-        </div>
-        <div class="features-container" style="  border-top: 1px;
-        border-top-style: solid;
-        border-color: var(--md-nav-color-on-seperator);
-        margin-top: 1rem;
-      ">
+
+        <!-- Features Grid -->
+        <div class="features-container">
           <div class="feature-rows">
             <div id="groupFavorites" class="feature-group">
-              <div th:replace="~{fragments/featureGroupHeader :: featureGroupHeader(groupTitle=#{navbar.favorite})}">
-              </div>
-              <div class="nav-group-container">
-              </div>
+              <div th:replace="~{fragments/featureGroupHeader :: featureGroupHeader(groupTitle=#{navbar.favorite})}"></div>
+              <div class="nav-group-container"></div>
             </div>
             <th:block th:insert="~{fragments/navElements.html :: navElements}"></th:block>
           </div>
-
         </div>
-            <th:block th:insert="~{fragments/footer.html :: footer}"></th:block>
+      </section>
 
+    </div>
+
+    <!-- Command Palette Modal -->
+    <div class="palette-backdrop" id="paletteBackdrop" onclick="if(event.target===this) toggleCmdPalette(false)">
+      <div class="palette-modal">
+        <div class="palette-search">
+          <span class="material-symbols-rounded text-muted">search</span>
+          <input type="text" class="palette-input" id="paletteInput" placeholder="Type a tool name, workflow, or action...">
+          <kbd class="kbd-shortcut">ESC</kbd>
+        </div>
+        <div class="palette-results" id="paletteResults">
+          <div class="palette-group-title">Suggested Workflows</div>
+          <a th:href="@{'/multi-tool'}" class="palette-item">
+            <span><strong>Assemble & Clean:</strong> Merge, rotate, remove blank sheets</span>
+            <kbd class="kbd-shortcut">↵</kbd>
+          </a>
+          <a th:href="@{'/sign'}" class="palette-item">
+            <span><strong>Sign & Finalize:</strong> Place signature and stamp</span>
+            <kbd class="kbd-shortcut">↵</kbd>
+          </a>
+          <a th:href="@{'/redact'}" class="palette-item">
+            <span><strong>Redact & Secure:</strong> Blackout text and sanitize</span>
+            <kbd class="kbd-shortcut">↵</kbd>
+          </a>
+          <a th:href="@{'/compress-pdf'}" class="palette-item">
+            <span><strong>Compress PDF:</strong> Shrink file size for sharing</span>
+            <kbd class="kbd-shortcut">↵</kbd>
+          </a>
+          <div class="palette-group-title">Core Operations</div>
+          <a th:href="@{'/ocr-pdf'}" class="palette-item">
+            <span>OCR Scans (Make text selectable)</span>
+            <span class="small text-muted">OCR</span>
+          </a>
+          <a th:href="@{'/merge-pdfs'}" class="palette-item">
+            <span>Merge PDFs into one</span>
+            <span class="small text-muted">Merge</span>
+          </a>
+          <a th:href="@{'/split-pdfs'}" class="palette-item">
+            <span>Split PDF into separate files</span>
+            <span class="small text-muted">Split</span>
+          </a>
+          <a th:href="@{'/rotate-pdf'}" class="palette-item">
+            <span>Rotate Pages</span>
+            <span class="small text-muted">Rotate</span>
+          </a>
+          <a th:href="@{'/pipeline'}" class="palette-item">
+            <span>Pipelines (Multi-step batch automation)</span>
+            <span class="small text-muted">Automation</span>
+          </a>
+        </div>
+        <div class="palette-footer">
+          <span>Press <kbd class="kbd-shortcut">↑</kbd> <kbd class="kbd-shortcut">↓</kbd> to navigate</span>
+          <span>Local &amp; Private &middot; Zero Data Egress</span>
+        </div>
       </div>
     </div>
+
+    <th:block th:insert="~{fragments/footer.html :: footer}"></th:block>
   </div>
 
   <style>
-    .favorite-icon {
-      cursor: pointer;
-      width: 0rem;
-      font-size: 2rem;
-    }
-
-    .toggle-favourites {
-      cursor: pointer;
-    }
-
-    .toggle-favourites.active {
-      color: gold;
-    }
+    .cursor-pointer { cursor: pointer; }
+    .favorite-icon { cursor: pointer; width: 0rem; font-size: 2rem; }
+    .toggle-favourites { cursor: pointer; }
+    .toggle-favourites.active { color: #D97706; }
   </style>
+
   <script th:src="@{'/js/fetch-utils.js'}"></script>
   <script th:inline="javascript">
     /*<![CDATA[*/
     window.analyticsPromptBoolean = /*[[${@analyticsPrompt}]]*/ false;
     /*]]>*/
-
-    window.showSurvey = /*[[${showSurveyFromDocker}]]*/ true
+    window.showSurvey = /*[[${showSurveyFromDocker}]]*/ true;
   </script>
   <script th:src="@{'/js/pages/home.js'}" th:inline="javascript"></script>
+
+  <!-- Universal Intake & Command Palette Script -->
   <script>
-    function applyScale() {
-      const baseWidth = 1440;
-      const baseHeight = 1000;
-      const scaleX = window.innerWidth / baseWidth;
-      const scaleY = window.innerHeight / baseHeight;
-      const scale = Math.max(0.9, Math.min(scaleX, scaleY)); // keep aspect ratio, honor minScale
-      const ui = document.getElementById('scale-wrap');
-      ui.style.transform = `scale(${scale*0.75})`;
+    // Universal Intake Handler: routes to multi-tool
+    const deck = document.getElementById('universalIntakeDeck');
+    const fileInput = document.getElementById('universalFileInput');
+
+    if (deck && fileInput) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        deck.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          deck.classList.add('dragover');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        deck.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          deck.classList.remove('dragover');
+        }, false);
+      });
+
+      deck.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          handleIntakeFile(files[0]);
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          handleIntakeFile(fileInput.files[0]);
+        }
+      });
     }
-  
-    window.addEventListener('resize', applyScale);
-    window.addEventListener('load', applyScale);
+
+    function handleIntakeFile(file) {
+      if (file && file.type === 'application/pdf') {
+        // Redirect to multi-tool workspace
+        window.location.href = window.location.origin + '/multi-tool';
+      }
+    }
+
+    // Command Palette Logic
+    function toggleCmdPalette(show) {
+      const modal = document.getElementById('paletteBackdrop');
+      const input = document.getElementById('paletteInput');
+      if (modal) {
+        if (show) {
+          modal.classList.add('active');
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+        } else {
+          modal.classList.remove('active');
+        }
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCmdPalette(true);
+      }
+      if (e.key === 'Escape') {
+        toggleCmdPalette(false);
+      }
+    });
+
+    // Fuzzy filter inside palette
+    const paletteInput = document.getElementById('paletteInput');
+    if (paletteInput) {
+      paletteInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.palette-results .palette-item');
+        items.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(query) ? 'flex' : 'none';
+        });
+      });
+    }
   </script>
-  
-
 </body>
-
 </html>
