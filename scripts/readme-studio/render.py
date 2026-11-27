@@ -20,8 +20,8 @@ from PIL import Image, ImageDraw
 from playwright.sync_api import sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-COORDINATOR_SCRATCH = Path(
-  r"C:\Users\subha\.gemini\antigravity\brain\207841c8-cc1b-47a5-82d0-f80cff627412\scratch"
+COORDINATOR_V2_SHEETS = Path(
+  r"C:\Users\subha\.gemini\antigravity\brain\207841c8-cc1b-4783-8f11-bc5d7b2c4f20\scratch\sheets\v2"
 )
 MAX_RECOMMENDED_BYTES = 3_500_000
 
@@ -105,33 +105,45 @@ def build_gl_args(gl_mode: str) -> list[str]:
   return ["--use-gl=angle", "--use-angle=swiftshader", *base]
 
 
-def make_contact_sheet(frame_paths: list[Path], out_path: Path, frames: int) -> Path:
-  pcts = [0, 25, 50, 75]
+def make_contact_sheet(
+  frame_paths: list[Path], out_path: Path, frames: int, target_w: int, target_h: int
+) -> Path:
+  """Generate a crisp 6-frame (3x2) contact sheet at 0%, 16%, 33%, 50%, 66%, 83%."""
+  pcts = [0, 16, 33, 50, 66, 83]
   indices = [min(frames - 1, int(round((p / 100.0) * frames))) if p > 0 else 0 for p in pcts]
-  samples = [Image.open(frame_paths[idx]).convert("RGBA") for idx in indices]
-  w, h = samples[0].size
+
+  tile_w = min(640, max(480, target_w // 2))
+  tile_h = max(1, int(round(tile_w * (target_h / max(1, target_w)))))
+
+  samples: list[Image.Image] = []
+  for idx in indices:
+    with Image.open(frame_paths[idx]) as raw:
+      samples.append(raw.convert("RGB").resize((tile_w, tile_h), Image.Resampling.LANCZOS))
+
   pad = 12
   bar = 28
-  sheet_w = w * 2 + pad * 3
-  sheet_h = (h + bar) * 2 + pad * 3
-  sheet = Image.new("RGBA", (sheet_w, sheet_h), (22, 20, 18, 255))
+  cols = 3
+  rows = 2
+  sheet_w = tile_w * cols + pad * (cols + 1)
+  sheet_h = (tile_h + bar) * rows + pad * (rows + 1)
+  sheet = Image.new("RGB", (sheet_w, sheet_h), (22, 20, 18))
   draw = ImageDraw.Draw(sheet)
 
-  positions = [
-    (pad, pad),
-    (pad * 2 + w, pad),
-    (pad, pad * 2 + h + bar),
-    (pad * 2 + w, pad * 2 + h + bar),
-  ]
-  for (x, y), img, pct, idx in zip(positions, samples, pcts, indices):
-    draw.rectangle([x, y, x + w, y + bar], fill=(38, 34, 30, 255))
-    draw.text((x + 10, y + 7), f"{pct}%  |  frame {idx}/{frames - 1}  (t={idx / frames:.3f})", fill=(245, 239, 230, 255))
+  for slot, (img, pct, idx) in enumerate(zip(samples, pcts, indices)):
+    r, c = divmod(slot, cols)
+    x = pad + c * (tile_w + pad)
+    y = pad + r * (tile_h + bar + pad)
+    draw.rectangle([x, y, x + tile_w, y + bar], fill=(38, 34, 30))
+    draw.text(
+      (x + 10, y + 7),
+      f"{pct}%  |  frame {idx}/{frames - 1}  (t={idx / frames:.3f})",
+      fill=(245, 239, 230),
+    )
     sheet.paste(img, (x, y + bar))
+    img.close()
 
   out_path.parent.mkdir(parents=True, exist_ok=True)
-  sheet.convert("RGB").save(out_path, format="PNG", optimize=True)
-  for im in samples:
-    im.close()
+  sheet.save(out_path, format="PNG", optimize=True)
   return out_path
 
 
@@ -170,9 +182,9 @@ def probe_webp(ffprobe_bin: str, out_path: Path) -> dict[str, Any]:
 
 
 def default_contact_sheet_path(out_path: Path) -> Path:
-  if COORDINATOR_SCRATCH.parent.exists():
-    COORDINATOR_SCRATCH.mkdir(parents=True, exist_ok=True)
-    return COORDINATOR_SCRATCH / f"{out_path.stem}-contact-sheet.png"
+  if COORDINATOR_V2_SHEETS.parents[1].exists():
+    COORDINATOR_V2_SHEETS.mkdir(parents=True, exist_ok=True)
+    return COORDINATOR_V2_SHEETS / f"{out_path.stem}.png"
   return out_path.with_name(f"{out_path.stem}-contact-sheet.png")
 
 
@@ -180,6 +192,9 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
   html_path = Path(args.html).resolve()
   if not html_path.is_file():
     raise FileNotFoundError(f"Scene HTML not found: {html_path}")
+
+  if args.supersample < 1:
+    raise ValueError("--supersample must be >= 1")
 
   out_path = Path(args.out).resolve()
   out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -200,6 +215,7 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
   errors: list[str] = []
   frame_paths: list[Path] = []
   temp_dir = Path(tempfile.mkdtemp(prefix="octapdf-studio-"))
+  effective_dpr = args.dpr * args.supersample
 
   try:
     with sync_playwright() as pw:
@@ -223,7 +239,7 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
 
       context = browser.new_context(
         viewport={"width": args.width, "height": args.height},
-        device_scale_factor=args.dpr,
+        device_scale_factor=effective_dpr,
       )
       page = context.new_page()
       page.on("pageerror", lambda err: errors.append(f"pageerror: {err}"))
@@ -269,6 +285,8 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
       str(args.fps),
       "-i",
       str(temp_dir / "frame_%05d.png"),
+      "-vf",
+      f"scale={args.width}:{args.height}:flags=lanczos",
       "-vcodec",
       "libwebp_anim",
       "-lossless",
@@ -287,7 +305,7 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
     sheet_path: Path | None = None
     if not args.no_contact_sheet:
       target_sheet = Path(args.contact_sheet).resolve() if args.contact_sheet else default_contact_sheet_path(out_path)
-      sheet_path = make_contact_sheet(frame_paths, target_sheet, args.frames)
+      sheet_path = make_contact_sheet(frame_paths, target_sheet, args.frames, args.width, args.height)
 
     probe = probe_webp(ffprobe_bin, out_path)
     return {
@@ -299,6 +317,8 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
       "requested_frames": args.frames,
       "fps": args.fps,
       "quality": args.quality,
+      "supersample": args.supersample,
+      "capture_px": [int(round(args.width * effective_dpr)), int(round(args.height * effective_dpr))],
       "probe": probe,
     }
   finally:
@@ -309,24 +329,26 @@ def render_scene(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
   parser = argparse.ArgumentParser(
-    description="Deterministic Three.js/WebGL2-to-animated-WebP renderer for OctaPDF README visuals."
+    description="Deterministic supersampled Three.js/WebGL2-to-animated-WebP renderer for OctaPDF README visuals."
   )
   parser.add_argument("--html", required=True, help="Path to scene HTML exposing window.renderFrame(i, totalFrames, t).")
   parser.add_argument("--out", required=True, help="Output animated WebP file path.")
-  parser.add_argument("--width", type=int, default=960, help="Viewport/output width in pixels (default: 960).")
-  parser.add_argument("--height", type=int, default=540, help="Viewport/output height in pixels (default: 540).")
+  parser.add_argument("--width", type=int, default=960, help="Output width in pixels (default: 960).")
+  parser.add_argument("--height", type=int, default=540, help="Output height in pixels (default: 540).")
   parser.add_argument("--fps", type=int, default=30, help="Output framerate (default: 30).")
   parser.add_argument("--frames", type=int, default=90, help="Total frames to render (default: 90).")
-  parser.add_argument("--quality", type=int, default=82, help="libwebp_anim quality 0-100 (default: 82).")
-  parser.add_argument("--dpr", type=float, default=1.0, help="Device scale factor (default: 1.0).")
+  parser.add_argument("--quality", type=int, default=84, help="libwebp_anim quality 0-100 (default: 84).")
+  parser.add_argument("--supersample", type=int, default=2, help="Supersample multiplier before Lanczos downscale (default: 2).")
+  parser.add_argument("--dpr", type=float, default=1.0, help="Base device scale factor multiplied by --supersample (default: 1.0).")
   parser.add_argument(
     "--gl",
     choices=["auto", "d3d11", "swiftshader"],
     default="auto",
     help="WebGL ANGLE backend (default: auto).",
   )
-  parser.add_argument("--contact-sheet", help="Optional output PNG path for 4-frame (0/25/50/75%%) contact sheet.")
-  parser.add_argument("--no-contact-sheet", action="store_true", help="Skip generating the 4-frame contact sheet.")
+  parser.add_argument("--contact-sheet", help="Optional output PNG path for 6-frame (0/16/33/50/66/83%%) contact sheet.")
+  parser.add_argument("--no-contact-sheet", action="store_true", help="Skip generating the contact sheet.")
+  parser.add_argument("--allow-oversize", action="store_true", help="Warn instead of failing if WebP exceeds 3.5 MB.")
   parser.add_argument("--verbose", action="store_true", help="Log HTTP requests.")
   return parser.parse_args()
 
@@ -337,15 +359,17 @@ def main() -> int:
   print(json.dumps(result, indent=2))
   if result["probe"]["nb_read_frames"] not in (None, args.frames):
     print(
-      f"WARNING: ffprobe read {result['probe']['nb_read_frames']} frames, expected {args.frames}",
+      f"ERROR: ffprobe read {result['probe']['nb_read_frames']} frames, expected {args.frames}",
       file=sys.stderr,
     )
     return 2
   if not result["probe"]["under_3_5mb"]:
     print(
-      f"WARNING: output exceeds 3.5 MB target ({result['probe']['size_mb']} MB)",
+      f"ERROR: output exceeds 3.5 MB limit ({result['probe']['size_mb']} MB / {result['probe']['size_bytes']} bytes)",
       file=sys.stderr,
     )
+    if not args.allow_oversize:
+      return 3
   return 0
 
 

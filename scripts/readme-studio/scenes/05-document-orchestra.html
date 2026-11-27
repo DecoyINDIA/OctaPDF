@@ -12,583 +12,914 @@
       height: 100%;
       overflow: hidden;
       background: #FAF7F2;
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     }
     canvas {
       display: block;
       width: 100%;
       height: 100%;
     }
-    .hud-top {
+    .phase-rail {
       position: absolute;
-      top: 24px;
-      left: 34px;
-      right: 34px;
+      top: 28px;
+      right: 42px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 14px;
       pointer-events: none;
-    }
-    .hud-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      color: #6E645D;
+      font-family: 'OctaEditorialSans', 'Segoe UI', system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.20em;
       text-transform: uppercase;
+      color: #A89E94;
     }
-    .hud-dot {
-      width: 7px;
-      height: 7px;
-      background: #E8501C;
-      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-    }
-    .hud-meta {
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      color: #6E645D;
-    }
-    .hud-bottom {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.84);
-      border: 1px solid #E8E2D8;
-      border-radius: 999px;
-      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.06);
-      pointer-events: none;
-    }
-    .phase-pill {
+    .phase-item {
       position: relative;
-      padding: 4px 11px 6px;
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      color: #8A7F76;
+      padding-bottom: 5px;
     }
-    .phase-pill.active {
+    .phase-item.active {
       color: #241E1B;
     }
-    .phase-pill .bar {
+    .phase-item .rule {
       position: absolute;
-      left: 11px;
-      right: 11px;
-      bottom: 1px;
-      height: 2px;
-      border-radius: 2px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1.5px;
       background: #E8501C;
       transform: scaleX(0);
       transform-origin: left center;
     }
-    .phase-pill.active .bar {
+    .phase-item.active .rule {
       transform: scaleX(1);
     }
-    .phase-sep {
-      color: #D2C9BD;
-      font-size: 11px;
-      user-select: none;
+    .compress-metric {
+      position: absolute;
+      right: 42px;
+      bottom: 30px;
+      font-family: ui-monospace, 'Consolas', monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6E645D;
+      pointer-events: none;
+      opacity: 0;
+      border-bottom: 1px solid rgba(232, 80, 28, 0.45);
+      padding-bottom: 3px;
+    }
+    .compress-metric span {
+      color: #E8501C;
     }
   </style>
 </head>
 <body>
-  <div class="hud-top">
-    <div class="hud-kicker">
-      <span class="hud-dot"></span>
-      <span>OCTAPDF // DOCUMENT ORCHESTRA</span>
-    </div>
-    <div class="hud-meta" id="hud-sub">LOCAL PAPER ENGINE · 6-SHEET FOLIO</div>
+  <div class="phase-rail" id="phase-rail">
+    <div class="phase-item" data-phase="0">MERGE<span class="rule"></span></div>
+    <div class="phase-item" data-phase="1">SPLIT<span class="rule"></span></div>
+    <div class="phase-item" data-phase="2">REORDER<span class="rule"></span></div>
+    <div class="phase-item" data-phase="3">COMPRESS<span class="rule"></span></div>
+    <div class="phase-item" data-phase="4">SIGN<span class="rule"></span></div>
   </div>
-
-  <div class="hud-bottom" id="phase-bar">
-    <div class="phase-pill" data-phase="0">MERGE<span class="bar"></span></div>
-    <span class="phase-sep">·</span>
-    <div class="phase-pill" data-phase="1">SPLIT<span class="bar"></span></div>
-    <span class="phase-sep">·</span>
-    <div class="phase-pill" data-phase="2">REORDER<span class="bar"></span></div>
-    <span class="phase-sep">·</span>
-    <div class="phase-pill" data-phase="3">COMPRESS<span class="bar"></span></div>
-    <span class="phase-sep">·</span>
-    <div class="phase-pill" data-phase="4">SIGN<span class="bar"></span></div>
-  </div>
+  <div class="compress-metric" id="compress-metric">COMPACTION · <span>QPDF + PDFBOX</span></div>
 
   <script type="module">
     import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
     import {
-      PALETTE,
+      initStudio,
+      createCottonPaperMaterial,
+      createPdfPageTexture,
+      createEditorialCaptionLayer,
+      foldPlaneGeometry,
       clamp01,
-      smoothstep,
+      lerp,
       smootherstep,
-      easeInOutCubic,
-      cubicBezier3,
-      createPaperFiberMaps,
-      createDocumentPageTexture,
-      createPaperSheetMesh,
-      setupStudioLighting,
-      createOctagonalSeal,
-    } from '/scripts/readme-studio/scenes/paper-utils.js';
+      easeInOutQuint,
+      springDamped
+    } from '/scripts/readme-studio/scenes/studio-kit.js';
 
-    const W = window.innerWidth || 1200;
-    const H = window.innerHeight || 600;
+    const W = 1120;
+    const H = 560;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(W, H, false);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.02;
-    document.body.appendChild(renderer.domElement);
+    const studio = initStudio(null, {
+      mode: 'light',
+      width: W,
+      height: H,
+      fov: 30,
+      camPos: [0, 1.48, 4.78],
+      lookAt: [0, 0.04, 0],
+      floorY: -0.92,
+      shadowOpacity: 0.24,
+      shadowFrustum: 4.8,
+      exposure: 0.96
+    });
+    const { renderer, scene, camera } = studio;
+    studio.lights.key.position.set(4.5, 5.4, 3.8);
+    studio.lights.key.intensity = 2.25;
+    studio.lights.rim.intensity = 0.65;
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(PALETTE.canvas, 8.0, 15.5);
-    setupStudioLighting(scene, {
-      background: PALETTE.canvas,
-      shadowExtent: 5.2,
-      keyPosition: [4.0, 7.6, 5.2],
-      keyIntensity: 2.1,
+    const hud = createEditorialCaptionLayer(document.body, {
+      mode: 'light',
+      designWidth: W,
+      designHeight: H,
+      kicker: 'OCTAPDF // DOCUMENT ORCHESTRA'
     });
 
-    const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 60);
-    camera.position.set(0, 2.35, 5.35);
-    camera.lookAt(0, 0.08, 0);
-
-    // Architectural drafting desk + recessed paper mat
-    const { bumpMap } = createPaperFiberMaps(512, 107);
-
-    const desk = new THREE.Mesh(
-      new THREE.PlaneGeometry(24, 16),
-      new THREE.MeshStandardMaterial({ color: '#F3EDE3', roughness: 0.94, metalness: 0.0 })
-    );
-    desk.rotation.x = -Math.PI / 2;
-    desk.position.y = -0.95;
-    desk.receiveShadow = true;
-    scene.add(desk);
-
-    const deskMat = new THREE.Mesh(
-      new THREE.BoxGeometry(5.8, 0.02, 3.4),
-      new THREE.MeshStandardMaterial({
-        color: '#FAF7F2',
-        roughness: 0.88,
-        bumpMap,
-        bumpScale: 0.002,
-      })
-    );
-    deskMat.position.set(0, -0.94, 0.05);
-    deskMat.receiveShadow = true;
-    scene.add(deskMat);
-
-    // Fine drafting alignment crosshairs on the desk mat
-    const gridMat = new THREE.LineBasicMaterial({ color: '#DED5C8', transparent: true, opacity: 0.85 });
-    const gridPts = [];
-    for (let x = -2.4; x <= 2.41; x += 0.6) {
-      gridPts.push(new THREE.Vector3(x, -0.928, -1.3), new THREE.Vector3(x, -0.928, 1.4));
+    // Subtle warm drafting surface rule lines on the cyclorama floor
+    const floorRulePts = [];
+    for (let x = -2.8; x <= 2.81; x += 0.7) {
+      floorRulePts.push(new THREE.Vector3(x, -0.916, -1.5), new THREE.Vector3(x, -0.916, 1.5));
     }
-    for (let z = -1.2; z <= 1.21; z += 0.6) {
-      gridPts.push(new THREE.Vector3(-2.6, -0.928, z), new THREE.Vector3(2.6, -0.928, z));
+    for (let z = -1.4; z <= 1.41; z += 0.7) {
+      floorRulePts.push(new THREE.Vector3(-2.8, -0.916, z), new THREE.Vector3(2.8, -0.916, z));
     }
-    const deskGrid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPts), gridMat);
-    scene.add(deskGrid);
+    const floorRules = new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(floorRulePts),
+      new THREE.LineBasicMaterial({ color: '#D6CBB9', transparent: true, opacity: 0.55 })
+    );
+    scene.add(floorRules);
 
-    // Master stage group
-    const stageGroup = new THREE.Group();
-    scene.add(stageGroup);
+    // Custom clean contract texture (blank signature field ready for live calligraphic ink)
+    function createCleanContractTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1320;
+      const ctx = c.getContext('2d');
+      const Wp = 1024, Hp = 1320;
+      const bg = '#FFFDF9', subtle = '#F5EFE6', ink = '#241E1B', muted = '#6E645D';
+      const rule = 'rgba(36, 30, 27, 0.14)', accent = '#E8501C';
 
-    // 6 distinct architectural paper sheets
-    const sheetConfigs = [
-      { idx: '01', title: 'EXECUTIVE SUMMARY', variant: 'prose', hasSignatureGuide: true, hasStampTarget: true },
-      { idx: '02', title: 'SYSTEM ARCHITECTURE', variant: 'diagram', hasSignatureGuide: false, hasStampTarget: false },
-      { idx: '03', title: 'FOLIO SPECIFICATION', variant: 'columns', hasSignatureGuide: false, hasStampTarget: false },
-      { idx: '04', title: 'SECURITY CONTROLS', variant: 'prose', hasSignatureGuide: false, hasStampTarget: false },
-      { idx: '05', title: 'OCR & CONVERSION', variant: 'diagram', hasSignatureGuide: false, hasStampTarget: false },
-      { idx: '06', title: 'ARCHIVE APPENDIX', variant: 'columns', hasSignatureGuide: false, hasStampTarget: false },
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, Wp, Hp);
+      const vig = ctx.createRadialGradient(Wp * 0.5, Hp * 0.45, 160, Wp * 0.5, Hp * 0.5, 820);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(218, 206, 190, 0.22)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, Wp, Hp);
+
+      ctx.strokeStyle = rule;
+      ctx.lineWidth = 1.5;
+      const m = 54, tk = 20;
+      [[m, m, 1, 1], [Wp - m, m, -1, 1], [m, Hp - m, 1, -1], [Wp - m, Hp - m, -1, -1]].forEach(([x, y, dx, dy]) => {
+        ctx.beginPath(); ctx.moveTo(x, y + dy * tk); ctx.lineTo(x, y); ctx.lineTo(x + dx * tk, y); ctx.stroke();
+      });
+
+      ctx.fillStyle = muted;
+      ctx.font = '600 16px "Segoe UI", "Liberation Sans", sans-serif';
+      ctx.fillText('OCTAPDF  /  PAPER ARCHITECTURE', 92, 92);
+      ctx.textAlign = 'right';
+      ctx.fillText('03 / 05', Wp - 92, 92);
+      ctx.textAlign = 'left';
+
+      ctx.strokeStyle = rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(92, 112); ctx.lineTo(Wp - 92, 112); ctx.stroke();
+
+      ctx.fillStyle = accent;
+      ctx.fillRect(92, 154, 52, 4);
+      ctx.fillStyle = muted;
+      ctx.font = '700 15px "Segoe UI", sans-serif';
+      ctx.fillText('EXECUTION & INTEGRITY ATTESTATION', 92, 190);
+
+      ctx.fillStyle = ink;
+      ctx.font = '700 40px "Georgia", serif';
+      ctx.fillText('Certificate of Local Processing', 92, 248);
+
+      const lines = [
+        'ARTICLE I — CUSTODY OF MATERIAL',
+        'All source manuscripts, exhibits, and signature vectors remain exclusively',
+        'under host filesystem custody throughout assembly and compression.',
+        '',
+        'ARTICLE II — CRYPTOGRAPHIC SEALING',
+        'Digital signatures apply PKCS#7 / BouncyCastle 1.80 verification chains',
+        'directly within local JVM execution without third-party key escrow.'
+      ];
+      ctx.fillStyle = ink;
+      ctx.font = '400 19px "Georgia", "Times New Roman", serif';
+      lines.forEach((ln, idx) => ctx.fillText(ln, 92, 318 + idx * 32));
+
+      const y = 638;
+      ctx.fillStyle = subtle;
+      ctx.fillRect(92, y, Wp - 184, 240);
+      ctx.strokeStyle = rule;
+      ctx.strokeRect(92, y, Wp - 184, 240);
+
+      ctx.fillStyle = muted;
+      ctx.font = '700 14px "Segoe UI", sans-serif';
+      ctx.fillText('AUTHORIZED SIGNATURE', 130, y + 48);
+      ctx.fillText('LOCAL ATTESTATION', 660, y + 48);
+
+      ctx.strokeStyle = 'rgba(36, 30, 27, 0.28)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(130, y + 166);
+      ctx.lineTo(540, y + 166);
+      ctx.stroke();
+
+      ctx.fillStyle = ink;
+      ctx.font = '600 15px "Segoe UI", sans-serif';
+      ctx.fillText('Signed on Local Paper Desk · v0.46.2', 130, y + 202);
+
+      // Subtle footer
+      ctx.strokeStyle = rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(92, Hp - 102); ctx.lineTo(Wp - 92, Hp - 102); ctx.stroke();
+      ctx.fillStyle = muted;
+      ctx.font = '400 14px "Consolas", monospace';
+      ctx.fillText('LOCAL CUSTODY  ·  MIT OPEN SOURCE', 92, Hp - 68);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      return tex;
+    }
+
+    // Custom 5th archival sheet matching studio-kit 1024x1320 folio style
+    function createArchiveSheetTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1320;
+      const ctx = c.getContext('2d');
+      const Wp = 1024, Hp = 1320;
+      const bg = '#FFFDF9', subtle = '#F5EFE6', ink = '#241E1B', muted = '#6E645D';
+      const rule = 'rgba(36, 30, 27, 0.14)', accent = '#E8501C';
+
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, Wp, Hp);
+      const vig = ctx.createRadialGradient(Wp * 0.5, Hp * 0.45, 160, Wp * 0.5, Hp * 0.5, 820);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(218, 206, 190, 0.22)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, Wp, Hp);
+
+      ctx.strokeStyle = rule;
+      ctx.lineWidth = 1.5;
+      const m = 54, tk = 20;
+      [[m, m, 1, 1], [Wp - m, m, -1, 1], [m, Hp - m, 1, -1], [Wp - m, Hp - m, -1, -1]].forEach(([x, y, dx, dy]) => {
+        ctx.beginPath(); ctx.moveTo(x, y + dy * tk); ctx.lineTo(x, y); ctx.lineTo(x + dx * tk, y); ctx.stroke();
+      });
+
+      ctx.fillStyle = muted;
+      ctx.font = '600 16px "Segoe UI", sans-serif';
+      ctx.fillText('OCTAPDF  /  PAPER ARCHITECTURE', 92, 92);
+      ctx.textAlign = 'right';
+      ctx.fillText('05 / 05', Wp - 92, 92);
+      ctx.textAlign = 'left';
+
+      ctx.strokeStyle = rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(92, 112); ctx.lineTo(Wp - 92, 112); ctx.stroke();
+
+      ctx.fillStyle = accent;
+      ctx.fillRect(92, 154, 52, 4);
+      ctx.fillStyle = muted;
+      ctx.font = '700 15px "Segoe UI", sans-serif';
+      ctx.fillText('ARCHIVAL COMPLIANCE  ·  PDF/A-2B & QPDF', 92, 190);
+      ctx.fillStyle = ink;
+      ctx.font = '700 42px "Segoe UI", sans-serif';
+      ctx.fillText('Long-Term Folio Integrity', 92, 246);
+
+      const items = [
+        ['LINEARIZATION', 'Fast web-view byte streaming via qpdf --linearize'],
+        ['COLOR PROFILES', 'Embedded sRGB / CMYK ICC preservation across merges'],
+        ['FONT SUBSETTING', 'Deterministic glyph embedding for archival legibility'],
+        ['STREAM DEFLATE', 'Lossless object-stream compaction without raster loss']
+      ];
+      let iy = 322;
+      items.forEach(([k, v]) => {
+        ctx.fillStyle = subtle;
+        ctx.fillRect(92, iy, Wp - 184, 112);
+        ctx.strokeStyle = rule;
+        ctx.strokeRect(92, iy, Wp - 184, 112);
+        ctx.fillStyle = accent;
+        ctx.font = '700 14px "Consolas", monospace';
+        ctx.fillText(k, 124, iy + 40);
+        ctx.fillStyle = ink;
+        ctx.font = '400 20px "Georgia", serif';
+        ctx.fillText(v, 124, iy + 78);
+        iy += 136;
+      });
+
+      ctx.strokeStyle = rule;
+      ctx.beginPath(); ctx.moveTo(92, Hp - 102); ctx.lineTo(Wp - 92, Hp - 102); ctx.stroke();
+      ctx.fillStyle = muted;
+      ctx.font = '400 14px "Consolas", monospace';
+      ctx.fillText('LOCAL CUSTODY  ·  MIT OPEN SOURCE', 92, Hp - 68);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      return tex;
+    }
+
+    // Five genuine high-DPI PDF pages
+    const SHEET_W = 1.32;
+    const SHEET_H = 1.70;
+    const BASE_TILT = -0.44;
+
+    const textures = [
+      createPdfPageTexture('brief'),
+      createPdfPageTexture('architecture'),
+      createCleanContractTexture(),
+      createPdfPageTexture('ledger'),
+      createArchiveSheetTexture()
     ];
 
-    const SHEET_W = 1.38;
-    const SHEET_H = 1.84;
-    const SHEET_T = 0.022;
-    const BASE_TILT = -Math.PI * 0.27;
+    const stage = new THREE.Group();
+    scene.add(stage);
 
-    const sheets = sheetConfigs.map((cfg, i) => {
-      const tex = createDocumentPageTexture({
-        pageIndex: cfg.idx,
-        title: cfg.title,
-        variant: cfg.variant,
-        hasSignatureGuide: cfg.hasSignatureGuide,
-        hasStampTarget: cfg.hasStampTarget,
-        bg: i === 0 ? '#FFFFFF' : '#FDFBF7',
+    const sheets = textures.map((tex) => {
+      const fp = foldPlaneGeometry(SHEET_W, SHEET_H, 28, 36);
+      const mat = createCottonPaperMaterial({
+        color: '#FFFFFF',
+        map: tex,
+        vertexColors: true,
+        roughness: 0.84,
+        sheen: 0.35,
+        bumpScale: 0.004
       });
-      const mesh = createPaperSheetMesh({
-        width: SHEET_W,
-        height: SHEET_H,
-        thickness: SHEET_T,
-        frontTexture: tex,
-        bumpMap,
-      });
-      stageGroup.add(mesh);
-      return mesh;
+      const mesh = new THREE.Mesh(fp.geometry, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.shadowSide = THREE.FrontSide;
+      stage.add(mesh);
+
+      // Ultra-fine paper edge hairline so stacked edges read crisply
+      const edgePts = [
+        new THREE.Vector3(-SHEET_W * 0.5, -SHEET_H * 0.5, 0.001),
+        new THREE.Vector3(SHEET_W * 0.5, -SHEET_H * 0.5, 0.001),
+        new THREE.Vector3(SHEET_W * 0.5, SHEET_H * 0.5, 0.001),
+        new THREE.Vector3(-SHEET_W * 0.5, SHEET_H * 0.5, 0.001)
+      ];
+      const edgeLine = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(edgePts),
+        new THREE.LineBasicMaterial({ color: '#AFA292', transparent: true, opacity: 0.85 })
+      );
+      mesh.add(edgeLine);
+
+      return { mesh, fp, mat, edgeLine };
     });
 
-    // Terracotta Spine Clasp (appears when merged)
-    const spineClasp = new THREE.Mesh(
-      new THREE.BoxGeometry(0.055, SHEET_H * 0.92, 0.19),
-      new THREE.MeshStandardMaterial({
-        color: PALETTE.accent,
-        roughness: 0.34,
-        metalness: 0.08,
-      })
-    );
-    spineClasp.castShadow = true;
-    spineClasp.receiveShadow = true;
-    spineClasp.rotation.x = BASE_TILT;
-    stageGroup.add(spineClasp);
+    // =========================================================================
+    // Hairline Architectural Merge Registration Rule & Split Score Blade
+    // =========================================================================
+    const scoreGroup = new THREE.Group();
+    scoreGroup.rotation.x = BASE_TILT;
+    stage.add(scoreGroup);
 
-    // Chapter seam laser/crease blade (appears during Split)
-    const seamBlade = new THREE.Mesh(
-      new THREE.BoxGeometry(0.016, SHEET_H * 1.18, 0.36),
-      new THREE.MeshStandardMaterial({
-        color: PALETTE.accent,
-        emissive: PALETTE.ribbonFace,
-        emissiveIntensity: 0.55,
-        roughness: 0.25,
-      })
-    );
-    seamBlade.rotation.x = BASE_TILT;
-    seamBlade.visible = false;
-    stageGroup.add(seamBlade);
+    const scoreBeamMat = new THREE.MeshBasicMaterial({
+      color: '#E8501C',
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide
+    });
+    const scoreBeam = new THREE.Mesh(new THREE.PlaneGeometry(0.006, SHEET_H * 1.18), scoreBeamMat);
+    const scoreHaloMat = new THREE.MeshBasicMaterial({
+      color: '#FF6B35',
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide
+    });
+    const scoreHalo = new THREE.Mesh(new THREE.PlaneGeometry(0.032, SHEET_H * 1.18), scoreHaloMat);
+    scoreGroup.add(scoreHalo, scoreBeam);
+    scoreGroup.visible = false;
 
-    // Compress Phase: Articulated 3D Accordion Bellows + Graphite Compression Platens
-    const bellowsGroup = new THREE.Group();
-    bellowsGroup.position.set(0, 0.06, 0.12);
-    bellowsGroup.rotation.set(-0.24, 0.44, 0);
-    stageGroup.add(bellowsGroup);
+    // Hairline alignment registration ticks (for Merge flush confirmation)
+    const regGroup = new THREE.Group();
+    regGroup.rotation.x = BASE_TILT;
+    stage.add(regGroup);
+    const regTickPts = [];
+    const rw = SHEET_W * 0.5 + 0.045, rh = SHEET_H * 0.5 + 0.045, rl = 0.12;
+    [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(([sx, sy]) => {
+      regTickPts.push(
+        new THREE.Vector3(sx * rw, sy * (rh - rl), 0.04),
+        new THREE.Vector3(sx * rw, sy * rh, 0.04),
+        new THREE.Vector3(sx * rw, sy * rh, 0.04),
+        new THREE.Vector3(sx * (rw - rl), sy * rh, 0.04)
+      );
+    });
+    const regMat = new THREE.LineBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0 });
+    const regLines = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(regTickPts), regMat);
+    regGroup.add(regLines);
 
-    const PLEAT_COUNT = 10;
-    const PLEAT_W = 0.34;
-    const PLEAT_H = 1.62;
-    const pleats = [];
-    for (let p = 0; p < PLEAT_COUNT; p++) {
-      const mat = new THREE.MeshStandardMaterial({
-        color: p % 2 === 0 ? '#FFFFFF' : '#EFE7DB',
-        roughness: 0.66,
-        bumpMap,
-        bumpScale: 0.003,
-        side: THREE.DoubleSide,
-      });
-      const pleat = new THREE.Mesh(new THREE.BoxGeometry(PLEAT_W, PLEAT_H, 0.016), mat);
-      pleat.castShadow = true;
-      pleat.receiveShadow = true;
-      bellowsGroup.add(pleat);
-      pleats.push(pleat);
+    // =========================================================================
+    // COMPRESS: 8 Translucent Vellum Signatures + Contracting Hairline Gauge
+    // =========================================================================
+    // Tilted horizontal book-signature stack so all 8 translucent vellum sheets read crisply in 3D perspective!
+    const compressGroup = new THREE.Group();
+    compressGroup.position.set(-0.08, 0.06, 0.16);
+    compressGroup.rotation.set(0.16, 0.34, 0);
+    stage.add(compressGroup);
+
+    function createVellumSheetTexture(idx) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 640;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = idx % 2 === 0 ? '#FFFDF9' : '#F6EFE3';
+      ctx.fillRect(0, 0, 512, 640);
+      ctx.strokeStyle = 'rgba(36, 30, 27, 0.14)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(24, 24, 464, 592);
+      ctx.fillStyle = idx === 0 ? '#E8501C' : 'rgba(110, 100, 93, 0.45)';
+      ctx.font = '700 18px "Consolas", monospace';
+      ctx.fillText(`SIG 0${idx + 1} / 08`, 48, 66);
+      ctx.fillStyle = 'rgba(36, 30, 27, 0.20)';
+      for (let r = 0; r < 9; r++) {
+        ctx.fillRect(48, 110 + r * 46, 340 - (r % 3) * 60, 4);
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
     }
 
-    const platenGeo = new THREE.BoxGeometry(0.065, PLEAT_H + 0.14, 0.62);
-    const platenMat = new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.42, metalness: 0.18 });
-    const leftPlaten = new THREE.Mesh(platenGeo, platenMat);
-    const rightPlaten = new THREE.Mesh(platenGeo, platenMat);
-    leftPlaten.castShadow = true;
-    rightPlaten.castShadow = true;
-    bellowsGroup.add(leftPlaten, rightPlaten);
+    const VELLUM_COUNT = 8;
+    const vellumSheets = [];
+    for (let v = 0; v < VELLUM_COUNT; v++) {
+      const fp = foldPlaneGeometry(1.56, 1.98, 22, 26);
+      const vMat = new THREE.MeshPhysicalMaterial({
+        color: '#FFFFFF',
+        map: createVellumSheetTexture(v),
+        roughness: 0.60,
+        metalness: 0.0,
+        sheen: 0.55,
+        sheenColor: new THREE.Color('#FFF8EE'),
+        transparent: true,
+        opacity: v === 0 ? 0.88 : 0.64,
+        side: THREE.DoubleSide
+      });
+      const m = new THREE.Mesh(fp.geometry, vMat);
+      m.rotation.x = -Math.PI / 2;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.shadowSide = THREE.FrontSide;
 
-    // Terracotta compression guide rods (scale dynamically with platen span)
-    const railMat = new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.32, metalness: 0.2 });
-    const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.0, 16), railMat);
-    topRail.rotation.z = Math.PI / 2;
-    topRail.position.set(0, PLEAT_H * 0.5 + 0.04, 0);
-    const botRail = topRail.clone();
-    botRail.position.set(0, -PLEAT_H * 0.5 - 0.04, 0);
-    bellowsGroup.add(topRail, botRail);
-    bellowsGroup.visible = false;
+      const borderPts = [
+        new THREE.Vector3(-0.78, -0.99, 0.002),
+        new THREE.Vector3(0.78, -0.99, 0.002),
+        new THREE.Vector3(0.78, 0.99, 0.002),
+        new THREE.Vector3(-0.78, 0.99, 0.002)
+      ];
+      const bLine = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(borderPts),
+        new THREE.LineBasicMaterial({
+          color: v === 0 ? '#E8501C' : '#8D8175',
+          transparent: true,
+          opacity: v === 0 ? 0.92 : 0.68
+        })
+      );
+      m.add(bLine);
+      compressGroup.add(m);
+      vellumSheets.push({ mesh: m, fp, mat: vMat, bLine });
+    }
 
-    // Sign & Annotate Phase: Attached to Sheet 0 local space so ink/seal move rigidly with Sheet 0!
+    // Hairline vertical compression metric gauge beside the vellum stack
+    const gaugeGroup = new THREE.Group();
+    gaugeGroup.position.set(1.04, 0, 0.15);
+    compressGroup.add(gaugeGroup);
+
+    const gaugeRailGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -0.5, 0), new THREE.Vector3(0, 0.5, 0),
+      new THREE.Vector3(-0.08, 0.5, 0), new THREE.Vector3(0.03, 0.5, 0),
+      new THREE.Vector3(-0.08, -0.5, 0), new THREE.Vector3(0.03, -0.5, 0)
+    ]);
+    const gaugeRail = new THREE.LineSegments(
+      gaugeRailGeo,
+      new THREE.LineBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0.95 })
+    );
+    gaugeGroup.add(gaugeRail);
+
+    const gaugeArrowMat = new THREE.LineBasicMaterial({ color: '#241E1B', transparent: true, opacity: 0.78 });
+    const gaugeArrowTop = new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.03, 0.05, 0), new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0.03, 0.05, 0), new THREE.Vector3(0, 0, 0)
+      ]),
+      gaugeArrowMat
+    );
+    gaugeGroup.add(gaugeArrowTop);
+    compressGroup.visible = false;
+
+    // =========================================================================
+    // SIGN: Variable-Width Calligraphic Ink Ribbon + Nib + Hairline Seal on Sheet 2 (Contract)
+    // =========================================================================
     const sigAnchor = new THREE.Group();
-    sheets[0].add(sigAnchor);
+    sheets[2].mesh.add(sigAnchor);
 
-    // Signature field coordinates in Sheet 0 local space (SHEET_W=1.38, SHEET_H=1.84)
-    const sigPoints = [
-      new THREE.Vector3(-0.46, -0.60, 0.020),
-      new THREE.Vector3(-0.37, -0.50, 0.022),
-      new THREE.Vector3(-0.32, -0.62, 0.020),
-      new THREE.Vector3(-0.22, -0.53, 0.022),
-      new THREE.Vector3(-0.16, -0.61, 0.020),
-      new THREE.Vector3(-0.07, -0.55, 0.022),
-      new THREE.Vector3(0.01, -0.60, 0.020),
-      new THREE.Vector3(-0.28, -0.65, 0.021),
-      new THREE.Vector3(0.05, -0.63, 0.021),
-    ];
-    const sigCurve = new THREE.CatmullRomCurve3(sigPoints);
-    const SIG_TUBULAR = 120;
-    const SIG_RADIAL = 10;
-    const sigGeo = new THREE.TubeGeometry(sigCurve, SIG_TUBULAR, 0.013, SIG_RADIAL, false);
-    const sigMat = new THREE.MeshStandardMaterial({
-      color: PALETTE.accent,
-      emissive: PALETTE.ribbonShadow,
-      emissiveIntensity: 0.25,
-      roughness: 0.28,
-      metalness: 0.08,
+    // Signature field coordinates mapped cleanly to createCleanContractTexture()
+    // Canvas box: x=130..540 (of 1024), baseline y=804 (of 1320)
+    const sigCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.46, -0.175, 0.0045),
+      new THREE.Vector3(-0.40, -0.095, 0.0045),
+      new THREE.Vector3(-0.37, -0.185, 0.0045),
+      new THREE.Vector3(-0.30, -0.118, 0.0045),
+      new THREE.Vector3(-0.26, -0.182, 0.0045),
+      new THREE.Vector3(-0.20, -0.132, 0.0045),
+      new THREE.Vector3(-0.15, -0.178, 0.0045),
+      new THREE.Vector3(-0.08, -0.145, 0.0045),
+      new THREE.Vector3(0.01, -0.175, 0.0045),
+      new THREE.Vector3(-0.18, -0.202, 0.0045),
+      new THREE.Vector3(0.05, -0.190, 0.0045)
+    ]);
+
+    function createCalligraphicRibbonGeometry(curve, segments = 220) {
+      const geo = new THREE.BufferGeometry();
+      const vertCount = (segments + 1) * 2;
+      const positions = new Float32Array(vertCount * 3);
+      const colors = new Float32Array(vertCount * 3);
+      const indices = [];
+
+      const p = new THREE.Vector3();
+      const t = new THREE.Vector3();
+      const cDark = new THREE.Color('#C4360A');
+      const cMid = new THREE.Color('#E8501C');
+      const cLight = new THREE.Color('#FF6B35');
+      const tmpC = new THREE.Color();
+
+      for (let s = 0; s <= segments; s++) {
+        const u = s / segments;
+        curve.getPoint(u, p);
+        curve.getTangent(u, t).normalize();
+        const nx = -t.y;
+        const ny = t.x;
+
+        // Broad-nib modulation: thicker on downstrokes & diagonal sweeps, hairline on upstrokes/terminals
+        const downBias = clamp01((-t.y + 0.65) * 0.68);
+        const endTaper = Math.sin(clamp01(u) * Math.PI);
+        const swell = 0.0026 + 0.0115 * Math.pow(downBias, 1.35) * (0.25 + 0.75 * Math.pow(endTaper, 0.45));
+
+        const idx = s * 2;
+        positions[idx * 3 + 0] = p.x - nx * swell;
+        positions[idx * 3 + 1] = p.y - ny * swell;
+        positions[idx * 3 + 2] = p.z;
+
+        positions[(idx + 1) * 3 + 0] = p.x + nx * swell;
+        positions[(idx + 1) * 3 + 1] = p.y + ny * swell;
+        positions[(idx + 1) * 3 + 2] = p.z;
+
+        tmpC.copy(cDark).lerp(cMid, 0.4 + 0.4 * downBias).lerp(cLight, u * 0.2);
+        colors[idx * 3 + 0] = tmpC.r; colors[idx * 3 + 1] = tmpC.g; colors[idx * 3 + 2] = tmpC.b;
+        colors[(idx + 1) * 3 + 0] = tmpC.r; colors[(idx + 1) * 3 + 1] = tmpC.g; colors[(idx + 1) * 3 + 2] = tmpC.b;
+
+        if (s < segments) {
+          indices.push(idx, idx + 1, idx + 2, idx + 1, idx + 3, idx + 2);
+        }
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      geo.userData.segments = segments;
+      return geo;
+    }
+
+    const SIG_SEGS = 220;
+    const sigGeo = createCalligraphicRibbonGeometry(sigCurve, SIG_SEGS);
+    const sigMat = new THREE.MeshPhysicalMaterial({
+      color: '#FFFFFF',
+      vertexColors: true,
+      roughness: 0.25,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.2,
+      side: THREE.DoubleSide
     });
     const sigMesh = new THREE.Mesh(sigGeo, sigMat);
-    sigMesh.castShadow = true;
     sigAnchor.add(sigMesh);
 
-    const nibMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.021, 16, 16),
-      new THREE.MeshStandardMaterial({
-        color: PALETTE.ribbonLight,
-        emissive: PALETTE.accent,
-        emissiveIntensity: 0.65,
-        roughness: 0.2,
-      })
+    // Sleek fine drafting nib that draws the ink
+    const nibGroup = new THREE.Group();
+    const nibMat = new THREE.MeshStandardMaterial({ color: '#241E1B', roughness: 0.28, metalness: 0.65 });
+    const nibTip = new THREE.Mesh(new THREE.ConeGeometry(0.011, 0.085, 16), nibMat);
+    nibTip.rotation.x = -Math.PI * 0.5;
+    nibTip.position.z = 0.042;
+    const nibBody = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.011, 0.22, 16), nibMat);
+    nibBody.rotation.x = -Math.PI * 0.5;
+    nibBody.position.z = 0.195;
+    const nibCollar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0155, 0.0155, 0.018, 16),
+      new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.3, metalness: 0.2 })
     );
-    sigAnchor.add(nibMesh);
+    nibCollar.rotation.x = -Math.PI * 0.5;
+    nibCollar.position.z = 0.095;
+    nibGroup.add(nibTip, nibCollar, nibBody);
+    nibGroup.rotation.set(-0.42, 0.25, 0);
+    sigAnchor.add(nibGroup);
 
-    const sealMesh = createOctagonalSeal(0.115, 0.018);
-    sealMesh.position.set(0.39, -0.58, 0.02);
-    sigAnchor.add(sealMesh);
+    // Crisp hairline octagonal seal on the right side of the signature box
+    const sealGroup = new THREE.Group();
+    sealGroup.position.set(0.31, -0.175, 0.004);
+    sigAnchor.add(sealGroup);
 
-    const phasePills = Array.from(document.querySelectorAll('.phase-pill'));
-    const hudSub = document.getElementById('hud-sub');
-    const phaseLabels = [
-      'MERGE // BEZIER ASSEMBLY',
-      'SPLIT // CHAPTER SEAM SEPARATION',
-      'REORDER & ROTATE // 90° Z-LIFT',
-      'COMPRESS // BELLOWS VOLUME',
-      'SIGN & ANNOTATE // VECTOR INK + SEAL',
+    const makeOctagonPts = (radius) => {
+      const pts = [];
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0));
+      }
+      return pts;
+    };
+    const sealMat = new THREE.LineBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0.9 });
+    const sealOuter = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(makeOctagonPts(0.11)), sealMat);
+    const sealInner = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(makeOctagonPts(0.082)), sealMat);
+    const sealCrossPts = [
+      new THREE.Vector3(-0.045, 0, 0), new THREE.Vector3(0.045, 0, 0),
+      new THREE.Vector3(0, -0.045, 0), new THREE.Vector3(0, 0.045, 0)
+    ];
+    const sealCross = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(sealCrossPts), sealMat);
+    sealGroup.add(sealOuter, sealInner, sealCross);
+    sigAnchor.visible = false;
+
+    // HUD phase rail
+    const phaseItems = Array.from(document.querySelectorAll('.phase-item'));
+    const compressMetricEl = document.getElementById('compress-metric');
+    const phaseCaptions = [
+      ['01 / 05', 'MERGE — CASCADE ASSEMBLY'],
+      ['02 / 05', 'SPLIT — HAIRLINE ARCHITECTURAL SCORE'],
+      ['03 / 05', 'REORDER & ROTATE — 90° PAPER FLEX'],
+      ['04 / 05', 'COMPRESS — VELLUM SIGNATURES'],
+      ['05 / 05', 'SIGN — CALLIGRAPHIC INK & SEAL']
     ];
 
-    function setActivePhase(idx) {
-      phasePills.forEach((el, k) => el.classList.toggle('active', k === idx));
-      hudSub.textContent = phaseLabels[idx];
+    function setPhase(idx) {
+      phaseItems.forEach((el, k) => el.classList.toggle('active', k === idx));
+      hud.setCaption(phaseCaptions[idx][0], phaseCaptions[idx][1], 0.9);
     }
 
-    const tmpPos = new THREE.Vector3();
+    // Fanned starting pose helper (shared by Phase 1 start and Phase 6 seamless return)
+    function applyFannedPose(s, u, curlExtra = 0) {
+      const fanSpread = [-1.42, -0.71, 0.0, 0.71, 1.42][s];
+      const fanZ = [-0.14, -0.04, 0.04, -0.04, -0.14][s];
+      const fanY = [0.06, 0.09, 0.11, 0.09, 0.06][s];
+      const fanYaw = [0.22, 0.11, 0.0, -0.11, -0.22][s];
+      const stackZ = 0.08 - s * 0.018;
+      const stackY = 0.05 - s * 0.005;
+
+      const x = lerp(fanSpread, 0, u);
+      const y = lerp(fanY, stackY, u) + Math.sin(u * Math.PI) * (0.16 - s * 0.02);
+      const z = lerp(fanZ, stackZ, u);
+      sheets[s].mesh.position.set(x, y, z);
+      sheets[s].mesh.rotation.set(BASE_TILT, lerp(fanYaw, 0, u), lerp(fanYaw * 0.18, 0, u));
+      sheets[s].fp.applyFold({
+        curl: (1 - u) * 0.14 + curlExtra,
+        waveAmp: (1 - u) * 0.5 + Math.sin(u * Math.PI) * 0.35,
+        wavePhase: s * 1.1 + u * 2.2
+      });
+    }
+
+    const tmpPt = new THREE.Vector3();
 
     window.renderFrame = function renderFrame(i, totalFrames, t) {
-      // Subtle seamless studio camera breath
       const orbit = t * Math.PI * 2;
-      camera.position.set(Math.sin(orbit) * 0.28, 2.32 + Math.cos(orbit) * 0.06, 5.32);
-      camera.lookAt(0, 0.06, 0);
+      camera.position.set(Math.sin(orbit) * 0.18, 1.48 + Math.cos(orbit) * 0.05, 4.78);
+      camera.lookAt(0, 0.04, 0);
 
-      // Determine active editorial phase
-      if (t < 0.21) setActivePhase(0);
-      else if (t < 0.39) setActivePhase(1);
-      else if (t < 0.59) setActivePhase(2);
-      else if (t < 0.77) setActivePhase(3);
-      else setActivePhase(4);
-
-      // Default visibility
-      bellowsGroup.visible = false;
-      seamBlade.visible = false;
+      // Reset visibility
+      scoreGroup.visible = false;
+      compressGroup.visible = false;
       sigAnchor.visible = false;
-      spineClasp.visible = false;
+      regMat.opacity = 0;
+      compressMetricEl.style.opacity = '0';
 
-      // Reset all sheet transforms cleanly
       for (let s = 0; s < sheets.length; s++) {
-        sheets[s].visible = true;
-        sheets[s].scale.set(1, 1, 1);
-        sheets[s].rotation.set(BASE_TILT, 0, 0);
+        sheets[s].mesh.visible = true;
+        sheets[s].mesh.scale.set(1, 1, 1);
+        sheets[s].mat.opacity = 1;
+        sheets[s].mat.transparent = false;
+        sheets[s].edgeLine.material.opacity = 0.65;
       }
 
       if (t < 0.21) {
         // PHASE 1: MERGE (0.00 -> 0.21)
-        const u = smootherstep(0.015, 0.17, t);
+        setPhase(0);
+        // Cascade stagger across sheets
         for (let s = 0; s < sheets.length; s++) {
-          const isLeft = s < 3;
-          const localIdx = isLeft ? s : s - 3;
-          const p0 = new THREE.Vector3(isLeft ? -1.48 - localIdx * 0.04 : 1.48 + localIdx * 0.04, 0.14 - localIdx * 0.04, isLeft ? 0.22 - localIdx * 0.05 : -0.22 - localIdx * 0.05);
-          const p1 = new THREE.Vector3(isLeft ? -0.95 : 0.95, 0.52 + (5 - s) * 0.04, isLeft ? 0.36 : -0.18);
-          const p2 = new THREE.Vector3(isLeft ? -0.25 : 0.25, 0.26, 0.08 - s * 0.025);
-          const p3 = new THREE.Vector3(0, 0.04 - s * 0.012, 0.12 - s * 0.036);
-          cubicBezier3(p0, p1, p2, p3, u, tmpPos);
-          sheets[s].position.copy(tmpPos);
-          sheets[s].rotation.y = (isLeft ? 0.24 : -0.24) * (1 - u);
-          sheets[s].rotation.z = (isLeft ? 0.06 : -0.06) * (1 - u);
+          const delay = s * 0.015;
+          const u = smootherstep((t - delay) / (0.165 - delay));
+          applyFannedPose(s, u);
         }
-        const claspIn = smootherstep(0.15, 0.20, t);
-        if (claspIn > 0.01) {
-          spineClasp.visible = true;
-          spineClasp.position.set(-SHEET_W * 0.5 - 0.015 - (1 - claspIn) * 0.35, 0.01, 0.03);
-          spineClasp.scale.setScalar(0.5 + 0.5 * claspIn);
-        }
-      } else if (t < 0.39) {
-        // PHASE 2: SPLIT (0.21 -> 0.39)
-        const claspOut = 1 - smootherstep(0.21, 0.25, t);
-        if (claspOut > 0.02) {
-          spineClasp.visible = true;
-          spineClasp.position.set(-SHEET_W * 0.5 - 0.015 - (1 - claspOut) * 0.35, 0.01, 0.03);
-          spineClasp.scale.setScalar(claspOut);
-        }
+        const regFade = Math.sin(clamp01((t - 0.145) / 0.06) * Math.PI);
+        regMat.opacity = regFade * 0.85;
+      } else if (t < 0.40) {
+        // PHASE 2: SPLIT (0.21 -> 0.40)
+        setPhase(1);
+        const splitU = smootherstep((t - 0.23) / 0.13);
+        const scoreIn = clamp01((t - 0.215) / 0.055);
+        const scoreOut = 1 - clamp01((t - 0.345) / 0.05);
 
-        const splitU = smootherstep(0.22, 0.35, t);
         for (let s = 0; s < sheets.length; s++) {
-          const isFront = s < 3;
-          const localIdx = isFront ? s : s - 3;
-          const baseZ = 0.12 - s * 0.036;
-          const baseY = 0.04 - s * 0.012;
-          const targetX = isFront ? -1.04 - localIdx * 0.035 : 1.04 + localIdx * 0.035;
-          const targetY = isFront ? 0.08 - localIdx * 0.03 : 0.02 - localIdx * 0.03;
-          const targetZ = isFront ? 0.18 - localIdx * 0.04 : -0.14 - localIdx * 0.04;
-          sheets[s].position.set(
-            targetX * splitU,
-            THREE.MathUtils.lerp(baseY, targetY, splitU),
-            THREE.MathUtils.lerp(baseZ, targetZ, splitU)
+          const isLeft = s < 2;
+          const localIdx = isLeft ? s : s - 2;
+          const stackZ = 0.08 - s * 0.018;
+          const stackY = 0.05 - s * 0.005;
+
+          const targetX = isLeft ? -0.94 - localIdx * 0.035 : 0.94 + localIdx * 0.035;
+          const targetY = 0.06 - localIdx * 0.012;
+          const targetZ = 0.08 - localIdx * 0.022;
+
+          sheets[s].mesh.position.set(
+            lerp(0, targetX, splitU),
+            lerp(stackY, targetY, splitU),
+            lerp(stackZ, targetZ, splitU)
           );
-          sheets[s].rotation.y = (isFront ? 0.16 : -0.16) * splitU;
+          sheets[s].mesh.rotation.set(BASE_TILT, lerp(0, isLeft ? 0.14 : -0.14, splitU), 0);
+          sheets[s].fp.applyFold({
+            curl: Math.sin(splitU * Math.PI) * 0.12,
+            waveAmp: Math.sin(splitU * Math.PI) * 0.25,
+            wavePhase: s * 0.9 + t * 8
+          });
         }
 
-        const bladeFade = Math.sin(clamp01((t - 0.235) / 0.12) * Math.PI);
-        if (bladeFade > 0.02 && splitU > 0.15) {
-          seamBlade.visible = true;
-          seamBlade.position.set(0, 0.04, 0.02);
-          seamBlade.scale.set(1, bladeFade, 1);
+        const scoreAlpha = scoreIn * scoreOut;
+        if (scoreAlpha > 0.02) {
+          scoreGroup.visible = true;
+          const sweepY = lerp(0.95, -0.95, clamp01((t - 0.215) / 0.14));
+          scoreBeam.position.set(0, sweepY * 0.12, 0.16);
+          scoreHalo.position.set(0, sweepY * 0.12, 0.158);
+          scoreBeamMat.opacity = 0.92 * scoreAlpha;
+          scoreHaloMat.opacity = 0.24 * scoreAlpha;
+          scoreGroup.scale.set(1, scoreAlpha, 1);
         }
-      } else if (t < 0.59) {
-        // PHASE 3: REORDER & ROTATE (0.39 -> 0.59)
-        const gatherU = smootherstep(0.39, 0.44, t);
-        const liftU = smootherstep(0.43, 0.48, t);
-        const rotU = easeInOutCubic(clamp01((t - 0.45) / 0.07));
-        const slotU = smootherstep(0.51, 0.56, t);
-        const unrotU = easeInOutCubic(clamp01((t - 0.56) / 0.03));
+      } else if (t < 0.61) {
+        // PHASE 3: REORDER & ROTATE (0.40 -> 0.61)
+        setPhase(2);
+        const gatherU = smootherstep((t - 0.40) / 0.055);
+        const liftEnvelope = Math.sin(clamp01((t - 0.435) / 0.155) * Math.PI);
+        const rotIn = easeInOutQuint(clamp01((t - 0.45) / 0.06));
+        const rotBack = easeInOutQuint(clamp01((t - 0.54) / 0.055));
+        const rotAngle = (Math.PI * 0.5) * (rotIn * (1 - rotBack));
+        const reorderU = smootherstep((t - 0.50) / 0.075);
 
         for (let s = 0; s < sheets.length; s++) {
-          const isFront = s < 3;
-          const localIdx = isFront ? s : s - 3;
-          const startX = isFront ? -1.04 - localIdx * 0.035 : 1.04 + localIdx * 0.035;
-          const startY = isFront ? 0.08 - localIdx * 0.03 : 0.02 - localIdx * 0.03;
-          const startZ = isFront ? 0.18 - localIdx * 0.04 : -0.14 - localIdx * 0.04;
+          const isLeft = s < 2;
+          const localIdx = isLeft ? s : s - 2;
+          const startX = isLeft ? -0.94 - localIdx * 0.035 : 0.94 + localIdx * 0.035;
+          const startY = 0.06 - localIdx * 0.012;
+          const startZ = 0.08 - localIdx * 0.022;
 
+          // s=2 (contract) moves from index 2 to front index 0
           let orderIdx = s;
-          if (s === 0 || s === 1) orderIdx = s + slotU;
-          else if (s === 2) orderIdx = 2 * (1 - slotU);
+          if (s === 0 || s === 1) orderIdx = s + reorderU;
+          else if (s === 2) orderIdx = 2 * (1 - reorderU);
 
-          const deckX = THREE.MathUtils.lerp(startX, 0, gatherU);
-          const deckY = THREE.MathUtils.lerp(startY, 0.04 - orderIdx * 0.014, gatherU);
-          const deckZ = THREE.MathUtils.lerp(startZ, 0.12 - orderIdx * 0.042, gatherU);
+          const deckX = lerp(startX, 0, gatherU);
+          const deckY = lerp(startY, 0.05 - orderIdx * 0.006, gatherU);
+          const deckZ = lerp(startZ, 0.08 - orderIdx * 0.018, gatherU);
 
-          sheets[s].position.set(deckX, deckY, deckZ);
-          sheets[s].rotation.y = (isFront ? 0.16 : -0.16) * (1 - gatherU);
+          sheets[s].mesh.position.set(deckX, deckY, deckZ);
+          sheets[s].mesh.rotation.set(BASE_TILT, lerp(isLeft ? 0.14 : -0.14, 0, gatherU), 0);
 
           if (s === 2) {
-            const liftAmt = Math.sin(clamp01((t - 0.43) / 0.12) * Math.PI);
-            sheets[s].position.z += liftAmt * 0.72;
-            sheets[s].position.y += liftAmt * 0.34;
-            sheets[s].position.x += Math.sin(clamp01((t - 0.43) / 0.12) * Math.PI) * 0.42;
-            sheets[s].rotation.z = (Math.PI / 2) * (rotU * (1 - unrotU));
+            sheets[s].mesh.position.z += liftEnvelope * 0.72;
+            sheets[s].mesh.position.y += liftEnvelope * 0.18;
+            sheets[s].mesh.rotation.z = rotAngle;
+            sheets[s].fp.applyFold({
+              curl: liftEnvelope * 0.22,
+              waveAmp: liftEnvelope * 0.45,
+              wavePhase: t * 14
+            });
+          } else {
+            // Neighboring sheets part gracefully and fan outward while center sheet turns
+            const partDir = s < 2 ? -1 : 1;
+            sheets[s].mesh.position.x += partDir * liftEnvelope * 0.74;
+            sheets[s].mesh.rotation.y += -partDir * liftEnvelope * 0.24;
+            sheets[s].fp.applyFold({ curl: liftEnvelope * 0.08 });
           }
         }
-      } else if (t < 0.77) {
-        // PHASE 4: COMPRESS (0.59 -> 0.77)
-        const enterBellows = smootherstep(0.59, 0.63, t);
-        const exitBellows = smootherstep(0.735, 0.77, t);
+      } else if (t < 0.76) {
+        // PHASE 4: COMPRESS (0.61 -> 0.76) — 8 translucent vellum signatures settling into dense folio
+        setPhase(3);
+        const enterU = smootherstep((t - 0.61) / 0.03);
+        const exitU = smootherstep((t - 0.73) / 0.03);
+        const visAlpha = enterU * (1 - exitU);
 
-        if (enterBellows < 1 || exitBellows > 0) {
-          const stackAlpha = enterBellows < 1 ? 1 - enterBellows : exitBellows;
-          for (let s = 0; s < sheets.length; s++) {
-            sheets[s].visible = stackAlpha > 0.04;
-            sheets[s].position.set(0, 0.04 - s * 0.012, 0.12 - s * 0.036);
-            sheets[s].scale.setScalar(Math.max(0.01, stackAlpha));
-          }
-        } else {
-          for (let s = 0; s < sheets.length; s++) sheets[s].visible = false;
+        // Hide opaque sheets cleanly during vellum transition
+        const opaqueAlpha = enterU < 1 ? (1 - enterU) : exitU;
+        for (let s = 0; s < sheets.length; s++) {
+          const ord = s === 2 ? 0 : (s < 2 ? s + 1 : s);
+          sheets[s].mesh.visible = opaqueAlpha > 0.02;
+          sheets[s].mat.transparent = opaqueAlpha < 0.99;
+          sheets[s].mat.opacity = opaqueAlpha;
+          sheets[s].edgeLine.material.opacity = 0.85 * opaqueAlpha;
+          sheets[s].mesh.position.set(0, 0.05 - ord * 0.006, 0.08 - ord * 0.018);
+          sheets[s].mesh.rotation.set(BASE_TILT, 0, 0);
+          sheets[s].fp.applyFold({ curl: 0 });
         }
 
-        const bellowsScale = enterBellows * (1 - exitBellows);
-        if (bellowsScale > 0.02) {
-          bellowsGroup.visible = true;
-          bellowsGroup.scale.setScalar(bellowsScale);
+        if (visAlpha > 0.01) {
+          compressGroup.visible = true;
+          const compProgress = clamp01(springDamped(clamp01((t - 0.64) / 0.095), 6.2, 10.5));
+          const stackHeight = lerp(1.18, 0.085, compProgress);
 
-          // Expand then compress smoothly into tight volume
-          const compressU = smootherstep(0.635, 0.735, t);
-          const totalSpan = THREE.MathUtils.lerp(2.55, 0.56, compressU);
-          const stepX = totalSpan / PLEAT_COUNT;
-          const halfSpan = totalSpan * 0.5;
-
-          const angle = Math.acos(clamp01((stepX) / PLEAT_W) * 0.96);
-          for (let p = 0; p < PLEAT_COUNT; p++) {
-            const xCenter = -halfSpan + (p + 0.5) * stepX;
-            const sign = p % 2 === 0 ? 1 : -1;
-            pleats[p].position.set(xCenter, 0, 0);
-            pleats[p].rotation.y = sign * angle;
+          for (let v = 0; v < VELLUM_COUNT; v++) {
+            const frac = v / (VELLUM_COUNT - 1); // 0 = top, 1 = bottom
+            const vy = (0.5 - frac) * stackHeight - 0.05;
+            vellumSheets[v].mesh.position.set(0, vy, 0);
+            vellumSheets[v].mat.opacity = (v === 0 ? 0.92 : 0.64) * visAlpha;
+            vellumSheets[v].bLine.material.opacity = (v === 0 ? 0.95 : 0.72) * visAlpha;
+            vellumSheets[v].fp.applyFold({
+              curl: (1 - compProgress) * (0.14 - frac * 0.04),
+              waveAmp: (1 - compProgress) * 0.25,
+              wavePhase: v * 0.65 + t * 9
+            });
           }
-          leftPlaten.position.set(-halfSpan - 0.04, 0, 0);
-          rightPlaten.position.set(halfSpan + 0.04, 0, 0);
-          topRail.scale.y = totalSpan + 0.34;
-          botRail.scale.y = totalSpan + 0.34;
+
+          // Contracting hairline metric gauge on the right
+          const gaugeH = Math.max(0.14, stackHeight);
+          gaugeGroup.position.set(1.06, -0.05, 0);
+          gaugeRail.scale.y = gaugeH;
+          gaugeArrowTop.position.set(0, gaugeH * 0.5, 0);
+          compressMetricEl.style.opacity = String(visAlpha);
+          compressMetricEl.innerHTML = 'COMPACTION · <span>QPDF + PDFBOX</span>';
         }
       } else if (t < 0.92) {
-        // PHASE 5: SIGN & ANNOTATE (0.77 -> 0.92)
-        const presentU = smootherstep(0.77, 0.81, t);
+        // PHASE 5: SIGN (0.76 -> 0.92) — Contract forward, calligraphic ink stroke + hairline seal
+        setPhase(4);
+        const presentU = smootherstep((t - 0.76) / 0.04);
+
         for (let s = 0; s < sheets.length; s++) {
-          if (s === 0) {
-            sheets[s].position.set(0, THREE.MathUtils.lerp(0.04, 0.16, presentU), THREE.MathUtils.lerp(0.12, 0.58, presentU));
-            sheets[s].rotation.x = THREE.MathUtils.lerp(BASE_TILT, -0.18, presentU);
+          const ord = s === 2 ? 0 : (s < 2 ? s + 1 : s);
+          if (s === 2) {
+            sheets[s].mesh.position.set(
+              0,
+              lerp(0.05, 0.14, presentU),
+              lerp(0.08, 0.96, presentU)
+            );
+            sheets[s].mesh.rotation.set(lerp(BASE_TILT, -0.20, presentU), 0, 0);
+            sheets[s].fp.applyFold({ curl: 0.035 * presentU });
           } else {
-            sheets[s].position.set(0, 0.04 - s * 0.012, 0.12 - s * 0.036 - presentU * 0.25);
+            sheets[s].mesh.position.set(
+              0,
+              0.05 - ord * 0.006,
+              lerp(0.08 - ord * 0.018, -0.22 - ord * 0.02, presentU)
+            );
+            sheets[s].mesh.rotation.set(BASE_TILT, 0, 0);
+            sheets[s].fp.applyFold({ curl: 0 });
           }
         }
 
         sigAnchor.visible = true;
-        const drawU = clamp01((t - 0.805) / 0.07);
-        const segCount = Math.floor(drawU * SIG_TUBULAR);
-        sigGeo.setDrawRange(0, segCount * SIG_RADIAL * 6);
+        const drawU = clamp01((t - 0.775) / 0.062);
+        const segDraw = Math.floor(drawU * SIG_SEGS);
+        sigGeo.setDrawRange(0, segDraw * 6);
 
-        if (drawU > 0.01 && drawU < 0.99) {
-          nibMesh.visible = true;
-          nibMesh.position.copy(sigCurve.getPointAt(drawU));
+        if (drawU > 0.01 && drawU < 0.985) {
+          nibGroup.visible = true;
+          sigCurve.getPoint(drawU, tmpPt);
+          nibGroup.position.copy(tmpPt);
         } else {
-          nibMesh.visible = false;
+          nibGroup.visible = false;
         }
 
-        const sealU = smootherstep(0.865, 0.905, t);
+        const sealU = springDamped(clamp01((t - 0.81) / 0.04), 7.0, 12.0);
         if (sealU > 0.01) {
-          sealMesh.visible = true;
-          const dropZ = (1 - sealU) * 0.35;
-          sealMesh.position.set(0.39, -0.58, 0.02 + dropZ);
-          sealMesh.scale.setScalar(0.55 + 0.45 * sealU);
+          sealGroup.visible = true;
+          sealGroup.scale.setScalar(0.6 + 0.4 * sealU);
+          sealMat.opacity = clamp01(sealU) * 0.94;
         } else {
-          sealMesh.visible = false;
+          sealGroup.visible = false;
         }
       } else {
         // PHASE 6: SEAMLESS LOOP RETURN (0.92 -> 1.00)
-        const u = smootherstep(0.92, 0.995, t);
-        const sigFade = 1 - smootherstep(0.92, 0.955, t);
-        if (sigFade > 0.02) {
+        setPhase(4);
+        const retU = smootherstep((t - 0.92) / 0.075);
+        const sigFade = 1 - smootherstep((t - 0.92) / 0.04);
+
+        if (sigFade > 0.01) {
           sigAnchor.visible = true;
-          sigGeo.setDrawRange(0, Math.floor(sigFade * SIG_TUBULAR) * SIG_RADIAL * 6);
-          nibMesh.visible = false;
-          sealMesh.visible = true;
-          sealMesh.scale.setScalar(sigFade);
+          sigGeo.setDrawRange(0, Math.floor(sigFade * SIG_SEGS) * 6);
+          nibGroup.visible = false;
+          sealGroup.visible = true;
+          sealMat.opacity = sigFade * 0.94;
         }
 
         for (let s = 0; s < sheets.length; s++) {
-          const isLeft = s < 3;
-          const localIdx = isLeft ? s : s - 3;
-          const startPos = s === 0
-            ? new THREE.Vector3(0, 0.16, 0.58)
-            : new THREE.Vector3(0, 0.04 - s * 0.012, -0.13 - s * 0.036);
-          const p3 = new THREE.Vector3(
-            isLeft ? -1.48 - localIdx * 0.04 : 1.48 + localIdx * 0.04,
-            0.14 - localIdx * 0.04,
-            isLeft ? 0.22 - localIdx * 0.05 : -0.22 - localIdx * 0.05
-          );
-          const p1 = new THREE.Vector3(isLeft ? -0.35 : 0.35, 0.36, 0.25);
-          const p2 = new THREE.Vector3(isLeft ? -1.05 : 1.05, 0.44, isLeft ? 0.32 : -0.20);
-          cubicBezier3(startPos, p1, p2, p3, u, tmpPos);
-          sheets[s].position.copy(tmpPos);
+          const ord = s === 2 ? 0 : (s < 2 ? s + 1 : s);
+          const startPos = s === 2
+            ? new THREE.Vector3(0, 0.14, 0.96)
+            : new THREE.Vector3(0, 0.05 - ord * 0.006, -0.22 - ord * 0.02);
+          const startTilt = s === 2 ? -0.20 : BASE_TILT;
 
-          const startTilt = s === 0 ? -0.18 : BASE_TILT;
-          sheets[s].rotation.x = THREE.MathUtils.lerp(startTilt, BASE_TILT, u);
-          sheets[s].rotation.y = (isLeft ? 0.24 : -0.24) * u;
-          sheets[s].rotation.z = (isLeft ? 0.06 : -0.06) * u;
+          const fanSpread = [-1.42, -0.71, 0.0, 0.71, 1.42][s];
+          const fanZ = [-0.14, -0.04, 0.04, -0.04, -0.14][s];
+          const fanY = [0.06, 0.09, 0.11, 0.09, 0.06][s];
+          const fanYaw = [0.22, 0.11, 0.0, -0.11, -0.22][s];
+
+          sheets[s].mesh.position.set(
+            lerp(startPos.x, fanSpread, retU),
+            lerp(startPos.y, fanY, retU) + Math.sin(retU * Math.PI) * 0.14,
+            lerp(startPos.z, fanZ, retU)
+          );
+          sheets[s].mesh.rotation.set(
+            lerp(startTilt, BASE_TILT, retU),
+            lerp(0, fanYaw, retU),
+            lerp(0, fanYaw * 0.18, retU)
+          );
+          sheets[s].fp.applyFold({
+            curl: retU * 0.14,
+            waveAmp: Math.sin(retU * Math.PI) * 0.35 + retU * 0.5,
+            wavePhase: s * 1.1 + retU * 2.0
+          });
         }
       }
 

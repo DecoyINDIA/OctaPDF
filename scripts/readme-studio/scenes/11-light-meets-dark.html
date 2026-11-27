@@ -7,168 +7,69 @@
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
       background: #FAF7F2;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    canvas { display: block; width: 100%; height: 100%; }
-    .overlay-top {
-      position: fixed; top: 18px; left: 24px; right: 24px;
+    .polarity-footer {
+      position: absolute; left: 42px; right: 42px; bottom: 28px;
       display: flex; justify-content: space-between; align-items: center;
-      pointer-events: none; z-index: 10;
+      font-family: 'OctaEditorialSans', 'Segoe UI', system-ui, sans-serif;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; pointer-events: none;
     }
-    .swatch-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 13px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
-      letter-spacing: 0.02em; border: 1px solid transparent;
-    }
-    .swatch-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .anchor-pill {
-      padding: 6px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
-      background: rgba(36, 30, 27, 0.94); color: #FF8554;
-      border: 1px solid #E8501C;
-      box-shadow: 0 4px 14px rgba(22, 20, 18, 0.22);
-      font-family: ui-monospace, monospace;
-    }
-    .overlay-bottom {
-      position: fixed; bottom: 14px; left: 24px; right: 24px;
-      display: flex; justify-content: space-between; align-items: center;
-      pointer-events: none; z-index: 10; font-size: 12px; font-weight: 600;
-    }
-    .cap-pill {
-      padding: 6px 13px; border-radius: 999px; border: 1px solid transparent;
-      box-shadow: 0 4px 14px rgba(22, 20, 18, 0.16);
-    }
-    .cap-light {
-      background: rgba(255, 255, 255, 0.95); color: #241E1B; border-color: #D9D0C3;
-    }
-    .cap-dark {
-      background: rgba(26, 23, 20, 0.95); color: #F5EFE6; border-color: #474038;
+    .polarity-sep {
+      width: 24px; height: 1px; display: inline-block; vertical-align: middle; margin: 0 10px;
     }
   </style>
 </head>
 <body>
-  <div class="overlay-top">
-    <div class="swatch-pill" id="leftBadge" style="background: rgba(255,255,255,0.95); color: #241E1B; border-color: #D9D0C3;">
-      <span class="swatch-dot" style="background: #FAF7F2; border: 1px solid #B8AEA0;"></span>
-      <span>PAPER DESK · #FAF7F2</span>
-    </div>
-    <div class="anchor-pill">TERRACOTTA ANCHOR · #E8501C ↔ #FF6B35</div>
-    <div class="swatch-pill" id="rightBadge" style="background: rgba(26,23,20,0.95); color: #F5EFE6; border-color: #474038;">
-      <span class="swatch-dot" style="background: #161412; border: 1px solid #6E645D;"></span>
-      <span>OBSIDIAN INK · #161412</span>
-    </div>
-  </div>
-  <div class="overlay-bottom">
-    <span class="cap-pill cap-light" id="bottomLeft">Home &amp; Multi-Tool · Light Mode</span>
-    <span class="cap-pill cap-dark" id="bottomRight">Home &amp; Multi-Tool · Dark Mode</span>
-  </div>
-
   <script type="module">
     import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      initStudio,
+      createCottonPaperMaterial,
+      createEditorialCaptionLayer,
+      foldPlaneGeometry,
+      lerp,
+    } from '/scripts/readme-studio/scenes/studio-kit.js';
 
-    const W = window.innerWidth || 1120;
-    const H = window.innerHeight || 560;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(W, H, false);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    document.body.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-    const bgLight = new THREE.Color('#FAF7F2');
-    const bgDark = new THREE.Color('#161412');
-    scene.background = bgLight.clone();
-
-    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 40);
-
-    // Architectural lighting rig with dedicated warm graphite rim/fill for dark-mode facet definition
-    const hemi = new THREE.HemisphereLight('#FFFDF9', '#D6CEC4', 1.15);
-    scene.add(hemi);
-
-    const keyLight = new THREE.DirectionalLight('#FFF6EA', 2.0);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(2048, 2048);
-    keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 18;
-    keyLight.shadow.camera.left = -6;
-    keyLight.shadow.camera.right = 6;
-    keyLight.shadow.camera.top = 4;
-    keyLight.shadow.camera.bottom = -4;
-    keyLight.shadow.bias = -0.0004;
-    scene.add(keyLight);
-
-    const graphiteRim = new THREE.DirectionalLight('#EDE4D8', 0.55);
-    graphiteRim.position.set(-2.4, 2.8, -3.6);
-    scene.add(graphiteRim);
-
-    const frontFill = new THREE.DirectionalLight('#FFF3E6', 0.35);
-    frontFill.position.set(1.6, 1.4, 4.2);
-    scene.add(frontFill);
-
-    // Tight localized point light inside the origami core so it doesn't spill orange onto the Light UI wing
-    const coreGlow = new THREE.PointLight('#FF6B35', 1.4, 2.8, 2.0);
-    coreGlow.position.set(0, 0.15, 0.35);
-    scene.add(coreGlow);
-
-    const floorMat = new THREE.MeshStandardMaterial({ color: '#F2EBE0', roughness: 0.92, metalness: 0.04 });
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -1.25;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Central Multi-Faceted Folded Origami Sculpture
-    const origamiGroup = new THREE.Group();
-    const foldMat = new THREE.MeshStandardMaterial({
-      color: '#FFFFFF', roughness: 0.62, metalness: 0.08, flatShading: true
+    const W = 1120;
+    const H = 560;
+    const studio = initStudio(null, {
+      width: W,
+      height: H,
+      mode: 'light',
+      fov: 29,
+      camPos: [0, 0.56, 6.55],
+      lookAt: [0, 0.04, 0],
+      floorY: -1.16,
+      shadowFrustum: 7.5,
+      shadowOpacity: 0.18,
+      fogDensity: 0.024,
     });
-    const innerEdgeMat = new THREE.MeshStandardMaterial({
-      color: '#E8501C', emissive: '#E8501C', emissiveIntensity: 0.35, roughness: 0.32, metalness: 0.18
+    const { renderer, scene, camera, lights, cyclorama } = studio;
+    const shadowCatcherMat = cyclorama.children[0].material;
+
+    const hud = createEditorialCaptionLayer(document.body, {
+      mode: 'light',
+      designWidth: W,
+      designHeight: H,
+      kicker: 'PAPER DESK  ·  DUAL-POLARITY LIGHTING ARCHITECTURE',
     });
 
-    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 0), foldMat);
-    core.scale.set(0.88, 1.32, 0.88);
-    core.castShadow = true;
-    core.receiveShadow = true;
-    origamiGroup.add(core);
+    const footerEl = document.createElement('div');
+    footerEl.className = 'polarity-footer';
+    footerEl.innerHTML = `
+      <span id="lblLight">PAPER DESK #FAF7F2</span>
+      <span id="lblMid" style="color:#E8501C;">TERRACOTTA #E8501C / #FF6B35</span>
+      <span id="lblDark">OBSIDIAN #161412</span>
+    `;
+    hud.root.appendChild(footerEl);
+    const lblLight = footerEl.querySelector('#lblLight');
+    const lblMid = footerEl.querySelector('#lblMid');
+    const lblDark = footerEl.querySelector('#lblDark');
 
-    const inlay = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.032, 8, 8), innerEdgeMat);
-    inlay.rotation.x = Math.PI / 2;
-    inlay.castShadow = true;
-    origamiGroup.add(inlay);
-
-    const bladeGeom = new THREE.BoxGeometry(0.54, 0.92, 0.024);
-    const blades = [];
-    for (let k = 0; k < 8; k++) {
-      const ang = (k / 8) * Math.PI * 2;
-      const pivot = new THREE.Group();
-      pivot.rotation.y = ang;
-
-      const blade = new THREE.Mesh(bladeGeom, foldMat);
-      blade.position.set(0.54, (k % 2 === 0 ? 0.12 : -0.12), 0);
-      blade.rotation.z = (k % 2 === 0 ? -0.45 : 0.45);
-      blade.rotation.y = 0.32;
-      blade.castShadow = true;
-      blade.receiveShadow = true;
-      pivot.add(blade);
-
-      const crease = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.022, 0.032), innerEdgeMat);
-      crease.position.set(0.42, (k % 2 === 0 ? 0.06 : -0.06), 0);
-      crease.rotation.z = (k % 2 === 0 ? -0.25 : 0.25);
-      pivot.add(crease);
-
-      origamiGroup.add(pivot);
-      blades.push({ blade, k });
-    }
-    origamiGroup.position.set(0, 0.02, 0.25);
-    scene.add(origamiGroup);
-
+    // Texture loader
     const loader = new THREE.TextureLoader();
-    const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    const maxAniso = Math.min(16, renderer.capabilities.getMaxAnisotropy());
     function loadTex(url) {
       return new Promise((resolve, reject) => {
         loader.load(url, (tex) => {
@@ -181,6 +82,173 @@
       });
     }
 
+    function createRoundedRectShape(w, h, r) {
+      const s = new THREE.Shape();
+      const x = -w / 2, y = -h / 2;
+      s.moveTo(x + r, y);
+      s.lineTo(x + w - r, y);
+      s.quadraticCurveTo(x + w, y, x + w, y + r);
+      s.lineTo(x + w, y + h - r);
+      s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      s.lineTo(x + r, y + h);
+      s.quadraticCurveTo(x, y + h, x, y + h - r);
+      s.lineTo(x, y + r);
+      s.quadraticCurveTo(x, y, x + r, y);
+      return s;
+    }
+
+    function createUiScreenMaterial(tex, borderHex) {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: true,
+        uniforms: {
+          uMap: { value: tex },
+          uRadius: { value: 0.024 },
+          uAspect: { value: 16 / 10 },
+          uBorderColor: { value: new THREE.Color(borderHex) },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D uMap;
+          uniform float uRadius;
+          uniform float uAspect;
+          uniform vec3 uBorderColor;
+          varying vec2 vUv;
+
+          float roundedBoxSDF(vec2 p, vec2 b, float r) {
+            vec2 q = abs(p) - b + r;
+            return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+          }
+
+          void main() {
+            vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
+            vec2 halfSize = vec2(uAspect * 0.5, 0.5);
+            float d = roundedBoxSDF(p, halfSize, uRadius);
+            float aa = max(fwidth(d), 0.0012);
+            float alpha = 1.0 - smoothstep(-aa, aa, d);
+            if (alpha < 0.01) discard;
+            float borderBand = 1.0 - smoothstep(0.0, aa * 1.8, abs(d + 0.0022));
+            vec4 texel = texture2D(uMap, vUv);
+            vec3 col = mix(texel.rgb, uBorderColor, borderBand * 0.85);
+            gl_FragColor = vec4(col, alpha);
+          }
+        `,
+      });
+    }
+
+    function makeWingPanel(x, rotY, backHex, borderHex, texMain, texAlt) {
+      const g = new THREE.Group();
+      const w = 2.38, h = 1.49;
+      const bodyGeo = new THREE.ExtrudeGeometry(
+        createRoundedRectShape(w, h, 0.075),
+        { depth: 0.015, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 2, curveSegments: 16 }
+      );
+      bodyGeo.translate(0, 0, -0.015);
+      const bodyMat = createCottonPaperMaterial({
+        color: backHex, roughness: 0.62, sheen: 0.25, bumpScale: 0.002
+      });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      g.add(body);
+
+      const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        createUiScreenMaterial(texMain, borderHex)
+      );
+      screen.position.z = 0.004;
+      g.add(screen);
+
+      // Secondary offset folio behind primary UI card
+      const w2 = 1.98, h2 = 1.24;
+      const backGeo2 = new THREE.ExtrudeGeometry(
+        createRoundedRectShape(w2, h2, 0.065),
+        { depth: 0.012, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 2, curveSegments: 16 }
+      );
+      backGeo2.translate(0, 0, -0.012);
+      const subGroup = new THREE.Group();
+      const subBody = new THREE.Mesh(backGeo2, bodyMat);
+      subBody.castShadow = true;
+      subGroup.add(subBody);
+      const subScreen = new THREE.Mesh(
+        new THREE.PlaneGeometry(w2, h2),
+        createUiScreenMaterial(texAlt, borderHex)
+      );
+      subScreen.position.z = 0.004;
+      subGroup.add(subScreen);
+      subGroup.position.set(x < 0 ? -0.34 : 0.34, 0.30, -0.34);
+      g.add(subGroup);
+
+      g.position.set(x, 0.04, -0.18);
+      g.rotation.y = rotY;
+      scene.add(g);
+      return { g, subGroup };
+    }
+
+    // Precision-Crafted Smooth Folded Book-Folio Sculpture (zero intersecting z-fighting faces!)
+    const folioGroup = new THREE.Group();
+    const leafMat = createCottonPaperMaterial({
+      color: '#FAF7F2',
+      roughness: 0.84,
+      metalness: 0.04,
+      sheen: 0.55,
+      sheenColor: '#FFF3E4',
+      bumpScale: 0.006,
+      vertexColors: true,
+    });
+
+    const spineMat = new THREE.MeshPhysicalMaterial({
+      color: '#E8501C',
+      emissive: '#E8501C',
+      emissiveIntensity: 0.38,
+      roughness: 0.32,
+      metalness: 0.14,
+      clearcoat: 0.35,
+    });
+    const spineMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 1.72, 24), spineMat);
+    spineMesh.castShadow = true;
+    folioGroup.add(spineMesh);
+
+    const spineGlow = new THREE.PointLight('#FF6B35', 1.2, 3.0, 2.0);
+    spineGlow.position.set(0, 0.15, 0.25);
+    folioGroup.add(spineGlow);
+
+    // 10 fanned symmetric architectural book-folio leaves (5 left wing, 5 right wing — zero crossing, symmetrical spread!)
+    const NUM_PER_SIDE = 5;
+    const leaves = [];
+    for (let side = -1; side <= 1; side += 2) {
+      for (let s = 0; s < NUM_PER_SIDE; s++) {
+        const frac = s / (NUM_PER_SIDE - 1); // 0 (outer) .. 1 (inner toward center)
+        // Right side fans +X toward +Z (angles 0.22 .. 1.18); Left side mirrors symmetrically around spine!
+        const fanAngle = lerp(0.24, 1.18, frac);
+        const baseAngle = side === 1 ? -fanAngle : (Math.PI + fanAngle);
+
+        const pivot = new THREE.Group();
+        pivot.rotation.y = baseAngle;
+
+        const leafW = 0.88;
+        const leafH = 1.54 - (1 - frac) * 0.14;
+        const folded = foldPlaneGeometry(leafW, leafH, 24, 30);
+        folded.geometry.translate(leafW * 0.5 + 0.045, 0, 0);
+
+        const mesh = new THREE.Mesh(folded.geometry, leafMat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        pivot.add(mesh);
+
+        folioGroup.add(pivot);
+        leaves.push({ pivot, folded, frac, side, fanAngle, k: (side === 1 ? s : s + NUM_PER_SIDE) });
+      }
+    }
+    folioGroup.position.set(0, 0.02, 0.22);
+    scene.add(folioGroup);
+
     const [homeLight, multiLight, homeDark, multiDark] = await Promise.all([
       loadTex('/assets/readme/captures/home-light.png'),
       loadTex('/assets/readme/captures/multitool-light.png'),
@@ -188,108 +256,98 @@
       loadTex('/assets/readme/captures/multitool-dark.png'),
     ]);
 
-    function makeWingPanel(x, rotY, frameColor, texMain, texAlt) {
-      const g = new THREE.Group();
-      const frameMat = new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.72, metalness: 0.04 });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(2.44, 1.53, 0.05), frameMat);
-      body.castShadow = true;
-      body.receiveShadow = true;
-      g.add(body);
+    const lightWing = makeWingPanel(-2.22, 0.26, '#FFFFFF', '#DDD5C9', homeLight, multiLight);
+    const darkWing = makeWingPanel(2.22, -0.26, '#1F1C19', '#3A342E', homeDark, multiDark);
 
-      const screenMat = new THREE.MeshBasicMaterial({ map: texMain, toneMapped: false });
-      const screen = new THREE.Mesh(new THREE.PlaneGeometry(2.32, 1.45), screenMat);
-      screen.position.z = 0.030;
-      g.add(screen);
-
-      const backMat = new THREE.MeshBasicMaterial({ map: texAlt, toneMapped: false });
-      const backBody = new THREE.Mesh(new THREE.BoxGeometry(2.04, 1.28, 0.04), frameMat);
-      backBody.position.set(x < 0 ? -0.35 : 0.35, 0.34, -0.34);
-      backBody.castShadow = true;
-      const backScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.94, 1.21), backMat);
-      backScreen.position.z = 0.024;
-      backBody.add(backScreen);
-      g.add(backBody);
-
-      g.position.set(x, 0.02, -0.15);
-      g.rotation.y = rotY;
-      scene.add(g);
-      return { g, frameMat };
-    }
-
-    const lightPanel = makeWingPanel(-2.24, 0.32, '#E8E2D8', homeLight, multiLight);
-    const darkPanel = makeWingPanel(2.24, -0.32, '#36312B', homeDark, multiDark);
-
-    const colIvory = new THREE.Color('#FAF7F2');
-    const colWarmGraphite = new THREE.Color('#474038'); // Rich architectural graphite so facets never crush to #000000
-    const colFloorLight = new THREE.Color('#F2EBE0');
-    const colFloorDark = new THREE.Color('#1C1916');
-    const colHemiSkyL = new THREE.Color('#FFFDF9');
-    const colHemiSkyD = new THREE.Color('#786D61');
-    const colHemiGndL = new THREE.Color('#D6CEC4');
-    const colHemiGndD = new THREE.Color('#2E2822');
+    // Color targets for smooth daylight-to-obsidian lighting wave
+    const colBgL = new THREE.Color('#FAF7F2');
+    const colBgD = new THREE.Color('#141210');
+    const colLeafL = new THREE.Color('#FAF7F2');
+    const colLeafD = new THREE.Color('#2A241F');
+    const colSheenL = new THREE.Color('#FFF8EE');
+    const colSheenD = new THREE.Color('#FF8554');
     const colTerraL = new THREE.Color('#E8501C');
     const colTerraD = new THREE.Color('#FF6B35');
+    const colHemiSkyL = new THREE.Color('#FFFDF9');
+    const colHemiSkyD = new THREE.Color('#5E5348');
+    const colHemiGndL = new THREE.Color('#DED3C6');
+    const colHemiGndD = new THREE.Color('#1A1613');
+    const colShadowL = new THREE.Color('#594A3D');
+    const colShadowD = new THREE.Color('#040302');
 
-    const leftBadge = document.getElementById('leftBadge');
-    const rightBadge = document.getElementById('rightBadge');
-    const bottomLeft = document.getElementById('bottomLeft');
-    const bottomRight = document.getElementById('bottomRight');
-
-    function lerpRgb(c1, c2, u) {
-      const r = Math.round(c1[0] + (c2[0] - c1[0]) * u);
-      const g = Math.round(c1[1] + (c2[1] - c1[1]) * u);
-      const b = Math.round(c1[2] + (c2[2] - c1[2]) * u);
-      return `rgb(${r}, ${g}, ${b})`;
+    function mixHexRgb(a, b, u) {
+      const r = Math.round(a[0] + (b[0] - a[0]) * u);
+      const g = Math.round(a[1] + (b[1] - a[1]) * u);
+      const bl = Math.round(a[2] + (b[2] - a[2]) * u);
+      return `rgb(${r},${g},${bl})`;
     }
 
     window.renderFrame = function renderFrame(i, totalFrames, t) {
       const theta = t * Math.PI * 2;
       const darkMix = 0.5 - 0.5 * Math.cos(theta);
 
-      scene.background.lerpColors(bgLight, bgDark, darkMix);
-      floorMat.color.lerpColors(colFloorLight, colFloorDark, darkMix);
-      floorMat.roughness = 0.90 - darkMix * 0.36;
-      floorMat.metalness = 0.04 + darkMix * 0.16;
+      // Seamless studio cyclorama + fog transition (#FAF7F2 <-> #141210)
+      scene.background.lerpColors(colBgL, colBgD, darkMix);
+      scene.fog.color.copy(scene.background);
+      shadowCatcherMat.color.lerpColors(colShadowL, colShadowD, darkMix);
+      shadowCatcherMat.opacity = lerp(0.16, 0.45, darkMix);
 
-      // Transform origami sculpture from warm ivory cardstock to sculpted brushed graphite
-      foldMat.color.lerpColors(colIvory, colWarmGraphite, darkMix);
-      foldMat.roughness = 0.62 - darkMix * 0.22;
-      foldMat.metalness = 0.08 + darkMix * 0.24;
+      // Cotton-paper folio material transforms into raking-edge graphite (#2A241F)
+      leafMat.color.lerpColors(colLeafL, colLeafD, darkMix);
+      leafMat.sheenColor.lerpColors(colSheenL, colSheenD, darkMix);
+      leafMat.roughness = lerp(0.86, 0.50, darkMix);
+      leafMat.metalness = lerp(0.02, 0.16, darkMix);
 
-      innerEdgeMat.color.lerpColors(colTerraL, colTerraD, darkMix);
-      innerEdgeMat.emissive.lerpColors(colTerraL, colTerraD, darkMix);
-      innerEdgeMat.emissiveIntensity = 0.35 + darkMix * 0.95;
+      spineMat.color.lerpColors(colTerraL, colTerraD, darkMix);
+      spineMat.emissive.lerpColors(colTerraL, colTerraD, darkMix);
+      spineMat.emissiveIntensity = lerp(0.35, 1.15, darkMix);
+      spineGlow.intensity = lerp(0.85, 2.1, darkMix);
 
-      hemi.color.lerpColors(colHemiSkyL, colHemiSkyD, darkMix);
-      hemi.groundColor.lerpColors(colHemiGndL, colHemiGndD, darkMix);
-      hemi.intensity = 1.15 - darkMix * 0.15;
+      // Studio light rig sweep
+      lights.hemi.color.lerpColors(colHemiSkyL, colHemiSkyD, darkMix);
+      lights.hemi.groundColor.lerpColors(colHemiGndL, colHemiGndD, darkMix);
+      lights.hemi.intensity = lerp(0.92, 0.78, darkMix);
 
-      const lightAngle = -Math.PI * 0.45 + darkMix * Math.PI * 0.90;
-      keyLight.position.set(Math.sin(lightAngle) * 5.2, 4.8 - darkMix * 0.3, Math.cos(lightAngle) * 4.6);
-      keyLight.intensity = 2.0 - darkMix * 0.25;
-      graphiteRim.intensity = 0.45 + darkMix * 1.45;
-      frontFill.intensity = 0.25 + darkMix * 0.65;
-      coreGlow.intensity = 1.1 + darkMix * 1.5;
+      const sweepAng = lerp(-0.78, 0.78, darkMix);
+      lights.key.position.set(Math.sin(sweepAng) * 5.2, 6.2 - darkMix * 0.6, Math.cos(sweepAng) * 4.8);
+      lights.key.intensity = lerp(1.95, 2.25, darkMix);
+      lights.fill.intensity = lerp(0.62, 0.72, darkMix);
+      lights.rim.intensity = lerp(0.45, 1.45, darkMix);
 
-      origamiGroup.rotation.y = theta;
-      origamiGroup.rotation.x = Math.sin(theta) * 0.14;
-      blades.forEach(({ blade, k }) => {
-        const baseZ = (k % 2 === 0 ? -0.45 : 0.45);
-        blade.rotation.z = baseZ + Math.sin(theta + k * (Math.PI / 4)) * 0.12;
+      // Symmetric folio breathing spread choreography
+      const spreadScale = 1.0 + Math.sin(theta) * 0.14;
+      folioGroup.rotation.y = Math.sin(theta) * 0.18;
+      leaves.forEach(({ pivot, folded, frac, side, fanAngle, k }) => {
+        const dynFan = fanAngle * spreadScale;
+        pivot.rotation.y = side === 1 ? -dynFan : (Math.PI + dynFan);
+        const localCurl = 0.14 + Math.sin(theta + frac * Math.PI) * 0.10;
+        folded.applyFold({
+          fold: 0.0,
+          curl: localCurl,
+          wavePhase: theta + k * 0.45,
+          waveAmp: 0.38,
+          aoStrength: 0.16,
+        });
       });
 
-      const camX = (darkMix - 0.5) * 1.05;
-      const camZ = 6.35 - Math.sin(darkMix * Math.PI) * 0.35;
-      camera.position.set(camX, 0.46 + Math.sin(theta) * 0.05, camZ);
-      camera.lookAt(camX * 0.42, 0.02, 0);
+      // Subtle camera focus arc
+      const camX = (darkMix - 0.5) * 0.85;
+      camera.position.set(camX, 0.48 + Math.sin(theta) * 0.04, 6.45 - Math.sin(darkMix * Math.PI) * 0.25);
+      camera.lookAt(camX * 0.35, 0.03, 0);
 
-      lightPanel.g.position.y = 0.02 + (1 - darkMix) * 0.07;
-      darkPanel.g.position.y = 0.02 + darkMix * 0.07;
+      lightWing.g.position.y = 0.04 + (1 - darkMix) * 0.06;
+      darkWing.g.position.y = 0.04 + darkMix * 0.06;
 
-      leftBadge.style.borderColor = darkMix < 0.5 ? '#E8501C' : '#D9D0C3';
-      rightBadge.style.borderColor = darkMix >= 0.5 ? '#FF6B35' : '#474038';
-      bottomLeft.style.borderColor = darkMix < 0.5 ? '#E8501C' : '#D9D0C3';
-      bottomRight.style.borderColor = darkMix >= 0.5 ? '#FF6B35' : '#474038';
+      // High-contrast Swiss typography (crisp dark ink on light/mid, crisp ivory ink on dark — never low-contrast mid-grey!)
+      const isDarkStage = darkMix >= 0.42;
+      hud.kickerEl.style.color = isDarkStage ? '#F5EFE6' : '#241E1B';
+      hud.root.querySelectorAll('.octa-hud-corner').forEach((c) => {
+        c.style.borderColor = isDarkStage ? 'rgba(245, 239, 230, 0.28)' : 'rgba(36, 30, 27, 0.22)';
+      });
+
+      lblLight.style.color = isDarkStage ? '#F0E8DE' : '#241E1B';
+      lblDark.style.color = isDarkStage ? '#FAF7F2' : '#241E1B';
+      lblMid.style.color = isDarkStage ? '#FF8554' : '#C83E10';
 
       renderer.render(scene, camera);
     };

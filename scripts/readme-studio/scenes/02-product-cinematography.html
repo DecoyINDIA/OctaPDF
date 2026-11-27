@@ -7,116 +7,69 @@
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
       background: #FAF7F2;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    canvas { display: block; width: 100%; height: 100%; }
-    .hud-bar {
-      position: fixed; left: 24px; right: 24px; bottom: 18px;
-      display: flex; align-items: center; justify-content: space-between;
-      pointer-events: none; z-index: 10;
+    .progress-hairline {
+      position: absolute; left: 42px; right: 42px; bottom: 20px; height: 1px;
+      background: rgba(36, 30, 27, 0.12); pointer-events: none;
     }
-    .hud-pill {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 8px 16px; border-radius: 999px;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid #E8E2D8;
-      box-shadow: 0 6px 20px rgba(36, 30, 27, 0.08);
-      color: #241E1B; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
-    }
-    .hud-dot { width: 8px; height: 8px; border-radius: 50%; background: #E8501C; }
-    .hud-step { color: #E8501C; font-family: ui-monospace, monospace; font-size: 12px; }
-    .hud-meta {
-      padding: 7px 14px; border-radius: 999px;
-      background: rgba(36, 30, 27, 0.88); color: #FAF7F2;
-      font-size: 12px; font-weight: 500; letter-spacing: 0.01em;
-    }
-    .progress-track {
-      position: fixed; left: 0; right: 0; bottom: 0; height: 3px;
-      background: rgba(232, 226, 216, 0.65); z-index: 11;
-    }
-    .progress-fill {
-      height: 100%; width: 0%; background: linear-gradient(90deg, #E8501C, #FF6B35);
+    .progress-hairline-fill {
+      height: 100%; width: 0%; background: #E8501C;
     }
   </style>
 </head>
 <body>
-  <div class="hud-bar">
-    <div class="hud-pill">
-      <span class="hud-dot"></span>
-      <span class="hud-step" id="hudStep">01</span>
-      <span id="hudTitle">Paper Desk Home · Universal Intake Deck</span>
-    </div>
-    <div class="hud-meta">OctaPDF v0.46.2 · Real Browser Capture</div>
-  </div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-
   <script type="module">
     import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      initStudio,
+      createCottonPaperMaterial,
+      createEditorialCaptionLayer,
+      clamp01,
+      lerp,
+      smoothstep,
+      smootherstep,
+      easeInOutQuint,
+    } from '/scripts/readme-studio/scenes/studio-kit.js';
 
-    const W = window.innerWidth || 1120;
-    const H = window.innerHeight || 630;
+    const W = 1120;
+    const H = 630;
+    const studio = initStudio(null, {
+      width: W,
+      height: H,
+      mode: 'light',
+      fov: 28,
+      camPos: [0, 0.36, 6.05],
+      lookAt: [0, 0.04, 0],
+      floorY: -1.26,
+      shadowFrustum: 7.5,
+      shadowOpacity: 0.16,
+      fogDensity: 0.022,
+    });
+    const { renderer, scene, camera } = studio;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(W, H, false);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.03;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    document.body.appendChild(renderer.domElement);
+    const hud = createEditorialCaptionLayer(document.body, {
+      mode: 'light',
+      designWidth: W,
+      designHeight: H,
+      kicker: 'OCTAPDF 0.46.2  ·  LIVE WORKSPACE REEL',
+    });
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#FAF7F2');
-    scene.fog = new THREE.Fog('#FAF7F2', 14, 26);
+    const pTrack = document.createElement('div');
+    pTrack.className = 'progress-hairline';
+    const pFill = document.createElement('div');
+    pFill.className = 'progress-hairline-fill';
+    pTrack.appendChild(pFill);
+    hud.root.appendChild(pTrack);
 
-    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 45);
+    // Subtle right-aligned Swiss spec tag inside hud.root
+    const specEl = document.createElement('div');
+    specEl.style.cssText = 'position:absolute;right:42px;top:30px;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#6E645D;';
+    specEl.textContent = '2880×1800 CAPTURES · LOCAL-FIRST';
+    hud.root.appendChild(specEl);
 
-    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DDD3C5', 1.15);
-    scene.add(hemi);
-
-    const keyLight = new THREE.DirectionalLight('#FFF8EE', 1.75);
-    keyLight.position.set(3.5, 6.2, 5.2);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(2048, 2048);
-    keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 22;
-    keyLight.shadow.camera.left = -9;
-    keyLight.shadow.camera.right = 9;
-    keyLight.shadow.camera.top = 5;
-    keyLight.shadow.camera.bottom = -5;
-    keyLight.shadow.bias = -0.0004;
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight('#FFE8DA', 0.65);
-    rimLight.position.set(-4.5, 3.0, -3.5);
-    scene.add(rimLight);
-
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(38, 28),
-      new THREE.MeshStandardMaterial({ color: '#F3ECE1', roughness: 0.94, metalness: 0.0 })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -1.35;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    const plinthMat = new THREE.MeshStandardMaterial({ color: '#EFE7DA', roughness: 0.85, metalness: 0.02 });
-    const trimMat = new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.42, metalness: 0.05 });
-
-    for (let k = 0; k < 4; k++) {
-      const slab = new THREE.Mesh(
-        new THREE.BoxGeometry(2.6, 3.3, 0.02),
-        new THREE.MeshStandardMaterial({ color: '#F7F2E9', roughness: 0.88 })
-      );
-      slab.position.set(-6.0 + k * 4.0, 0.25 + (k % 2) * 0.2, -3.6 - (k % 2) * 0.5);
-      slab.rotation.y = (k - 1.5) * 0.08;
-      slab.receiveShadow = true;
-      scene.add(slab);
-    }
-
+    // Texture loader
     const loader = new THREE.TextureLoader();
-    const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    const maxAniso = Math.min(16, renderer.capabilities.getMaxAnisotropy());
     function loadTex(url) {
       return new Promise((resolve, reject) => {
         loader.load(url, (tex) => {
@@ -129,73 +82,166 @@
       });
     }
 
-    function makeDisplayStage(w, h, borderHex = '#E8E2D8') {
-      const group = new THREE.Group();
-      const chassis = new THREE.Mesh(
-        new THREE.BoxGeometry(w + 0.14, h + 0.14, 0.07),
-        new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.55, metalness: 0.03 })
-      );
-      chassis.castShadow = true;
-      chassis.receiveShadow = true;
-      group.add(chassis);
-
-      const bezel = new THREE.Mesh(
-        new THREE.BoxGeometry(w + 0.16, h + 0.16, 0.045),
-        new THREE.MeshStandardMaterial({ color: borderHex, roughness: 0.65, metalness: 0.04 })
-      );
-      bezel.position.z = -0.015;
-      group.add(bezel);
-
-      const screenMat = new THREE.MeshBasicMaterial({ color: '#FFFFFF', toneMapped: false });
-      const screen = new THREE.Mesh(new THREE.PlaneGeometry(w, h), screenMat);
-      screen.position.z = 0.038;
-      group.add(screen);
-
-      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.02), trimMat);
-      badge.position.set(-w * 0.5 + 0.25, h * 0.5 + 0.085, 0.02);
-      group.add(badge);
-
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.08, 0.65), plinthMat);
-      plinth.position.set(0, -h * 0.5 - 0.22, -0.05);
-      plinth.castShadow = true;
-      plinth.receiveShadow = true;
-      group.add(plinth);
-
-      return { group, screenMat };
+    // Rounded-rectangle shape builder for crisp frameless card backing + shadow caster
+    function createRoundedRectShape(w, h, r) {
+      const s = new THREE.Shape();
+      const x = -w / 2, y = -h / 2;
+      s.moveTo(x + r, y);
+      s.lineTo(x + w - r, y);
+      s.quadraticCurveTo(x + w, y, x + w, y + r);
+      s.lineTo(x + w, y + h - r);
+      s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      s.lineTo(x + r, y + h);
+      s.quadraticCurveTo(x, y + h, x, y + h - r);
+      s.lineTo(x, y + r);
+      s.quadraticCurveTo(x, y, x + r, y);
+      return s;
     }
 
-    // 3 stages spaced cleanly so adjacent frames don't intrude during dwells
-    const stageHome = makeDisplayStage(3.2, 2.0);
-    stageHome.group.position.set(-4.5, 0.08, 0.45);
-    stageHome.group.rotation.y = 0.24;
-    scene.add(stageHome.group);
+    // SDF rounded-corner UI shader (crisp 1px border, zero chunky bezel, smooth opacity)
+    function createUiScreenMaterial(tex, borderHex = '#DFD7CB') {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: true,
+        uniforms: {
+          uMap: { value: tex },
+          uOpacity: { value: 1.0 },
+          uRadius: { value: 0.026 },
+          uAspect: { value: 16 / 10 },
+          uBorderColor: { value: new THREE.Color(borderHex) },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D uMap;
+          uniform float uOpacity;
+          uniform float uRadius;
+          uniform float uAspect;
+          uniform vec3 uBorderColor;
+          varying vec2 vUv;
 
-    // Command Palette floating plane in front of Home
-    const paletteMat = new THREE.MeshBasicMaterial({
-      color: '#FFFFFF', transparent: true, opacity: 1.0, toneMapped: false
-    });
-    const paletteCard = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 1.72), paletteMat);
-    paletteCard.position.set(-4.42, 0.08, 0.78);
-    paletteCard.rotation.y = 0.24;
-    const paletteBacking = new THREE.Mesh(
-      new THREE.BoxGeometry(2.82, 1.79, 0.03),
-      new THREE.MeshStandardMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.96, roughness: 0.4 })
-    );
-    paletteBacking.position.set(0, 0, -0.02);
-    paletteBacking.castShadow = true;
-    paletteCard.add(paletteBacking);
-    scene.add(paletteCard);
+          float roundedBoxSDF(vec2 p, vec2 b, float r) {
+            vec2 q = abs(p) - b + r;
+            return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+          }
 
-    const stageMulti = makeDisplayStage(3.3, 2.06);
-    stageMulti.group.position.set(0.0, 0.08, -0.65);
-    stageMulti.group.rotation.y = 0.0;
-    scene.add(stageMulti.group);
+          void main() {
+            vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
+            vec2 halfSize = vec2(uAspect * 0.5, 0.5);
+            float d = roundedBoxSDF(p, halfSize, uRadius);
+            float aa = max(fwidth(d), 0.0012);
+            float alpha = 1.0 - smoothstep(-aa, aa, d);
+            if (alpha < 0.01) discard;
 
-    const stageSign = makeDisplayStage(3.2, 2.0);
-    stageSign.group.position.set(4.5, 0.08, 0.45);
-    stageSign.group.rotation.y = -0.24;
-    scene.add(stageSign.group);
+            float borderBand = 1.0 - smoothstep(0.0, aa * 1.8, abs(d + 0.0022));
+            vec4 texel = texture2D(uMap, vUv);
+            vec3 col = mix(texel.rgb, uBorderColor, borderBand * 0.85);
+            gl_FragColor = vec4(col, alpha * uOpacity);
+          }
+        `,
+      });
+    }
 
+    // Build sleek frameless rounded UI card
+    function makeFramelessCard(w, h, cornerR = 0.095) {
+      const group = new THREE.Group();
+      const shape = createRoundedRectShape(w, h, cornerR);
+      const bodyGeo = new THREE.ExtrudeGeometry(shape, {
+        depth: 0.016,
+        bevelEnabled: true,
+        bevelThickness: 0.003,
+        bevelSize: 0.003,
+        bevelSegments: 3,
+        curveSegments: 20,
+      });
+      bodyGeo.translate(0, 0, -0.016);
+      const bodyMat = createCottonPaperMaterial({
+        color: '#FFFFFF',
+        roughness: 0.55,
+        sheen: 0.25,
+        bumpScale: 0.002,
+      });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      group.add(body);
+
+      const screenMat = createUiScreenMaterial(null, '#DDD5C9');
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(w, h), screenMat);
+      screen.position.z = 0.004;
+      group.add(screen);
+
+      return { group, screenMat, bodyMat };
+    }
+
+    // Sleek macOS-style vector cursor (crisp arrow mesh)
+    function makeVectorCursor() {
+      const g = new THREE.Group();
+      const s = new THREE.Shape();
+      s.moveTo(0, 0);
+      s.lineTo(0, -0.14);
+      s.lineTo(0.036, -0.108);
+      s.lineTo(0.064, -0.165);
+      s.lineTo(0.086, -0.155);
+      s.lineTo(0.058, -0.098);
+      s.lineTo(0.102, -0.095);
+      s.closePath();
+
+      const borderGeo = new THREE.ShapeGeometry(s);
+      const borderMesh = new THREE.Mesh(
+        borderGeo,
+        new THREE.MeshBasicMaterial({ color: '#FFFFFF', side: THREE.DoubleSide })
+      );
+      borderMesh.scale.set(1.16, 1.16, 1);
+      borderMesh.position.set(-0.006, 0.008, 0.001);
+      g.add(borderMesh);
+
+      const fillMesh = new THREE.Mesh(
+        new THREE.ShapeGeometry(s),
+        new THREE.MeshBasicMaterial({ color: '#1F1C19', side: THREE.DoubleSide })
+      );
+      fillMesh.position.z = 0.003;
+      g.add(fillMesh);
+
+      // Subtle terracotta click-pulse ring
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: '#E8501C', transparent: true, opacity: 0.0, side: THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.045, 0.065, 32), ringMat);
+      ring.position.set(0.01, -0.01, 0.002);
+      g.add(ring);
+
+      return { group: g, ring, ringMat };
+    }
+
+    const CARD_W = 3.52;
+    const CARD_H = 2.20;
+
+    const cardHome = makeFramelessCard(CARD_W, CARD_H);
+    const cardMulti = makeFramelessCard(CARD_W, CARD_H);
+    const cardSign = makeFramelessCard(CARD_W, CARD_H);
+
+    // Floating Command Palette overlay layer on cardHome (clean full-card cross-reveal, zero moire)
+    const paletteMat = createUiScreenMaterial(null, '#DDD5C9');
+    const palettePlane = new THREE.Mesh(new THREE.PlaneGeometry(CARD_W, CARD_H), paletteMat);
+    const paletteGroup = new THREE.Group();
+    paletteGroup.add(palettePlane);
+    paletteGroup.position.set(0, 0, 0.012);
+    cardHome.group.add(paletteGroup);
+
+    scene.add(cardHome.group);
+    scene.add(cardMulti.group);
+    scene.add(cardSign.group);
+
+    const cursor = makeVectorCursor();
+    scene.add(cursor.group);
+
+    // Load real screenshots & sampled sequence frames
     const multiIndices = [];
     for (let k = 0; k < 25; k++) multiIndices.push(Math.round((k / 24) * 48));
     const signIndices = [];
@@ -211,118 +257,120 @@
     const multiTextures = seqTex.slice(0, multiIndices.length);
     const signTextures = seqTex.slice(multiIndices.length);
 
-    stageHome.screenMat.map = homeTex;
-    stageHome.screenMat.needsUpdate = true;
-    paletteMat.map = paletteTex;
-    paletteMat.needsUpdate = true;
-    stageMulti.screenMat.map = multiTextures[0];
-    stageMulti.screenMat.needsUpdate = true;
-    stageSign.screenMat.map = signTextures[0];
-    stageSign.screenMat.needsUpdate = true;
-
-    function smoothstep(a, b, x) {
-      const u = Math.max(0, Math.min(1, (x - a) / (b - a)));
-      return u * u * (3 - 2 * u);
-    }
-
-    const hudStep = document.getElementById('hudStep');
-    const hudTitle = document.getElementById('hudTitle');
-    const progressFill = document.getElementById('progressFill');
-
-    // Centered framing per stage with generous headroom so top & bottom edges never clip
-    const camPosA = new THREE.Vector3(-3.36, 0.32, 5.10);
-    const camPosB = new THREE.Vector3(0.0, 0.32, 4.25);
-    const camPosC = new THREE.Vector3(3.36, 0.32, 5.15);
-
-    const lookA = new THREE.Vector3(-4.46, 0.05, 0.45);
-    const lookB = new THREE.Vector3(0.0, 0.05, -0.65);
-    const lookC = new THREE.Vector3(4.46, 0.05, 0.45);
+    cardHome.screenMat.uniforms.uMap.value = homeTex;
+    paletteMat.uniforms.uMap.value = paletteTex;
+    cardMulti.screenMat.uniforms.uMap.value = multiTextures[0];
+    cardSign.screenMat.uniforms.uMap.value = signTextures[0];
 
     window.renderFrame = function renderFrame(i, totalFrames, t) {
-      // Piecewise dwell schedule:
-      // 0.00..0.28 -> Window 1 (Home -> Command Palette centered at t=0.25)
-      // 0.28..0.34 -> Snappy transition to Window 2
-      // 0.34..0.62 -> Window 2 (Multi-Tool centered at t=0.50)
-      // 0.62..0.68 -> Snappy transition to Window 3
-      // 0.68..0.93 -> Window 3 (Sign + Live Light/Dark centered at t=0.75)
-      // 0.93..1.00 -> Snappy transition back to Window 1 (exact match at t=0 / t=1)
-      let camPos = new THREE.Vector3();
-      let lookTarget = new THREE.Vector3();
-      let activeStage = 1;
+      // Seamless 3-phase keynote carousel across t in [0, 1):
+      // Phase 1 (0.00 .. 0.34): Home glides from subtle 6° keynote tilt -> crisp 0° -> Command Palette opens cleanly
+      // Phase 2 (0.34 .. 0.67): Smooth spring slide to Multi-Tool (real 4-page PDF rotating & reordering + vector cursor)
+      // Phase 3 (0.67 .. 1.00): Smooth spring slide to Sign & Live Light->Dark toggle -> serene slide back to Home
 
-      if (t < 0.28) {
-        camPos.copy(camPosA);
-        lookTarget.copy(lookA);
-        activeStage = 1;
-      } else if (t < 0.34) {
-        const u = smoothstep(0.28, 0.34, t);
-        camPos.lerpVectors(camPosA, camPosB, u);
-        lookTarget.lerpVectors(lookA, lookB, u);
-        activeStage = u < 0.5 ? 1 : 2;
-      } else if (t < 0.62) {
-        camPos.copy(camPosB);
-        lookTarget.copy(lookB);
-        activeStage = 2;
-      } else if (t < 0.68) {
-        const u = smoothstep(0.62, 0.68, t);
-        camPos.lerpVectors(camPosB, camPosC, u);
-        lookTarget.lerpVectors(lookB, lookC, u);
-        activeStage = u < 0.5 ? 2 : 3;
-      } else if (t < 0.93) {
-        camPos.copy(camPosC);
-        lookTarget.copy(lookC);
-        activeStage = 3;
-      } else {
-        const u = smoothstep(0.93, 1.00, t);
-        camPos.lerpVectors(camPosC, camPosA, u);
-        lookTarget.lerpVectors(lookC, lookA, u);
-        activeStage = u < 0.5 ? 3 : 1;
-      }
+      const t12 = easeInOutQuint(clamp01((t - 0.25) / 0.065));
+      const t23 = easeInOutQuint(clamp01((t - 0.59) / 0.065));
+      const t31 = easeInOutQuint(clamp01((t - 0.92) / 0.075));
 
-      // Subtle continuous breathing motion
-      camera.position.copy(camPos);
-      camera.position.x += Math.sin(t * Math.PI * 2) * 0.04;
-      camera.position.y += Math.cos(t * Math.PI * 2) * 0.025;
-      camera.lookAt(lookTarget);
+      // World X conveyor offset: 0 (Home) -> -4.8 (Multi-Tool) -> -9.6 (Sign) -> -14.4 wraps cleanly to 0!
+      const posX = lerp(0, -4.8, t12) + lerp(0, -4.8, t23) + lerp(0, -4.8, t31);
 
-      // Phase A: Command Palette opens over Home during 0.09..0.28 (cleanly visible at t=0.25!)
-      const palReveal = smoothstep(0.08, 0.14, t) * (1 - smoothstep(0.26, 0.30, t));
-      paletteMat.opacity = palReveal;
-      paletteBacking.material.opacity = palReveal * 0.96;
-      paletteCard.visible = palReveal > 0.01;
-      paletteCard.position.set(
-        -4.42 + palReveal * 0.06,
-        0.08 + (1 - palReveal) * -0.04,
-        0.68 + palReveal * 0.24
-      );
+      // Position cards cleanly in periodic carousel slots
+      const homeSlotX = (t > 0.78) ? 14.4 : 0.0;
+      cardHome.group.position.set(homeSlotX + posX, Math.sin(t * Math.PI * 2) * 0.02, 0);
+      cardMulti.group.position.set(4.8 + posX, Math.sin(t * Math.PI * 2 + 1.0) * 0.02, 0);
+      cardSign.group.position.set(9.6 + posX, Math.sin(t * Math.PI * 2 + 2.0) * 0.02, 0);
 
-      // Phase B: Multi-Tool sequence progresses smoothly across 0.32..0.63
-      const mNorm = Math.max(0, Math.min(1, (t - 0.32) / 0.31));
+      // Keynote 6° entrance tilt settling smoothly to flat 1:1 legibility on the active card
+      const homeTilt = Math.sin(clamp01(t / 0.10) * Math.PI) * -0.105 * (1 - smoothstep((t - 0.05) / 0.06));
+      const homeOutTilt = t31 > 0 ? (1 - t31) * -0.09 : 0;
+      cardHome.group.rotation.y = homeTilt + homeOutTilt;
+      cardHome.group.rotation.x = 0.025 * (1 - smoothstep((t - 0.04) / 0.06));
+
+      cardMulti.group.rotation.y = clamp01((cardMulti.group.position.x) * -0.04);
+      cardSign.group.rotation.y = clamp01((cardSign.group.position.x) * -0.04);
+
+      // Command Palette reveal on Home (0.08 .. 0.25)
+      const palIn = smoothstep((t - 0.07) / 0.05);
+      const palOut = 1 - smoothstep((t - 0.22) / 0.04);
+      const palAlpha = palIn * palOut;
+      paletteGroup.visible = palAlpha > 0.01;
+      paletteGroup.position.z = 0.010 + palAlpha * 0.015;
+      paletteMat.uniforms.uOpacity.value = palAlpha;
+
+      // Multi-Tool live frame stream (0.30 .. 0.61)
+      const mNorm = clamp01((t - 0.30) / 0.30);
       const mIdx = Math.min(multiTextures.length - 1, Math.floor(mNorm * (multiTextures.length - 1)));
-      if (stageMulti.screenMat.map !== multiTextures[mIdx]) {
-        stageMulti.screenMat.map = multiTextures[mIdx];
-        stageMulti.screenMat.needsUpdate = true;
+      if (cardMulti.screenMat.uniforms.uMap.value !== multiTextures[mIdx]) {
+        cardMulti.screenMat.uniforms.uMap.value = multiTextures[mIdx];
       }
 
-      // Phase C: Sign + Light-to-Dark sequence progresses smoothly across 0.66..0.94
-      const sNorm = Math.max(0, Math.min(1, (t - 0.66) / 0.28));
+      // Sign + Dark Mode live frame stream (0.64 .. 0.93)
+      const sNorm = clamp01((t - 0.64) / 0.28);
       const sIdx = Math.min(signTextures.length - 1, Math.floor(sNorm * (signTextures.length - 1)));
-      if (stageSign.screenMat.map !== signTextures[sIdx]) {
-        stageSign.screenMat.map = signTextures[sIdx];
-        stageSign.screenMat.needsUpdate = true;
+      if (cardSign.screenMat.uniforms.uMap.value !== signTextures[sIdx]) {
+        cardSign.screenMat.uniforms.uMap.value = signTextures[sIdx];
       }
 
-      if (activeStage === 1) {
-        hudStep.textContent = '01';
-        hudTitle.textContent = palReveal > 0.25 ? 'Command Palette (⌘K) · Instant Workflow Jump' : 'Paper Desk Home · Universal Intake Deck';
-      } else if (activeStage === 2) {
-        hudStep.textContent = '02';
-        hudTitle.textContent = 'PDF Multi-Tool · Visual Reorder, Rotate & Export';
-      } else {
-        hudStep.textContent = '03';
-        hudTitle.textContent = 'Sign PDFs & Live Theme Toggle · Light ↔ Dark';
+      // Vector cursor choreography over active Multi-Tool & Sign cards
+      cursor.group.visible = false;
+      cursor.ringMat.opacity = 0;
+
+      if (t >= 0.09 && t <= 0.24) {
+        cursor.group.visible = true;
+        const cu = smoothstep((t - 0.10) / 0.12);
+        cursor.group.position.set(
+          cardHome.group.position.x + lerp(0.55, -0.18, cu),
+          lerp(-0.35, 0.32, cu),
+          0.16
+        );
+      } else if (t >= 0.32 && t <= 0.59) {
+        cursor.group.visible = true;
+        const u = clamp01((t - 0.32) / 0.27);
+        const cx = cardMulti.group.position.x + (
+          u < 0.35 ? lerp(0.65, -0.45, smoothstep(u / 0.35)) :
+          u < 0.70 ? lerp(-0.45, 0.08, smoothstep((u - 0.35) / 0.35)) :
+          lerp(0.08, 0.74, smoothstep((u - 0.70) / 0.30))
+        );
+        const cy = (
+          u < 0.35 ? lerp(0.15, -0.68, smoothstep(u / 0.35)) :
+          u < 0.70 ? lerp(-0.68, -0.25, smoothstep((u - 0.35) / 0.35)) :
+          lerp(-0.25, -0.78, smoothstep((u - 0.70) / 0.30))
+        );
+        cursor.group.position.set(cx, cy, 0.16);
+        const clickA = Math.exp(-Math.pow((u - 0.34) * 18, 2));
+        const clickB = Math.exp(-Math.pow((u - 0.68) * 18, 2));
+        const pulse = Math.max(clickA, clickB);
+        cursor.ringMat.opacity = pulse * 0.75;
+        cursor.ring.scale.setScalar(0.8 + (1 - pulse) * 1.1);
+      } else if (t >= 0.65 && t <= 0.91) {
+        cursor.group.visible = true;
+        const u = clamp01((t - 0.65) / 0.26);
+        const cx = cardSign.group.position.x + lerp(-0.25, 1.14, smoothstep(clamp01((u - 0.35) / 0.35)));
+        const cy = lerp(-0.10, 1.02, smoothstep(clamp01((u - 0.35) / 0.35)));
+        cursor.group.position.set(cx, cy, 0.16);
+        const pulse = Math.exp(-Math.pow((u - 0.72) * 16, 2));
+        cursor.ringMat.opacity = pulse * 0.80;
+        cursor.ring.scale.setScalar(0.8 + (1 - pulse) * 1.1);
       }
-      progressFill.style.width = `${(t * 100).toFixed(2)}%`;
+
+      // Gentle camera dolly breathing
+      camera.position.set(
+        Math.sin(t * Math.PI * 2) * 0.04,
+        0.34 + Math.cos(t * Math.PI * 2) * 0.02,
+        6.02 - Math.sin(t * Math.PI * 2) * 0.06
+      );
+      camera.lookAt(0, 0.04, 0);
+
+      // Clean Swiss unboxed editorial caption locked to whichever card is centered
+      if (posX > -2.4 || posX < -12.0) {
+        hud.setCaption('01', palAlpha > 0.25 ? 'COMMAND PALETTE (⌘K)  ·  INSTANT WORKFLOW JUMP' : 'PAPER DESK HOME  ·  UNIVERSAL INTAKE DECK', 0.92);
+      } else if (posX > -7.2) {
+        hud.setCaption('02', 'MULTI-TOOL STUDIO  ·  REORDER, ROTATE & EXPORT', 0.92);
+      } else {
+        hud.setCaption('03', 'SIGN STUDIO  ·  FREEHAND SIGNATURE & LIVE DARK THEME', 0.92);
+      }
+      pFill.style.width = `${(t * 100).toFixed(2)}%`;
 
       renderer.render(scene, camera);
     };

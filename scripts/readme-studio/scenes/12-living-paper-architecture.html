@@ -4,514 +4,612 @@
   <meta charset="utf-8">
   <title>OctaPDF — Living Paper Architecture</title>
   <style>
+    @font-face {
+      font-family: 'OctaEditorialSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Regular.ttf') format('truetype');
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaEditorialSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Bold.ttf') format('truetype');
+      font-weight: 700; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaEditorialSerif';
+      src: url('/src/main/resources/static/fonts/Tinos-Regular.woff2') format('woff2');
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      width: 1120px;
+      height: 560px;
       overflow: hidden;
       background: #FAF7F2;
-      font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'OctaEditorialSans', 'Segoe UI', system-ui, sans-serif;
       color: #241E1B;
+      -webkit-font-smoothing: antialiased;
     }
     canvas {
       display: block;
-      width: 100%;
-      height: 100%;
+      width: 1120px;
+      height: 560px;
     }
-    .hud {
+
+    /* Unboxed Swiss Editorial Margin Layout — Zero HTML Rounded Cards */
+    .swiss-stage {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      padding: 24px 28px;
+    }
+
+    .left-column {
+      position: absolute;
+      top: 64px;
+      left: 42px;
+      width: 376px;
+    }
+
+    .display-title {
+      font-family: 'OctaEditorialSerif', Georgia, serif;
+      font-size: 31px;
+      font-weight: 400;
+      line-height: 1.06;
+      letter-spacing: -0.015em;
+      color: #241E1B;
+      margin: 0 0 10px 0;
+    }
+
+    .accent-rule {
+      width: 52px;
+      height: 1.5px;
+      background: #E8501C;
+      margin-bottom: 11px;
+    }
+
+    .lead-copy {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: #6E645D;
+      margin: 0 0 16px 0;
+      max-width: 372px;
+    }
+    .lead-copy strong {
+      color: #241E1B;
+      font-weight: 700;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid rgba(36, 30, 27, 0.16);
+      border-bottom: 1px solid rgba(36, 30, 27, 0.16);
+      padding: 9px 0 8px 0;
+      margin-bottom: 15px;
+      gap: 8px;
+    }
+    .kpi-cell {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      border-left: 1px solid rgba(36, 30, 27, 0.12);
+      padding-left: 9px;
     }
-    .top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
+    .kpi-cell:first-child {
+      border-left: none;
+      padding-left: 0;
     }
-    .placard {
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid #E5DDD2;
-      border-radius: 10px;
-      padding: 13px 16px;
-      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.06);
-      max-width: 390px;
-    }
-    .eyebrow {
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-      color: #E8501C;
-      margin-bottom: 4px;
-    }
-    .title {
-      font-size: 20px;
+    .kpi-val {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13.5px;
       font-weight: 700;
-      letter-spacing: -0.02em;
       color: #241E1B;
       line-height: 1.15;
     }
-    .subtitle {
-      margin-top: 5px;
-      font-size: 11.5px;
-      color: #6E645D;
-      line-height: 1.35;
-    }
-    .metrics-strip {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-      max-width: 620px;
-    }
-    .pill {
-      background: rgba(255, 255, 255, 0.90);
-      border: 1px solid #E5DDD2;
-      border-radius: 8px;
-      padding: 8px 12px;
-      box-shadow: 0 6px 18px rgba(36, 30, 27, 0.05);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-    .pill.accent {
-      background: #241E1B;
-      border-color: #241E1B;
-      color: #FAF7F2;
-    }
-    .pill-val {
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 13px;
+    .kpi-val.accent { color: #E8501C; }
+    .kpi-lbl {
+      font-size: 8.5px;
       font-weight: 700;
-      line-height: 1.1;
-    }
-    .pill.accent .pill-val {
-      color: #FF6B35;
-    }
-    .pill-lbl {
-      margin-top: 3px;
-      font-size: 9.5px;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: #6E645D;
+      margin-top: 2px;
     }
-    .pill.accent .pill-lbl {
-      color: #C8BFB5;
-    }
-    .bottom-row {
+
+    .ledger-head {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      gap: 20px;
-    }
-    .strata-card {
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid #E5DDD2;
-      border-radius: 10px;
-      padding: 10px 14px;
-      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.05);
-    }
-    .strata-head {
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 9.5px;
-      font-weight: 600;
-      letter-spacing: 0.09em;
+      align-items: baseline;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: #6E645D;
-      margin-bottom: 4px;
+      margin-bottom: 7px;
     }
-    .strata-list {
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 10.5px;
-      color: #241E1B;
+    .ledger-head span:last-child {
+      font-family: 'Consolas', 'Courier New', monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .lang-ledger {
       display: flex;
-      gap: 8px;
-      align-items: center;
+      flex-direction: column;
+      gap: 4px;
     }
-    .dot {
+    .lang-row {
+      display: grid;
+      grid-template-columns: 10px 76px 1fr 50px;
+      align-items: center;
+      gap: 8px;
+      height: 17px;
+      transition: opacity 0.12s linear;
+    }
+    .lang-chip {
       width: 7px;
       height: 7px;
-      border-radius: 2px;
-      background: #E8501C;
-      display: inline-block;
+      border: 1px solid rgba(36, 30, 27, 0.22);
     }
-    .legend-card {
-      background: rgba(255, 255, 255, 0.90);
-      border: 1px solid #E5DDD2;
-      border-radius: 10px;
-      padding: 10px 14px;
-      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.05);
-      max-width: 650px;
+    .lang-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #241E1B;
+      letter-spacing: 0.01em;
     }
-    .legend-grid {
-      display: grid;
-      grid-template-columns: repeat(5, auto);
-      gap: 6px 14px;
-      margin-top: 5px;
+    .lang-bar-track {
+      position: relative;
+      height: 2px;
+      background: rgba(36, 30, 27, 0.09);
+      width: 100%;
     }
-    .leg-item {
+    .lang-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: #241E1B;
+    }
+    .lang-pct {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: right;
+      color: #241E1B;
+    }
+
+    .right-telemetry-note {
+      position: absolute;
+      top: 30px;
+      right: 42px;
+      text-align: right;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6E645D;
+    }
+    .right-telemetry-note strong {
+      color: #241E1B;
+    }
+
+    .commit-strata-footer {
+      position: absolute;
+      right: 42px;
+      bottom: 30px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.06em;
+      color: #6E645D;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 10px;
-      color: #241E1B;
-      white-space: nowrap;
+      gap: 8px;
     }
-    .swatch {
-      width: 9px;
-      height: 9px;
-      border-radius: 2px;
-      flex-shrink: 0;
-      border: 1px solid rgba(36, 30, 27, 0.14);
+    .commit-strata-footer .sep {
+      color: #E8501C;
+      font-weight: 700;
+    }
+    .commit-hash {
+      transition: color 0.12s linear;
     }
   </style>
 </head>
 <body>
-  <div class="hud">
-    <div class="top-row">
-      <div class="placard">
-        <div class="eyebrow">Repository Telemetry &middot; DecoyINDIA/OctaPDF</div>
-        <div class="title">Living Paper Architecture</div>
-        <div class="subtitle">9 radial origami sectors scaled to 2,826,562 source bytes &amp; 6 commit strata on <code>main</code> &mdash; 0 published GitHub releases.</div>
-      </div>
-      <div class="metrics-strip">
-        <div class="pill accent">
-          <div class="pill-val">6 Commits</div>
-          <div class="pill-lbl">main strata</div>
-        </div>
-        <div class="pill">
-          <div class="pill-val">2.83 MB</div>
-          <div class="pill-lbl">2,826,562 B</div>
-        </div>
-        <div class="pill">
-          <div class="pill-val">9 Langs</div>
-          <div class="pill-lbl">radial fins</div>
-        </div>
-        <div class="pill">
-          <div class="pill-val">0 Releases</div>
-          <div class="pill-lbl">0 tags &middot; 0 dl</div>
-        </div>
-        <div class="pill">
-          <div class="pill-val">MIT</div>
-          <div class="pill-lbl">license</div>
-        </div>
-      </div>
+  <div class="swiss-stage" id="swissStage">
+    <div class="right-telemetry-note">
+      <strong>2,826,562</strong> SOURCE BYTES &middot; <strong>0</strong> RELEASES &middot; <strong>MIT</strong>
     </div>
 
-    <div class="bottom-row">
-      <div class="strata-card">
-        <div class="strata-head">Base Plinth &middot; 6 Verified Commits (main)</div>
-        <div class="strata-list">
-          <span class="dot"></span>
-          <span>92c2b48 &rarr; ae836c9 &rarr; c3c431d &rarr; feea2cc &rarr; 4446aaa &rarr; c38c673</span>
+    <div class="left-column">
+      <h1 class="display-title">Living Paper Architecture</h1>
+      <div class="accent-rule"></div>
+      <p class="lead-copy">
+        Stepped cotton-paper pavilion scaled to <strong>9 verified languages</strong> across <strong>6 commit plinths</strong> on <code>main</code> &mdash; zero prebuilt releases.
+      </p>
+
+      <div class="kpi-grid">
+        <div class="kpi-cell">
+          <span class="kpi-val accent">6</span>
+          <span class="kpi-lbl">Commits</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-val">2.83 MB</span>
+          <span class="kpi-lbl">2,826,562 B</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-val">9</span>
+          <span class="kpi-lbl">Languages</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-val">0</span>
+          <span class="kpi-lbl">Downloads</span>
         </div>
       </div>
-      <div class="legend-card">
-        <div class="strata-head">Radial Origami Proportions &middot; Verified GitHub Languages (100.00%)</div>
-        <div class="legend-grid">
-          <div class="leg-item"><span class="swatch" style="background:#E8501C"></span>Java 59.45%</div>
-          <div class="leg-item"><span class="swatch" style="background:#FAF7F2"></span>HTML 17.43%</div>
-          <div class="leg-item"><span class="swatch" style="background:#2B2521"></span>JS 14.44%</div>
-          <div class="leg-item"><span class="swatch" style="background:#8C7F75"></span>CSS 3.70%</div>
-          <div class="leg-item"><span class="swatch" style="background:#FE9114"></span>RTF 1.48%</div>
-          <div class="leg-item"><span class="swatch" style="background:#D9CFC4"></span>Python 1.34%</div>
-          <div class="leg-item"><span class="swatch" style="background:#6E645D"></span>Shell 1.32%</div>
-          <div class="leg-item"><span class="swatch" style="background:#F54702"></span>Gherkin 0.68%</div>
-          <div class="leg-item"><span class="swatch" style="background:#352F29"></span>Dockerfile 0.16%</div>
-        </div>
+
+      <div class="ledger-head">
+        <span>Language Composition</span>
+        <span>100.00% Verified</span>
       </div>
+      <div class="lang-ledger" id="langLedger"></div>
+    </div>
+
+    <div class="commit-strata-footer" id="commitFooter">
+      <span style="letter-spacing:0.16em;text-transform:uppercase;font-weight:700;color:#241E1B;">6 PLINTHS</span>
+      <span class="sep">&mdash;</span>
+      <span class="commit-hash" data-idx="0">92c2b48</span>
+      <span>&rarr;</span>
+      <span class="commit-hash" data-idx="1">ae836c9</span>
+      <span>&rarr;</span>
+      <span class="commit-hash" data-idx="2">c3c431d</span>
+      <span>&rarr;</span>
+      <span class="commit-hash" data-idx="3">feea2cc</span>
+      <span>&rarr;</span>
+      <span class="commit-hash" data-idx="4">4446aaa</span>
+      <span>&rarr;</span>
+      <span class="commit-hash" data-idx="5">c38c673</span>
     </div>
   </div>
 
   <script type="module">
     import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      initStudio,
+      createCottonPaperMaterial,
+      createEditorialCaptionLayer,
+      clamp01,
+      smoothstep
+    } from '/scripts/readme-studio/scenes/studio-kit.js';
 
-    const W = window.innerWidth || 1200;
-    const H = window.innerHeight || 600;
+    const W = 1120;
+    const H = 560;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(W, H, false);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    document.body.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#FAF7F2');
-    scene.fog = new THREE.Fog('#FAF7F2', 11, 22);
-
-    const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 60);
-    camera.position.set(0, 4.55, 8.45);
-    camera.lookAt(0, 0.92, 0);
-
-    // Procedural fine paper-fiber normal/bump texture
-    function makePaperGrainTexture() {
-      const c = document.createElement('canvas');
-      c.width = 256;
-      c.height = 256;
-      const ctx = c.getContext('2d');
-      const img = ctx.createImageData(256, 256);
-      let seed = 1337;
-      const rand = () => {
-        seed = (seed * 16807) % 2147483647;
-        return (seed - 1) / 2147483646;
-      };
-      for (let i = 0; i < img.data.length; i += 4) {
-        const v = Math.floor(122 + (rand() - 0.5) * 34);
-        img.data[i] = v;
-        img.data[i + 1] = v;
-        img.data[i + 2] = v;
-        img.data[i + 3] = 255;
-      }
-      ctx.putImageData(img, 0, 0);
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth = 0.75;
-      for (let i = 0; i < 160; i++) {
-        ctx.beginPath();
-        const x = rand() * 256;
-        const y = rand() * 256;
-        const len = 8 + rand() * 20;
-        const ang = rand() * Math.PI * 2;
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
-        ctx.stroke();
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(3, 3);
-      return tex;
-    }
-
-    const paperBump = makePaperGrainTexture();
-
-    function paperMat(hex, roughness = 0.76, metalness = 0.02) {
-      return new THREE.MeshStandardMaterial({
-        color: new THREE.Color(hex),
-        roughness,
-        metalness,
-        bumpMap: paperBump,
-        bumpScale: 0.012,
-      });
-    }
-
-    // Lighting
-    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DDD2C4', 1.05);
-    scene.add(hemi);
-
-    const keyLight = new THREE.DirectionalLight('#FFF4E4', 2.25);
-    keyLight.position.set(4.5, 7.2, 4.8);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(2048, 2048);
-    keyLight.shadow.camera.near = 1;
-    keyLight.shadow.camera.far = 22;
-    keyLight.shadow.camera.left = -5.5;
-    keyLight.shadow.camera.right = 5.5;
-    keyLight.shadow.camera.top = 5.5;
-    keyLight.shadow.camera.bottom = -5.5;
-    keyLight.shadow.bias = -0.0004;
-    keyLight.shadow.radius = 3;
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight('#EAE4DC', 0.85);
-    rimLight.position.set(-5.2, 3.8, -4.0);
-    scene.add(rimLight);
-
-    // Architectural studio floor (smooth matte so static background compresses cleanly)
-    const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(18, 64),
-      new THREE.MeshStandardMaterial({
-        color: '#F5EFE6',
-        roughness: 0.96,
-        metalness: 0.0,
-      })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.02;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Subtle concentric calibration hairline rings on floor
-    const ringMat = new THREE.MeshBasicMaterial({ color: '#DFD5C8', transparent: true, opacity: 0.65 });
-    [2.35, 3.05, 3.65].forEach((r) => {
-      const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + 0.012, 96), ringMat);
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = -0.015;
-      scene.add(ring);
+    // Seamless museum cyclorama shifted cleanly right so left margin holds Swiss typography
+    const studio = initStudio(null, {
+      mode: 'light',
+      width: W,
+      height: H,
+      background: '#FAF7F2',
+      fogDensity: 0.020,
+      fov: 30,
+      camPos: [0.0, 2.82, 7.05],
+      lookAt: [-1.36, 0.56, 0.0],
+      floorY: -0.58,
+      shadowOpacity: 0.16,
+      shadowFrustum: 5.5,
+      exposure: 1.02
     });
 
-    const sculpture = new THREE.Group();
-    scene.add(sculpture);
+    const { renderer, scene, camera } = studio;
 
-    // 6 Commit Strata (layered octagonal paper plinths)
-    const strataSpecs = [
-      { r: 2.08, h: 0.09, color: '#EAE1D5', y: 0.05 },
-      { r: 1.88, h: 0.09, color: '#F5EFE6', y: 0.16 },
-      { r: 1.68, h: 0.09, color: '#FFFFFF', y: 0.27 },
-      { r: 1.48, h: 0.09, color: '#F5EFE6', y: 0.38 },
-      { r: 1.28, h: 0.09, color: '#FFFFFF', y: 0.49 },
-      { r: 1.08, h: 0.10, color: '#241E1B', y: 0.60 },
+    const hud = createEditorialCaptionLayer(document.body, {
+      mode: 'light',
+      designWidth: W,
+      designHeight: H,
+      kicker: 'REPOSITORY TELEMETRY · DECOYINDIA/OCTAPDF'
+    });
+    hud.setCaption('01', 'MAIN BRANCH STRATA · 0 RELEASES · MIT LICENSE', 0.85);
+
+    // Verified repository language telemetry (100.00% = 2,826,562 B)
+    const languages = [
+      { name: 'Java',       pct: 59.45, color: '#E8501C', fins: 6, height: 1.48, rOut: 1.66, barColor: '#E8501C' },
+      { name: 'HTML',       pct: 17.43, color: '#FFFDF9', fins: 2, height: 1.06, rOut: 1.46, barColor: '#C5B9AB' },
+      { name: 'JS',         pct: 14.44, color: '#241E1B', fins: 2, height: 0.96, rOut: 1.40, barColor: '#241E1B' },
+      { name: 'CSS',        pct: 3.70,  color: '#8C7F75', fins: 1, height: 0.76, rOut: 1.28, barColor: '#8C7F75' },
+      { name: 'RTF',        pct: 1.48,  color: '#FE9114', fins: 1, height: 0.66, rOut: 1.22, barColor: '#FE9114' },
+      { name: 'Python',     pct: 1.34,  color: '#DDD3C5', fins: 1, height: 0.60, rOut: 1.18, barColor: '#B8ADA0' },
+      { name: 'Shell',      pct: 1.32,  color: '#5C534C', fins: 1, height: 0.55, rOut: 1.15, barColor: '#5C534C' },
+      { name: 'Gherkin',    pct: 0.68,  color: '#D53902', fins: 1, height: 0.48, rOut: 1.10, barColor: '#D53902' },
+      { name: 'Dockerfile', pct: 0.16,  color: '#3A332E', fins: 1, height: 0.42, rOut: 1.06, barColor: '#3A332E' }
     ];
-    const strataMeshes = [];
-    strataSpecs.forEach((s, idx) => {
-      const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(s.r, s.r * 1.02, s.h, 8),
-        paperMat(s.color, idx === 5 ? 0.65 : 0.78, 0.03)
-      );
-      mesh.position.y = s.y;
-      mesh.rotation.y = (idx * Math.PI) / 16;
+
+    // Populate clean unboxed Swiss ledger rows
+    const ledgerEl = document.getElementById('langLedger');
+    const rowEls = languages.map((lang) => {
+      const row = document.createElement('div');
+      row.className = 'lang-row';
+      const fillW = Math.max(2.5, (lang.pct / 59.45) * 100);
+      row.innerHTML = `
+        <span class="lang-chip" style="background:${lang.color};"></span>
+        <span class="lang-name">${lang.name}</span>
+        <span class="lang-bar-track">
+          <span class="lang-bar-fill" style="width:${fillW.toFixed(1)}%;background:${lang.barColor};"></span>
+        </span>
+        <span class="lang-pct">${lang.pct.toFixed(2)}%</span>
+      `;
+      ledgerEl.appendChild(row);
+      return row;
+    });
+
+    const commitHashEls = Array.from(document.querySelectorAll('.commit-hash'));
+
+    // Pavilion root group placed on right-stage plinth
+    const pavilion = new THREE.Group();
+    pavilion.position.set(0.0, -0.58, 0.0);
+    scene.add(pavilion);
+
+    // Helper: create beveled rounded octagonal slab for the 6 commit plinths
+    function createBeveledOctagonGeo(radius, height, bevel = 0.012) {
+      const shape = new THREE.Shape();
+      const sides = 8;
+      for (let i = 0; i < sides; i++) {
+        const a = (i / sides) * Math.PI * 2 + Math.PI / 8;
+        const x = Math.cos(a) * radius;
+        const y = Math.sin(a) * radius;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: Math.max(0.01, height - bevel * 2),
+        bevelEnabled: true,
+        bevelThickness: bevel,
+        bevelSize: bevel,
+        bevelSegments: 2,
+        curveSegments: 1
+      });
+      geo.rotateX(-Math.PI / 2);
+      geo.center();
+      return geo;
+    }
+
+    // 6 Stepped Architectural Cotton-Paper Plinths = 6 verified commits on main
+    const plinthColors = ['#EAE1D5', '#F2EBE0', '#FAF6EF', '#EDE4D7', '#FFFDF9', '#241E1B'];
+    const plinthRecords = [];
+    let currentY = 0;
+    for (let i = 0; i < 6; i++) {
+      const radius = 1.84 - i * 0.145;
+      const height = 0.068;
+      const geo = createBeveledOctagonGeo(radius, height, 0.01);
+      const isTop = i === 5;
+      const mat = createCottonPaperMaterial({
+        color: plinthColors[i],
+        roughness: isTop ? 0.84 : 0.88,
+        sheen: isTop ? 0.06 : 0.35,
+        sheenColor: isTop ? '#3A322D' : '#FFF8EE',
+        envMapIntensity: isTop ? 0.32 : 0.58,
+        bumpScale: 0.007
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      const baseY = currentY + height * 0.5;
+      mesh.position.y = baseY;
+      mesh.rotation.y = i * 0.04;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      sculpture.add(mesh);
-      strataMeshes.push({ mesh, baseY: s.y, baseRot: mesh.rotation.y });
-    });
-
-    // Build folded origami wedge fin geometry (true creased double-face architectural wing)
-    function createOrigamiFinGeometry(rInner, rOuter, height, spanAngle, ridgeHeight) {
-      const half = spanAngle * 0.5;
-      const geom = new THREE.BufferGeometry();
-
-      // 6 vertices forming a crisp tented origami blade rising toward the center crease
-      const v0 = [rInner * Math.cos(-half), 0, rInner * Math.sin(-half)];
-      const v1 = [rOuter * Math.cos(-half), 0.04, rOuter * Math.sin(-half)];
-      const v2 = [rInner * Math.cos(half), 0, rInner * Math.sin(half)];
-      const v3 = [rOuter * Math.cos(half), 0.04, rOuter * Math.sin(half)];
-      const rMid = (rInner + rOuter) * 0.52;
-      const vPeakIn = [rInner * 1.04, ridgeHeight * 0.62, 0];
-      const vPeakOut = [rOuter * 0.96, height + ridgeHeight, 0];
-
-      const positions = new Float32Array([
-        // Left sloped facet
-        ...v0, ...v1, ...vPeakOut,
-        ...v0, ...vPeakOut, ...vPeakIn,
-        // Right sloped facet
-        ...vPeakIn, ...vPeakOut, ...v3,
-        ...vPeakIn, ...v3, ...v2,
-        // Outer folded cap
-        ...v1, ...v3, ...vPeakOut,
-        // Inner spine cap
-        ...v0, ...vPeakIn, ...v2,
-      ]);
-
-      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geom.computeVertexNormals();
-      return geom;
+      pavilion.add(mesh);
+      plinthRecords.push({ mesh, baseY, baseRot: mesh.rotation.y });
+      currentY += height + 0.004;
     }
 
-    // 9 Verified Languages summing to 100.00% (2,826,562 bytes)
-    const languages = [
-      { name: 'Java', pct: 59.45, color: '#E8501C', fins: 7, h: 1.28, rOut: 2.34 },
-      { name: 'HTML', pct: 17.43, color: '#FFFFFF', fins: 3, h: 1.02, rOut: 2.12 },
-      { name: 'JavaScript', pct: 14.44, color: '#2B2521', fins: 3, h: 0.95, rOut: 2.05 },
-      { name: 'CSS', pct: 3.70, color: '#8C7F75', fins: 1, h: 0.78, rOut: 1.90 },
-      { name: 'RTF', pct: 1.48, color: '#FE9114', fins: 1, h: 0.68, rOut: 1.82 },
-      { name: 'Python', pct: 1.34, color: '#D9CFC4', fins: 1, h: 0.64, rOut: 1.80 },
-      { name: 'Shell', pct: 1.32, color: '#6E645D', fins: 1, h: 0.62, rOut: 1.78 },
-      { name: 'Gherkin', pct: 0.68, color: '#F54702', fins: 1, h: 0.54, rOut: 1.72 },
-      { name: 'Dockerfile', pct: 0.16, color: '#352F29', fins: 1, h: 0.46, rOut: 1.68 },
-    ];
+    // Recessed terracotta datum hairline ring inlaid atop the 6th plinth
+    const datumRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.92, 0.955, 64),
+      new THREE.MeshBasicMaterial({ color: '#E8501C', side: THREE.DoubleSide })
+    );
+    datumRing.rotation.x = -Math.PI / 2;
+    datumRing.position.y = currentY + 0.003;
+    pavilion.add(datumRing);
 
-    const crownGroup = new THREE.Group();
-    crownGroup.position.y = 0.67;
-    sculpture.add(crownGroup);
+    // Central origami datum core (low, serene faceted ivory & terracotta keystone)
+    const coreBase = new THREE.Mesh(
+      createBeveledOctagonGeo(0.38, 0.18, 0.014),
+      createCottonPaperMaterial({ color: '#FFFDF9', roughness: 0.78 })
+    );
+    coreBase.position.y = currentY + 0.09;
+    coreBase.castShadow = true;
+    coreBase.receiveShadow = true;
+    pavilion.add(coreBase);
+
+    const coreCap = new THREE.Mesh(
+      createBeveledOctagonGeo(0.22, 0.06, 0.008),
+      createCottonPaperMaterial({ color: '#E8501C', roughness: 0.56, sheen: 0.35 })
+    );
+    coreCap.position.y = currentY + 0.21;
+    coreCap.castShadow = true;
+    pavilion.add(coreCap);
+
+    // Build smooth folded Swiss architectural paper fin (NO spiky triangles!)
+    // Creates a gently curved, folded double-leaf cardstock wall with soft vertex AO along the fold spine.
+    function createArchitecturalFinGeometry(rInner, rOuter, height, spanAngle, archScale = 1.0) {
+      const segsR = 14;
+      const segsU = 8; // across angular span (-0.5..+0.5)
+      const cols = segsU + 1;
+      const rows = segsR + 1;
+      const positions = [];
+      const colors = [];
+      const uvs = [];
+      const indices = [];
+
+      // Create front-and-back thin cardstock slab via slightly offset folded sheet or double-sided soft normals
+      for (let iy = 0; iy < rows; iy++) {
+        const v = iy / segsR; // 0 = bottom, 1 = top crest
+        for (let ix = 0; ix < cols; ix++) {
+          const u = ix / segsU; // 0..1 across angular width
+          const uCentered = (u - 0.5) * 2.0; // -1..+1
+          const absU = Math.abs(uCentered);
+
+          // Graceful radial curve from rInner to rOuter as the architectural fin rises and unfolds
+          const radialCurve = Math.pow(v, 0.85);
+          const foldDepth = (1.0 - absU) * 0.14 * (0.25 + 0.75 * v);
+          const r = rInner + (rOuter - rInner) * radialCurve - foldDepth;
+
+          // Smooth curved architectural crest (gentle dome / sloped gallery wing, never a sharp needle)
+          const crestProfile = 0.76 + 0.24 * Math.sin((1.0 - absU * 0.55) * Math.PI * 0.5);
+          const sweepSlant = (0.82 + 0.18 * (1.0 - v * 0.15)) * crestProfile;
+          const y = v * height * sweepSlant * archScale;
+
+          // Subtle origami pinch at base widening gracefully near top
+          const angleFactor = 0.68 + 0.32 * Math.sin(v * Math.PI * 0.5);
+          const ang = uCentered * (spanAngle * 0.5) * angleFactor;
+
+          const x = Math.cos(ang) * r;
+          const z = Math.sin(ang) * r;
+
+          positions.push(x, y, z);
+          uvs.push(u, v);
+
+          // Subtle crease AO along the central fold spine and base contact
+          const spineAO = Math.exp(-Math.pow(absU * 3.4, 2)) * 0.12;
+          const baseAO = Math.exp(-v * 4.5) * 0.10;
+          const shade = 1.0 - spineAO - baseAO;
+          colors.push(shade, shade * 0.99, shade * 0.975);
+        }
+      }
+
+      for (let iy = 0; iy < segsR; iy++) {
+        for (let ix = 0; ix < segsU; ix++) {
+          const a = iy * cols + ix;
+          const b = a + 1;
+          const c = a + cols;
+          const d = c + 1;
+          indices.push(a, c, b, b, c, d);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Build all 9 proportional architectural fins in a refined amphitheater sweep
+    const canopyGroup = new THREE.Group();
+    canopyGroup.position.y = currentY + 0.005;
+    pavilion.add(canopyGroup);
 
     const finRecords = [];
-    let cursorAngle = -Math.PI * 0.65;
+    const totalArc = Math.PI * 1.88; // 338° pavilion sweep with subtle architectural entrance notch
+    let cursorAng = -Math.PI * 0.55;
+
+    const terracottaShades = ['#C2350B', '#D44214', '#E24E1C', '#D44214', '#C2350B', '#B83008'];
 
     languages.forEach((lang, langIdx) => {
-      const totalRad = (lang.pct / 100.0) * Math.PI * 2;
-      const subCount = lang.fins;
-      const subSpan = (totalRad * 0.88) / subCount;
-      const step = totalRad / subCount;
+      const langArc = (lang.pct / 100.0) * totalArc;
+      const count = lang.fins;
+      const step = langArc / count;
 
-      for (let f = 0; f < subCount; f++) {
-        const angleCenter = cursorAngle + step * (f + 0.5);
-        const span = Math.max(subSpan, 0.042);
-        const crestWave = subCount > 1 ? Math.sin((f / (subCount - 1)) * Math.PI) * 0.24 : 0;
-        const h = lang.h + crestWave;
-        const rOut = lang.rOut + crestWave * 0.35;
+      for (let f = 0; f < count; f++) {
+        const angleCenter = cursorAng + step * (f + 0.5);
+        // Span cleanly proportional, with tight museum minimum so thin fins remain crisp sheets
+        const span = Math.max(step * 0.74, 0.068);
 
-        const geom = createOrigamiFinGeometry(0.46, rOut, h, span, 0.28);
-        // Subtle shade variation across Java terracotta pleats for depth
-        let hex = lang.color;
+        // Smooth architectural wave across multi-fin languages (e.g. Java's 6-fin colonnade)
+        const archWave = count > 1 ? 0.88 + 0.14 * Math.sin((f / (count - 1)) * Math.PI) : 1.0;
+        const rIn = langIdx >= 3 ? 0.48 + (langIdx - 3) * 0.032 : 0.46;
+        const geo = createArchitecturalFinGeometry(rIn, lang.rOut, lang.height, span, archWave);
+
+        let colHex = lang.color;
         if (lang.name === 'Java') {
-          const shades = ['#D53902', '#E8501C', '#F54702', '#FE7A15', '#F54702', '#E8501C', '#D53902'];
-          hex = shades[f % shades.length];
+          colHex = terracottaShades[f % terracottaShades.length];
         }
-        const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(hex),
-          roughness: lang.name === 'JavaScript' ? 0.62 : 0.72,
-          metalness: 0.03,
-          bumpMap: paperBump,
-          bumpScale: 0.01,
-          side: THREE.DoubleSide,
+        const isDarkFin = lang.name === 'JS' || lang.name === 'Dockerfile' || lang.name === 'Shell';
+        const isWarmAccent = lang.name === 'Java' || lang.name === 'RTF' || lang.name === 'Gherkin';
+        const mat = createCottonPaperMaterial({
+          color: colHex,
+          vertexColors: true,
+          roughness: isDarkFin ? 0.80 : 0.84,
+          sheen: isDarkFin ? 0.08 : (isWarmAccent ? 0.16 : 0.36),
+          sheenColor: isDarkFin ? '#3B322C' : '#FFF8EE',
+          envMapIntensity: isDarkFin ? 0.32 : (isWarmAccent ? 0.42 : 0.60),
+          bumpScale: 0.007,
+          side: THREE.DoubleSide
         });
 
-        const mesh = new THREE.Mesh(geom, mat);
+        const mesh = new THREE.Mesh(geo, mat);
         mesh.rotation.y = -angleCenter;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        crownGroup.add(mesh);
-        finRecords.push({ mesh, phase: angleCenter + langIdx * 0.4, baseY: 0 });
+        canopyGroup.add(mesh);
+
+        finRecords.push({
+          mesh,
+          langIdx,
+          angleCenter,
+          phase: angleCenter + langIdx * 0.35
+        });
       }
-      cursorAngle += totalRad;
+
+      cursorAng += langArc;
     });
 
-    // Central Octagonal Core Seal & Calibration Halo
-    const coreHub = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.48, 0.54, 0.52, 8),
-      paperMat('#241E1B', 0.55, 0.08)
+    // Subtle delicate calibration floor hairline arc around pavilion
+    const floorArcGeo = new THREE.RingGeometry(1.98, 1.998, 96);
+    const floorArc = new THREE.Mesh(
+      floorArcGeo,
+      new THREE.MeshBasicMaterial({ color: '#D7CEC2', transparent: true, opacity: 0.75, side: THREE.DoubleSide })
     );
-    coreHub.position.y = 0.26;
-    coreHub.castShadow = true;
-    coreHub.receiveShadow = true;
-    crownGroup.add(coreHub);
-
-    const coreSeal = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.32, 0.32, 0.06, 8),
-      paperMat('#E8501C', 0.40, 0.08)
-    );
-    coreSeal.position.y = 0.54;
-    coreSeal.castShadow = true;
-    crownGroup.add(coreSeal);
-
-    const haloRing = new THREE.Mesh(
-      new THREE.TorusGeometry(2.58, 0.014, 12, 96),
-      new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.4, metalness: 0.2 })
-    );
-    haloRing.rotation.x = Math.PI / 2;
-    haloRing.position.y = 0.76;
-    sculpture.add(haloRing);
+    floorArc.rotation.x = -Math.PI / 2;
+    floorArc.position.y = 0.004;
+    pavilion.add(floorArc);
 
     window.renderFrame = function renderFrame(i, totalFrames, t) {
       const theta = t * Math.PI * 2;
 
-      // Continuous architectural turntable + subtle breathing strata (exact seamless loop)
-      sculpture.rotation.y = theta;
+      // Smooth full 360-degree museum turntable revolution (exact loop at t=0 -> t=1)
+      const baseSpin = -0.35 + theta;
+      pavilion.rotation.y = baseSpin;
 
-      strataMeshes.forEach((s, idx) => {
-        s.mesh.position.y = s.baseY + Math.sin(theta * 2 - idx * 0.6) * 0.018;
-        s.mesh.rotation.y = s.baseRot + Math.sin(theta + idx * 0.5) * 0.05;
+      // Subtle architectural breathing across the 6 commit plinths
+      plinthRecords.forEach((p, idx) => {
+        const wave = Math.sin(theta * 2.0 - idx * 0.55);
+        p.mesh.position.y = p.baseY + wave * 0.008;
+        p.mesh.rotation.y = p.baseRot + Math.sin(theta + idx * 0.45) * 0.035;
       });
 
+      // Harmonic kinetic flex on the 9 language fins
+      const langActivity = new Array(languages.length).fill(0);
       finRecords.forEach((rec) => {
-        rec.mesh.position.y = Math.sin(theta * 2 + rec.phase) * 0.032;
+        const lift = 0.5 + 0.5 * Math.sin(theta * 2.0 + rec.phase);
+        rec.mesh.position.y = lift * 0.024;
+        // Measure how closely this fin faces the front-left gallery camera (+Z / -X quadrant)
+        const worldAng = rec.angleCenter - baseSpin;
+        const facing = 0.5 + 0.5 * Math.cos(worldAng - Math.PI * 0.45);
+        if (facing > langActivity[rec.langIdx]) {
+          langActivity[rec.langIdx] = facing;
+        }
       });
 
-      haloRing.position.y = 0.78 + Math.sin(theta * 2) * 0.05;
-      haloRing.rotation.z = Math.sin(theta) * 0.06;
+      // Synchronize Swiss ledger emphasis gently with the revolving pavilion
+      rowEls.forEach((row, idx) => {
+        const act = smoothstep(langActivity[idx]);
+        row.style.opacity = (0.64 + 0.36 * act).toFixed(3);
+      });
+
+      // Subtle traveling pulse across the 6 commit hashes in footer
+      const activeCommit = (t * 6) % 6;
+      commitHashEls.forEach((el, idx) => {
+        const d = Math.min(Math.abs(activeCommit - idx), 6 - Math.abs(activeCommit - idx));
+        const focus = clamp01(1.0 - d * 0.85);
+        el.style.color = focus > 0.45 ? '#E8501C' : '#6E645D';
+        el.style.fontWeight = focus > 0.45 ? '700' : '400';
+      });
+
+      // Gentle camera elevation breathing
+      camera.position.y = 2.82 + Math.sin(theta) * 0.07;
+      camera.lookAt(-1.36, 0.56, 0.0);
 
       renderer.render(scene, camera);
     };

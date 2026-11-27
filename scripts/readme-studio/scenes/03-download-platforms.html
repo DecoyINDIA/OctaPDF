@@ -2,225 +2,287 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>OctaPDF — Verified Runtime & Build Paths</title>
+  <title>OctaPDF — Verified Acquisition & Build Paths</title>
   <style>
+    @font-face {
+      font-family: 'OctaEditorialSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Regular.ttf') format('truetype');
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaEditorialSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Bold.ttf') format('truetype');
+      font-weight: 700; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaEditorialSerif';
+      src: url('/src/main/resources/static/fonts/Tinos-Regular.woff2') format('woff2');
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      width: 1120px;
+      height: 440px;
       overflow: hidden;
       background: #FAF7F2;
-      font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'OctaEditorialSans', 'Segoe UI', system-ui, sans-serif;
       color: #241E1B;
+      -webkit-font-smoothing: antialiased;
     }
     canvas {
       display: block;
-      width: 100%;
-      height: 100%;
+      width: 1120px;
+      height: 440px;
     }
-    .topbar {
+
+    /* Unboxed Swiss Editorial Header & Footer — Zero Rounded HTML Cards */
+    .swiss-header {
       position: absolute;
-      top: 16px;
-      left: 26px;
-      right: 26px;
+      top: 26px;
+      left: 42px;
+      right: 42px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(36, 30, 27, 0.12);
+      pointer-events: none;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #6E645D;
+    }
+    .header-bar {
+      width: 18px;
+      height: 1.5px;
+      background: #E8501C;
+      display: inline-block;
+    }
+    .header-left strong {
+      color: #241E1B;
+    }
+    .header-right {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6E645D;
+    }
+    .header-right strong {
+      color: #E8501C;
+    }
+
+    .swiss-footer {
+      position: absolute;
+      left: 42px;
+      right: 42px;
+      bottom: 22px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       pointer-events: none;
-    }
-    .brand-tag {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.90);
-      border: 1px solid #E5DDD2;
-      border-radius: 8px;
-      padding: 7px 13px;
-      box-shadow: 0 6px 18px rgba(36, 30, 27, 0.05);
-    }
-    .octa-dot {
-      width: 10px;
-      height: 10px;
-      background: #E8501C;
-      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-    }
-    .brand-text {
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 11px;
+      font-size: 9.5px;
       font-weight: 700;
-      letter-spacing: 0.09em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #241E1B;
+      color: #6E645D;
     }
-    .sub-pill {
-      background: rgba(36, 30, 27, 0.92);
-      color: #FAF7F2;
-      border-radius: 8px;
-      padding: 7px 13px;
-      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-      font-size: 10.5px;
-      letter-spacing: 0.04em;
+    .swiss-footer .idx {
+      color: #E8501C;
+      margin-right: 7px;
     }
-    .sub-pill span {
-      color: #FF6B35;
-      font-weight: 700;
+    .swiss-footer .mono {
+      font-family: 'Consolas', 'Courier New', monospace;
+      letter-spacing: 0.09em;
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand-tag">
-      <div class="octa-dot"></div>
-      <div class="brand-text">OctaPDF v0.46.2 &middot; Verified Acquisition &amp; Build Paths</div>
+  <div class="swiss-header">
+    <div class="header-left">
+      <span class="header-bar"></span>
+      <span><strong>OCTAPDF V0.46.2</strong> &middot; VERIFIED BUILD &amp; RUNTIME FOLIOS</span>
     </div>
-    <div class="sub-pill"><span>0</span> prebuilt GitHub releases &middot; Build or deploy directly from <span>main</span></div>
+    <div class="header-right">
+      <strong>0 PREBUILT RELEASES</strong> &mdash; RUN DIRECTLY FROM <strong>MAIN</strong>
+    </div>
+  </div>
+
+  <div class="swiss-footer">
+    <div><span class="idx">01</span>DOCKER &amp; HARDENED COMPOSE &nbsp;&middot;&nbsp; <span class="idx">02</span>JAVA 21+ FAT JAR &nbsp;&middot;&nbsp; <span class="idx">03</span>NATIVE SOURCE PACKAGING</div>
+    <div class="mono">MIT OPEN SOURCE &middot; ZERO TELEMETRY</div>
   </div>
 
   <script type="module">
     import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      initStudio,
+      createCottonPaperMaterial,
+      createEditorialCaptionLayer,
+      foldPlaneGeometry
+    } from '/scripts/readme-studio/scenes/studio-kit.js';
 
-    const W = window.innerWidth || 1200;
-    const H = window.innerHeight || 440;
+    const W = 1120;
+    const H = 440;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(W, H, false);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    document.body.appendChild(renderer.domElement);
+    const studio = initStudio(null, {
+      mode: 'light',
+      width: W,
+      height: H,
+      background: '#FAF7F2',
+      fogDensity: 0.020,
+      fov: 25.5,
+      camPos: [0.0, 0.88, 7.65],
+      lookAt: [0.0, 0.10, 0.0],
+      floorY: -1.32,
+      shadowOpacity: 0.15,
+      shadowFrustum: 6.4,
+      exposure: 1.05
+    });
 
+    const { renderer, scene, camera, lights } = studio;
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#FAF7F2');
+    // Subtle corner crop marks only (we render our own full header/footer strip)
+    createEditorialCaptionLayer(document.body, {
+      mode: 'light',
+      designWidth: W,
+      designHeight: H,
+      corners: true
+    });
 
-    const camera = new THREE.PerspectiveCamera(26, W / H, 0.1, 60);
-    camera.position.set(0, 3.15, 8.95);
-    camera.lookAt(0, 1.18, 0);
+    // Helper: create sleek beveled architectural cotton-cardstock folio slab
+    function createBeveledFolioGeo(w, h, thickness, radius = 0.055, bevel = 0.012) {
+      const hw = w * 0.5 - bevel;
+      const hh = h * 0.5 - bevel;
+      const r = Math.min(radius, hw * 0.4, hh * 0.4);
+      const shape = new THREE.Shape();
+      shape.moveTo(-hw + r, -hh);
+      shape.lineTo(hw - r, -hh);
+      shape.quadraticCurveTo(hw, -hh, hw, -hh + r);
+      shape.lineTo(hw, hh - r);
+      shape.quadraticCurveTo(hw, hh, hw - r, hh);
+      shape.lineTo(-hw + r, hh);
+      shape.quadraticCurveTo(-hw, hh, -hw, hh - r);
+      shape.lineTo(-hw, -hh + r);
+      shape.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
 
-    // Subtle procedural paper bump texture
-    function makePaperGrain() {
-      const c = document.createElement('canvas');
-      c.width = 256;
-      c.height = 256;
-      const ctx = c.getContext('2d');
-      const img = ctx.createImageData(256, 256);
-      let s = 4242;
-      const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-      for (let i = 0; i < img.data.length; i += 4) {
-        const v = Math.floor(124 + (rnd() - 0.5) * 28);
-        img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 255;
+      const extrudeDepth = Math.max(0.008, thickness - bevel * 2);
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: extrudeDepth,
+        bevelEnabled: true,
+        bevelThickness: bevel,
+        bevelSize: bevel,
+        bevelSegments: 3,
+        curveSegments: 8
+      });
+      geo.translate(0, 0, -extrudeDepth * 0.5);
+
+      // Normalize front-face UVs cleanly to [0,1] across [-w/2, +w/2] and [-h/2, +h/2]
+      const pos = geo.attributes.position;
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        const px = pos.getX(i);
+        const py = pos.getY(i);
+        uv.setXY(i, (px + w * 0.5) / w, (py + h * 0.5) / h);
       }
-      ctx.putImageData(img, 0, 0);
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(4, 4);
-      return tex;
+      uv.needsUpdate = true;
+      geo.computeVertexNormals();
+      return geo;
     }
 
-    const paperBump = makePaperGrain();
-
-    // Lighting
-    scene.add(new THREE.HemisphereLight('#FFFDF9', '#DCD0C1', 1.15));
-
-    const sweepLight = new THREE.DirectionalLight('#FFF3E2', 2.2);
-    sweepLight.position.set(2.5, 6.2, 5.2);
-    sweepLight.castShadow = true;
-    sweepLight.shadow.mapSize.set(2048, 2048);
-    sweepLight.shadow.camera.near = 1;
-    sweepLight.shadow.camera.far = 22;
-    sweepLight.shadow.camera.left = -7.2;
-    sweepLight.shadow.camera.right = 7.2;
-    sweepLight.shadow.camera.top = 4.5;
-    sweepLight.shadow.camera.bottom = -4.5;
-    sweepLight.shadow.bias = -0.0004;
-    sweepLight.shadow.radius = 3;
-    scene.add(sweepLight);
-
-    const fillLight = new THREE.DirectionalLight('#EFEAE2', 0.75);
-    fillLight.position.set(-4, 3, 3);
-    scene.add(fillLight);
-
-    // Desk floor (smooth matte for crisp WebP inter-frame compression)
-    const desk = new THREE.Mesh(
-      new THREE.PlaneGeometry(24, 14),
-      new THREE.MeshStandardMaterial({
-        color: '#F3ECE2',
-        roughness: 0.96,
-        metalness: 0.0,
-      })
-    );
-    desk.rotation.x = -Math.PI / 2;
-    desk.position.y = -0.02;
-    desk.receiveShadow = true;
-    scene.add(desk);
-
-    // High-DPI cardstock label texture generator
-    function makeCardTexture(spec) {
+    // High-DPI Editorial Cardstock Texture (1024 x 1160)
+    function makeFolioTexture(spec) {
+      const cw = 1024;
+      const ch = 1160;
       const c = document.createElement('canvas');
-      c.width = 1024;
-      c.height = 1120;
+      c.width = cw;
+      c.height = ch;
       const ctx = c.getContext('2d');
 
-      // Warm ivory cardstock face
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, c.width, c.height);
+      // Warm museum cotton paper
+      ctx.fillStyle = '#FFFDF9';
+      ctx.fillRect(0, 0, cw, ch);
 
-      // Subtle top & bottom paper bands
-      ctx.fillStyle = '#FAF7F2';
-      ctx.fillRect(0, 0, c.width, 190);
-      ctx.fillStyle = '#F5EFE6';
-      ctx.fillRect(0, 930, c.width, 190);
+      // Subtle ivory top gallery tint band
+      ctx.fillStyle = '#F5EFE5';
+      ctx.fillRect(0, 0, cw, 224);
 
-      // Crisp hairline borders
-      ctx.strokeStyle = '#E2D8CC';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
+      // Hairline editorial rules (no heavy boxes)
+      ctx.strokeStyle = 'rgba(36, 30, 27, 0.22)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(18, 190);
-      ctx.lineTo(c.width - 18, 190);
-      ctx.moveTo(18, 930);
-      ctx.lineTo(c.width - 18, 930);
+      ctx.moveTo(64, 224);
+      ctx.lineTo(cw - 64, 224);
+      ctx.moveTo(64, 536);
+      ctx.lineTo(cw - 64, 536);
+      ctx.moveTo(64, 938);
+      ctx.lineTo(cw - 64, 938);
       ctx.stroke();
 
-      // Pillar eyebrow
-      ctx.fillStyle = '#E8501C';
-      ctx.font = '700 32px "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
-      ctx.fillText(spec.eyebrow, 64, 92);
+      // Top terracotta index bar + eyebrow
+      ctx.fillStyle = '#D94210';
+      ctx.fillRect(64, 62, 46, 5);
+      ctx.font = '700 28px "Consolas", "Courier New", monospace';
+      ctx.fillText(spec.eyebrow, 126, 74);
 
-      // Pillar Title
-      ctx.fillStyle = '#241E1B';
-      ctx.font = '700 54px "Inter", "Segoe UI", sans-serif';
-      ctx.fillText(spec.title, 64, 156);
+      // Large crisp editorial title
+      ctx.fillStyle = '#181310';
+      ctx.font = '700 44px "OctaEditorialSans", "Segoe UI", sans-serif';
+      ctx.fillText(spec.title, 64, 144);
 
-      // Divider reserve space for 3D emblem relief in middle-top, bullets below
-      let y = 510;
-      spec.lines.forEach((line) => {
-        ctx.fillStyle = '#E8501C';
-        ctx.fillRect(64, y - 22, 16, 16);
+      ctx.fillStyle = '#4A423C';
+      ctx.font = '400 27px "OctaEditorialSans", "Segoe UI", sans-serif';
+      ctx.fillText(spec.subtitle, 64, 192);
 
-        ctx.fillStyle = '#241E1B';
-        ctx.font = '700 36px "Inter", "Segoe UI", sans-serif';
-        ctx.fillText(line.label, 98, y);
+      // Middle-upper zone (y = 224..536) reserved cleanly for the 3D origami emblem!
 
-        ctx.fillStyle = '#4A423C';
-        ctx.font = '600 28px "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
-        ctx.fillText(line.detail, 98, y + 42);
-        y += 108;
+      // Three crisp unboxed specification rows (y = 594..900)
+      let y = 602;
+      spec.specs.forEach((row, idx) => {
+        if (idx > 0) {
+          ctx.strokeStyle = 'rgba(36, 30, 27, 0.12)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(64, y - 42);
+          ctx.lineTo(cw - 64, y - 42);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#D94210';
+        ctx.font = '700 23px "Consolas", "Courier New", monospace';
+        ctx.fillText(row.tag, 64, y);
+
+        ctx.fillStyle = '#181310';
+        ctx.font = '700 33px "OctaEditorialSans", "Segoe UI", sans-serif';
+        ctx.fillText(row.head, 162, y);
+
+        ctx.fillStyle = '#3B342F';
+        ctx.font = '700 25px "Consolas", "Courier New", monospace';
+        ctx.fillText(row.detail, 162, y + 40);
+        y += 112;
       });
 
-      // Footer command block
-      ctx.fillStyle = '#241E1B';
-      ctx.fillRect(54, 964, c.width - 108, 114);
-      ctx.fillStyle = '#FF6B35';
-      ctx.font = '700 25px "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
-      ctx.fillText('$ ' + spec.cmd, 82, 1032);
+      // Crisp dark ink command footer band
+      ctx.fillStyle = '#1C1714';
+      ctx.fillRect(64, 976, cw - 128, 120);
+
+      ctx.fillStyle = '#B8AEA4';
+      ctx.font = '700 20px "Consolas", "Courier New", monospace';
+      ctx.fillText(spec.cmdLabel, 94, 1016);
+
+      ctx.fillStyle = '#FF7E4D';
+      ctx.font = '700 23px "Consolas", "Courier New", monospace';
+      ctx.fillText('$ ' + spec.cmd, 94, 1062);
 
       const tex = new THREE.CanvasTexture(c);
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -228,199 +290,251 @@
       return tex;
     }
 
-    // Build custom 3D origami emblem per pillar
-    function buildEmblem(kind) {
-      const g = new THREE.Group();
-      const whiteMat = new THREE.MeshStandardMaterial({ color: '#FAF7F2', roughness: 0.65, bumpMap: paperBump, bumpScale: 0.01 });
-      const darkMat = new THREE.MeshStandardMaterial({ color: '#241E1B', roughness: 0.58, bumpMap: paperBump, bumpScale: 0.01 });
-      const accentMat = new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.42, metalness: 0.06 });
+    // Custom 3D Origami Emblem Motifs (Delicate paper craft — NO blocky toy cubes!)
+    function buildOrigamiEmblem(kind) {
+      const group = new THREE.Group();
+      const ivoryMat = createCottonPaperMaterial({ color: '#FFFDF9', roughness: 0.78, bumpScale: 0.005 });
+      const boneMat = createCottonPaperMaterial({ color: '#EFE6D8', roughness: 0.84, bumpScale: 0.005 });
+      const graphiteMat = createCottonPaperMaterial({ color: '#241E1B', roughness: 0.68, sheen: 0.28 });
+      const terraMat = createCottonPaperMaterial({ color: '#E8501C', roughness: 0.56, sheen: 0.35 });
 
       if (kind === 'docker') {
-        // Layered hardened container cardstock blocks + Nginx reverse-proxy shield slab
-        const positions = [
-          [-0.28, 0.0, 0.06], [0.02, 0.0, 0.06], [0.32, 0.0, 0.06],
-          [-0.14, 0.24, 0.08], [0.16, 0.24, 0.08],
+        // Layered Container Planes: 4 crisp beveled architectural louvers + folded terracotta seal
+        const planes = [];
+        const planeSpecs = [
+          { w: 0.92, h: 0.34, z: 0.02, y: -0.09, rotX: -0.22, rotZ: -0.03, mat: graphiteMat },
+          { w: 0.84, h: 0.32, z: 0.07, y: -0.02, rotX: -0.18, rotZ: 0.01,  mat: boneMat },
+          { w: 0.76, h: 0.30, z: 0.12, y: 0.05,  rotX: -0.14, rotZ: 0.04,  mat: ivoryMat },
+          { w: 0.36, h: 0.18, z: 0.17, y: 0.11,  rotX: -0.10, rotZ: -0.02, mat: terraMat, x: 0.18 }
         ];
-        positions.forEach(([x, y, z], idx) => {
-          const b = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.19, 0.16), idx === 4 ? accentMat : whiteMat);
-          b.position.set(x, y, z);
-          b.castShadow = true;
-          g.add(b);
+        planeSpecs.forEach((ps) => {
+          const geo = createBeveledFolioGeo(ps.w, ps.h, 0.016, 0.02, 0.004);
+          const m = new THREE.Mesh(geo, ps.mat);
+          m.position.set(ps.x || 0, ps.y, ps.z);
+          m.rotation.set(ps.rotX, 0, ps.rotZ);
+          m.castShadow = true;
+          m.receiveShadow = true;
+          group.add(m);
+          planes.push({ mesh: m, baseZ: ps.z, baseRotX: ps.rotX });
         });
-        const base = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.11, 0.20), darkMat);
-        base.position.set(0.02, -0.18, 0.05);
-        base.castShadow = true;
-        g.add(base);
+        group.userData.animate = (wave) => {
+          planes.forEach((p, idx) => {
+            p.mesh.position.z = p.baseZ + wave * (idx * 0.018);
+            p.mesh.rotation.x = p.baseRotX + wave * 0.08;
+          });
+        };
       } else if (kind === 'jar') {
-        // Stepped Fat-JAR folio stack with central octagonal seal
-        for (let i = 0; i < 3; i++) {
-          const plate = new THREE.Mesh(
-            new THREE.BoxGeometry(0.86 - i * 0.12, 0.12, 0.22 - i * 0.03),
-            i === 1 ? darkMat : whiteMat
-          );
-          plate.position.set(0, -0.14 + i * 0.16, 0.04 + i * 0.03);
-          plate.castShadow = true;
-          g.add(plate);
-        }
-        const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 8), accentMat);
-        badge.rotation.x = Math.PI / 2;
-        badge.position.set(0.32, 0.18, 0.14);
-        badge.castShadow = true;
-        g.add(badge);
+        // Embossed Octagonal JAR Prism + Delicate Wing Clasps
+        const leftWing = new THREE.Mesh(createBeveledFolioGeo(0.46, 0.24, 0.014, 0.02, 0.004), boneMat);
+        leftWing.position.set(-0.28, 0.0, 0.04);
+        leftWing.rotation.y = 0.22;
+        leftWing.castShadow = true;
+        group.add(leftWing);
+
+        const rightWing = new THREE.Mesh(createBeveledFolioGeo(0.46, 0.24, 0.014, 0.02, 0.004), boneMat);
+        rightWing.position.set(0.28, 0.0, 0.04);
+        rightWing.rotation.y = -0.22;
+        rightWing.castShadow = true;
+        group.add(rightWing);
+
+        const outerOct = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.25, 0.024, 8), ivoryMat);
+        outerOct.rotation.x = Math.PI / 2;
+        outerOct.rotation.y = Math.PI / 8;
+        outerOct.position.z = 0.07;
+        outerOct.castShadow = true;
+        group.add(outerOct);
+
+        const midOct = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.175, 0.024, 8), graphiteMat);
+        midOct.rotation.x = Math.PI / 2;
+        midOct.rotation.y = Math.PI / 8;
+        midOct.position.z = 0.095;
+        midOct.castShadow = true;
+        group.add(midOct);
+
+        const coreOct = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.105, 0.022, 8), terraMat);
+        coreOct.rotation.x = Math.PI / 2;
+        coreOct.rotation.y = Math.PI / 8;
+        coreOct.position.z = 0.118;
+        coreOct.castShadow = true;
+        group.add(coreOct);
+
+        group.userData.animate = (wave) => {
+          leftWing.rotation.y = 0.22 + wave * 0.16;
+          rightWing.rotation.y = -0.22 - wave * 0.16;
+          coreOct.position.z = 0.118 + wave * 0.025;
+        };
       } else {
-        // Tri-fold native installer origami box (.exe / .dmg / .deb)
-        const box = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.44, 0.20), whiteMat);
-        box.position.set(0, -0.04, 0.06);
-        box.castShadow = true;
-        g.add(box);
+        // Folded Installer Folio: articulated origami folded sheet over recessed graphite backplate
+        const backPlate = new THREE.Mesh(createBeveledFolioGeo(0.84, 0.42, 0.014, 0.02, 0.004), graphiteMat);
+        backPlate.position.set(0, 0, 0.02);
+        backPlate.castShadow = true;
+        group.add(backPlate);
 
-        const leftFlap = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.04, 0.20), accentMat);
-        leftFlap.position.set(-0.14, 0.20, 0.06);
-        leftFlap.rotation.z = 0.28;
-        leftFlap.castShadow = true;
-        g.add(leftFlap);
+        const innerSheet = new THREE.Mesh(createBeveledFolioGeo(0.76, 0.36, 0.012, 0.018, 0.003), boneMat);
+        innerSheet.position.set(0, 0.02, 0.045);
+        innerSheet.castShadow = true;
+        group.add(innerSheet);
 
-        const rightFlap = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.04, 0.20), darkMat);
-        rightFlap.position.set(0.14, 0.20, 0.06);
-        rightFlap.rotation.z = -0.28;
-        rightFlap.castShadow = true;
-        g.add(rightFlap);
+        const folder = foldPlaneGeometry(0.78, 0.38, 20, 14);
+        folder.applyFold({ fold: 0.34, curl: 0.22, diagFold: 0.18, aoStrength: 0.22 });
+        const foldedWing = new THREE.Mesh(
+          folder.geometry,
+          createCottonPaperMaterial({ color: '#FFFDF9', vertexColors: true, roughness: 0.76, bumpScale: 0.005 })
+        );
+        foldedWing.position.set(0, 0.01, 0.075);
+        foldedWing.castShadow = true;
+        group.add(foldedWing);
+
+        // Delicate terracotta folded crease clasp
+        const spineClasp = new THREE.Mesh(createBeveledFolioGeo(0.06, 0.38, 0.018, 0.01, 0.003), terraMat);
+        spineClasp.position.set(0, 0.01, 0.09);
+        spineClasp.castShadow = true;
+        group.add(spineClasp);
+
+        group.userData.animate = (wave) => {
+          folder.applyFold({
+            fold: 0.28 + wave * 0.22,
+            curl: 0.18 + wave * 0.22,
+            diagFold: 0.14 + wave * 0.14,
+            aoStrength: 0.22
+          });
+        };
       }
-      return g;
+
+      return group;
     }
 
-    const specs = [
+    const folioSpecs = [
       {
         kind: 'docker',
-        x: -3.28,
+        x: -2.62,
+        rotY: 0.13,
         eyebrow: '01 / CONTAINER STACK',
-        title: 'Docker & Compose',
-        lines: [
-          { label: 'Alpine 3.24.4 + Nginx TLS', detail: 'Hardened multi-stage image' },
-          { label: 'read_only & cap_drop: ALL', detail: 'Unprivileged user 1000:1000' },
-          { label: 'internal: true Network', detail: 'Zero outbound egress' },
+        title: 'Docker & Hardened Compose',
+        subtitle: 'Multi-stage hardened runtime',
+        specs: [
+          { tag: 'BASE', head: 'Alpine 3.24.4 + Nginx TLS', detail: 'Non-root UID 1000:1000' },
+          { tag: 'LOCK', head: 'read_only · cap_drop: ALL', detail: 'no-new-privileges sandbox' },
+          { tag: 'NET',  head: 'internal: true Isolation', detail: 'Zero outbound cloud egress' }
         ],
-        cmd: 'docker compose -f docker-compose.prod.yml up',
+        cmdLabel: 'PRODUCTION COMPOSE',
+        cmd: 'docker compose -f docker-compose.prod.yml up -d'
       },
       {
         kind: 'jar',
         x: 0.0,
+        rotY: 0.0,
         eyebrow: '02 / JVM & DESKTOP UI',
-        title: 'Java 21+ Fat JAR',
-        lines: [
-          { label: 'Gradle bootJar Artifact', detail: 'Stirling-PDF-0.46.2.jar' },
-          { label: 'Local Desktop Mode', detail: 'STIRLING_PDF_DESKTOP_UI=true' },
-          { label: 'Port 8080 Localhost', detail: 'Offline PDFBox + LibreOffice' },
+        title: 'Java 21+ Fat JAR & Desktop',
+        subtitle: 'Standalone Spring Boot executable',
+        specs: [
+          { tag: 'JAR',  head: 'Gradle bootJar Artifact', detail: 'Stirling-PDF-0.46.2.jar' },
+          { tag: 'DESK', head: 'Local Desktop Wrapper', detail: 'STIRLING_PDF_DESKTOP_UI=true' },
+          { tag: 'CORE', head: 'Port 8080 Localhost', detail: 'PDFBox 3.0.5 + LibreOffice' }
         ],
-        cmd: './gradlew bootJar && java -jar build/libs/*.jar',
+        cmdLabel: 'BUILD EXECUTABLE JAR',
+        cmd: './gradlew bootJar'
       },
       {
         kind: 'native',
-        x: 3.28,
-        eyebrow: '03 / NATIVE BUILD',
-        title: 'Source Installers',
-        lines: [
-          { label: 'jpackage 1.6.1 Targets', detail: 'Windows .exe · macOS .dmg · .deb' },
-          { label: 'Launch4j 3.0.6 Wrapper', detail: 'Bundled Windows launcher' },
-          { label: 'Built From main Branch', detail: 'Verified source packaging' },
+        x: 2.62,
+        rotY: -0.13,
+        eyebrow: '03 / SOURCE PACKAGING',
+        title: 'Native Source Packaging',
+        subtitle: 'Platform bundles from main',
+        specs: [
+          { tag: 'PKG',  head: 'jpackage 1.6.1 Targets', detail: 'Windows .exe · macOS .dmg · .deb' },
+          { tag: 'WIN',  head: 'Launch4j 3.0.6 Wrapper', detail: 'Bundled Windows executable' },
+          { tag: 'GIT',  head: 'Built From main Branch', detail: '0 prebuilt releases — source only' }
         ],
-        cmd: './gradlew jpackage',
-      },
+        cmdLabel: 'PACKAGE NATIVE BUNDLE',
+        cmd: './gradlew jpackage'
+      }
     ];
 
-    const pillars = [];
+    const folios = [];
+    const folioW = 2.18;
+    const folioH = 2.46;
 
-    specs.forEach((spec, idx) => {
-      const group = new THREE.Group();
-      group.position.set(spec.x, 0, 0);
+    folioSpecs.forEach((spec, idx) => {
+      const root = new THREE.Group();
+      root.position.set(spec.x, 0.05, idx === 1 ? 0.14 : -0.06);
+      root.rotation.y = spec.rotY;
 
-      // Stepped Paper Desk plinth under each pillar
-      const plinth = new THREE.Mesh(
-        new THREE.BoxGeometry(2.92, 0.14, 1.55),
-        new THREE.MeshStandardMaterial({ color: '#EAE1D5', roughness: 0.85, bumpMap: paperBump, bumpScale: 0.01 })
+      // Slight architectural back-folio sleeve peeking diagonally with terracotta spine edge
+      const sleeve = new THREE.Mesh(
+        createBeveledFolioGeo(folioW, folioH, 0.022, 0.055, 0.008),
+        createCottonPaperMaterial({ color: '#EAE1D5', roughness: 0.86 })
       );
-      plinth.position.y = 0.07;
-      plinth.castShadow = true;
-      plinth.receiveShadow = true;
-      group.add(plinth);
+      sleeve.position.set(0.055, -0.045, -0.045);
+      sleeve.castShadow = true;
+      sleeve.receiveShadow = true;
+      root.add(sleeve);
 
-      // Tilted architectural cardstock monolith
-      const cardPivot = new THREE.Group();
-      cardPivot.position.set(0, 0.14, 0);
-      cardPivot.rotation.x = -0.34;
-      group.add(cardPivot);
+      const spineAccent = new THREE.Mesh(
+        createBeveledFolioGeo(0.08, folioH * 0.88, 0.018, 0.012, 0.005),
+        createCottonPaperMaterial({ color: '#E8501C', roughness: 0.58, sheen: 0.35 })
+      );
+      spineAccent.position.set(-folioW * 0.5 - 0.018, 0.0, -0.022);
+      spineAccent.castShadow = true;
+      root.add(spineAccent);
 
-      const tex = makeCardTexture(spec);
-      const sideMat = new THREE.MeshStandardMaterial({ color: '#EAE1D5', roughness: 0.8 });
-      const frontMat = new THREE.MeshStandardMaterial({
+      // Main cotton-cardstock folio slab
+      const tex = makeFolioTexture(spec);
+      const cardSideMat = createCottonPaperMaterial({ color: '#EDE4D8', roughness: 0.84 });
+      const cardFrontMat = createCottonPaperMaterial({
         map: tex,
-        roughness: 0.62,
-        metalness: 0.01,
-        bumpMap: paperBump,
-        bumpScale: 0.005,
+        roughness: 0.88,
+        sheen: 0.10,
+        envMapIntensity: 0.34,
+        bumpScale: 0.004
       });
 
+      // ExtrudeGeometry uses material group 0 for front/back faces and group 1 for bevel/sides
       const cardMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(2.58, 2.82, 0.09),
-        [sideMat, sideMat, sideMat, sideMat, frontMat, sideMat]
+        createBeveledFolioGeo(folioW, folioH, 0.042, 0.055, 0.012),
+        [cardFrontMat, cardSideMat]
       );
-      cardMesh.position.y = 1.41;
       cardMesh.castShadow = true;
       cardMesh.receiveShadow = true;
-      cardPivot.add(cardMesh);
+      root.add(cardMesh);
 
-      // Backing folded accent sleeve behind card
-      const sleeve = new THREE.Mesh(
-        new THREE.BoxGeometry(2.68, 2.70, 0.05),
-        new THREE.MeshStandardMaterial({ color: '#241E1B', roughness: 0.7 })
-      );
-      sleeve.position.set(0.06, 1.35, -0.07);
-      sleeve.castShadow = true;
-      cardPivot.add(sleeve);
+      // Mount custom 3D origami emblem in the open relief bay (center-upper region y ~ +0.42)
+      const emblem = buildOrigamiEmblem(spec.kind);
+      emblem.position.set(0, 0.42, 0.065);
+      emblem.rotation.x = 0.16;
+      root.add(emblem);
 
-      // Hinged origami terracotta tab rising cleanly along top edge (never obscuring eyebrow)
-      const flapPivot = new THREE.Group();
-      flapPivot.position.set(0, 2.82, 0.02);
-      cardPivot.add(flapPivot);
-
-      const flap = new THREE.Mesh(
-        new THREE.BoxGeometry(2.58, 0.16, 0.03),
-        new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.45 })
-      );
-      flap.position.set(0, 0.08, 0.015);
-      flap.castShadow = true;
-      flapPivot.add(flap);
-
-      // 3D geometric paper emblem mounted in upper card window
-      const emblem = buildEmblem(spec.kind);
-      emblem.position.set(0, 1.92, 0.12);
-      cardPivot.add(emblem);
-
-      scene.add(group);
-      pillars.push({
-        group,
-        cardPivot,
-        flapPivot,
+      scene.add(root);
+      folios.push({
+        root,
         emblem,
-        phase: (idx * Math.PI * 2) / 3,
+        baseX: spec.x,
+        baseZ: idx === 1 ? 0.14 : -0.06,
+        baseRotY: spec.rotY,
+        phase: (idx * Math.PI * 2) / 3
       });
     });
 
     window.renderFrame = function renderFrame(i, totalFrames, t) {
       const theta = t * Math.PI * 2;
 
-      // Directional key light sweeps cleanly across Pillar 1 -> Pillar 2 -> Pillar 3
-      sweepLight.position.x = Math.sin(theta) * 5.2;
-      sweepLight.position.z = 5.0 + Math.cos(theta) * 0.8;
+      // Gentle sweeping museum softbox highlight across the 3 folios
+      lights.key.position.x = 1.8 + Math.sin(theta) * 3.8;
+      lights.key.position.z = 5.0 + Math.cos(theta) * 0.7;
 
-      pillars.forEach((p) => {
-        const wave = 0.5 + 0.5 * Math.sin(theta - p.phase);
-        const smooth = wave * wave * (3 - 2 * wave);
-        p.group.position.y = smooth * 0.14;
-        p.cardPivot.rotation.x = -0.34 + smooth * 0.09;
-        p.flapPivot.rotation.x = -0.15 - smooth * 0.35;
-        p.emblem.position.z = 0.12 + smooth * 0.08;
-        p.emblem.rotation.y = Math.sin(theta - p.phase) * 0.18;
+      folios.forEach((f) => {
+        const raw = 0.5 + 0.5 * Math.sin(theta - f.phase);
+        const wave = raw * raw * (3 - 2 * raw);
+
+        // Graceful architectural hover & subtle gallery tilt
+        f.root.position.y = 0.02 + wave * 0.095;
+        f.root.rotation.x = -0.075 + wave * 0.045;
+        f.root.rotation.y = f.baseRotY + Math.sin(theta - f.phase) * 0.055;
+
+        if (f.emblem.userData.animate) {
+          f.emblem.userData.animate(wave);
+        }
       });
 
       renderer.render(scene, camera);
