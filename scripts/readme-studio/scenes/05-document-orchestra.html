@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Document Orchestra (Level 5)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .hud-top {
+      position: absolute;
+      top: 24px;
+      left: 34px;
+      right: 34px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .hud-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: #6E645D;
+      text-transform: uppercase;
+    }
+    .hud-dot {
+      width: 7px;
+      height: 7px;
+      background: #E8501C;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    }
+    .hud-meta {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: #6E645D;
+    }
+    .hud-bottom {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid #E8E2D8;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.06);
+      pointer-events: none;
+    }
+    .phase-pill {
+      position: relative;
+      padding: 4px 11px 6px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: #8A7F76;
+    }
+    .phase-pill.active {
+      color: #241E1B;
+    }
+    .phase-pill .bar {
+      position: absolute;
+      left: 11px;
+      right: 11px;
+      bottom: 1px;
+      height: 2px;
+      border-radius: 2px;
+      background: #E8501C;
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+    .phase-pill.active .bar {
+      transform: scaleX(1);
+    }
+    .phase-sep {
+      color: #D2C9BD;
+      font-size: 11px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-top">
+    <div class="hud-kicker">
+      <span class="hud-dot"></span>
+      <span>OCTAPDF // DOCUMENT ORCHESTRA</span>
+    </div>
+    <div class="hud-meta" id="hud-sub">LOCAL PAPER ENGINE · 6-SHEET FOLIO</div>
+  </div>
+
+  <div class="hud-bottom" id="phase-bar">
+    <div class="phase-pill" data-phase="0">MERGE<span class="bar"></span></div>
+    <span class="phase-sep">·</span>
+    <div class="phase-pill" data-phase="1">SPLIT<span class="bar"></span></div>
+    <span class="phase-sep">·</span>
+    <div class="phase-pill" data-phase="2">REORDER<span class="bar"></span></div>
+    <span class="phase-sep">·</span>
+    <div class="phase-pill" data-phase="3">COMPRESS<span class="bar"></span></div>
+    <span class="phase-sep">·</span>
+    <div class="phase-pill" data-phase="4">SIGN<span class="bar"></span></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      PALETTE,
+      clamp01,
+      smoothstep,
+      smootherstep,
+      easeInOutCubic,
+      cubicBezier3,
+      createPaperFiberMaps,
+      createDocumentPageTexture,
+      createPaperSheetMesh,
+      setupStudioLighting,
+      createOctagonalSeal,
+    } from '/scripts/readme-studio/scenes/paper-utils.js';
+
+    const W = window.innerWidth || 1200;
+    const H = window.innerHeight || 600;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.02;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(PALETTE.canvas, 8.0, 15.5);
+    setupStudioLighting(scene, {
+      background: PALETTE.canvas,
+      shadowExtent: 5.2,
+      keyPosition: [4.0, 7.6, 5.2],
+      keyIntensity: 2.1,
+    });
+
+    const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 60);
+    camera.position.set(0, 2.35, 5.35);
+    camera.lookAt(0, 0.08, 0);
+
+    // Architectural drafting desk + recessed paper mat
+    const { bumpMap } = createPaperFiberMaps(512, 107);
+
+    const desk = new THREE.Mesh(
+      new THREE.PlaneGeometry(24, 16),
+      new THREE.MeshStandardMaterial({ color: '#F3EDE3', roughness: 0.94, metalness: 0.0 })
+    );
+    desk.rotation.x = -Math.PI / 2;
+    desk.position.y = -0.95;
+    desk.receiveShadow = true;
+    scene.add(desk);
+
+    const deskMat = new THREE.Mesh(
+      new THREE.BoxGeometry(5.8, 0.02, 3.4),
+      new THREE.MeshStandardMaterial({
+        color: '#FAF7F2',
+        roughness: 0.88,
+        bumpMap,
+        bumpScale: 0.002,
+      })
+    );
+    deskMat.position.set(0, -0.94, 0.05);
+    deskMat.receiveShadow = true;
+    scene.add(deskMat);
+
+    // Fine drafting alignment crosshairs on the desk mat
+    const gridMat = new THREE.LineBasicMaterial({ color: '#DED5C8', transparent: true, opacity: 0.85 });
+    const gridPts = [];
+    for (let x = -2.4; x <= 2.41; x += 0.6) {
+      gridPts.push(new THREE.Vector3(x, -0.928, -1.3), new THREE.Vector3(x, -0.928, 1.4));
+    }
+    for (let z = -1.2; z <= 1.21; z += 0.6) {
+      gridPts.push(new THREE.Vector3(-2.6, -0.928, z), new THREE.Vector3(2.6, -0.928, z));
+    }
+    const deskGrid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPts), gridMat);
+    scene.add(deskGrid);
+
+    // Master stage group
+    const stageGroup = new THREE.Group();
+    scene.add(stageGroup);
+
+    // 6 distinct architectural paper sheets
+    const sheetConfigs = [
+      { idx: '01', title: 'EXECUTIVE SUMMARY', variant: 'prose', hasSignatureGuide: true, hasStampTarget: true },
+      { idx: '02', title: 'SYSTEM ARCHITECTURE', variant: 'diagram', hasSignatureGuide: false, hasStampTarget: false },
+      { idx: '03', title: 'FOLIO SPECIFICATION', variant: 'columns', hasSignatureGuide: false, hasStampTarget: false },
+      { idx: '04', title: 'SECURITY CONTROLS', variant: 'prose', hasSignatureGuide: false, hasStampTarget: false },
+      { idx: '05', title: 'OCR & CONVERSION', variant: 'diagram', hasSignatureGuide: false, hasStampTarget: false },
+      { idx: '06', title: 'ARCHIVE APPENDIX', variant: 'columns', hasSignatureGuide: false, hasStampTarget: false },
+    ];
+
+    const SHEET_W = 1.38;
+    const SHEET_H = 1.84;
+    const SHEET_T = 0.022;
+    const BASE_TILT = -Math.PI * 0.27;
+
+    const sheets = sheetConfigs.map((cfg, i) => {
+      const tex = createDocumentPageTexture({
+        pageIndex: cfg.idx,
+        title: cfg.title,
+        variant: cfg.variant,
+        hasSignatureGuide: cfg.hasSignatureGuide,
+        hasStampTarget: cfg.hasStampTarget,
+        bg: i === 0 ? '#FFFFFF' : '#FDFBF7',
+      });
+      const mesh = createPaperSheetMesh({
+        width: SHEET_W,
+        height: SHEET_H,
+        thickness: SHEET_T,
+        frontTexture: tex,
+        bumpMap,
+      });
+      stageGroup.add(mesh);
+      return mesh;
+    });
+
+    // Terracotta Spine Clasp (appears when merged)
+    const spineClasp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, SHEET_H * 0.92, 0.19),
+      new THREE.MeshStandardMaterial({
+        color: PALETTE.accent,
+        roughness: 0.34,
+        metalness: 0.08,
+      })
+    );
+    spineClasp.castShadow = true;
+    spineClasp.receiveShadow = true;
+    spineClasp.rotation.x = BASE_TILT;
+    stageGroup.add(spineClasp);
+
+    // Chapter seam laser/crease blade (appears during Split)
+    const seamBlade = new THREE.Mesh(
+      new THREE.BoxGeometry(0.016, SHEET_H * 1.18, 0.36),
+      new THREE.MeshStandardMaterial({
+        color: PALETTE.accent,
+        emissive: PALETTE.ribbonFace,
+        emissiveIntensity: 0.55,
+        roughness: 0.25,
+      })
+    );
+    seamBlade.rotation.x = BASE_TILT;
+    seamBlade.visible = false;
+    stageGroup.add(seamBlade);
+
+    // Compress Phase: Articulated 3D Accordion Bellows + Graphite Compression Platens
+    const bellowsGroup = new THREE.Group();
+    bellowsGroup.position.set(0, 0.06, 0.12);
+    bellowsGroup.rotation.set(-0.24, 0.44, 0);
+    stageGroup.add(bellowsGroup);
+
+    const PLEAT_COUNT = 10;
+    const PLEAT_W = 0.34;
+    const PLEAT_H = 1.62;
+    const pleats = [];
+    for (let p = 0; p < PLEAT_COUNT; p++) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: p % 2 === 0 ? '#FFFFFF' : '#EFE7DB',
+        roughness: 0.66,
+        bumpMap,
+        bumpScale: 0.003,
+        side: THREE.DoubleSide,
+      });
+      const pleat = new THREE.Mesh(new THREE.BoxGeometry(PLEAT_W, PLEAT_H, 0.016), mat);
+      pleat.castShadow = true;
+      pleat.receiveShadow = true;
+      bellowsGroup.add(pleat);
+      pleats.push(pleat);
+    }
+
+    const platenGeo = new THREE.BoxGeometry(0.065, PLEAT_H + 0.14, 0.62);
+    const platenMat = new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.42, metalness: 0.18 });
+    const leftPlaten = new THREE.Mesh(platenGeo, platenMat);
+    const rightPlaten = new THREE.Mesh(platenGeo, platenMat);
+    leftPlaten.castShadow = true;
+    rightPlaten.castShadow = true;
+    bellowsGroup.add(leftPlaten, rightPlaten);
+
+    // Terracotta compression guide rods (scale dynamically with platen span)
+    const railMat = new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.32, metalness: 0.2 });
+    const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.0, 16), railMat);
+    topRail.rotation.z = Math.PI / 2;
+    topRail.position.set(0, PLEAT_H * 0.5 + 0.04, 0);
+    const botRail = topRail.clone();
+    botRail.position.set(0, -PLEAT_H * 0.5 - 0.04, 0);
+    bellowsGroup.add(topRail, botRail);
+    bellowsGroup.visible = false;
+
+    // Sign & Annotate Phase: Attached to Sheet 0 local space so ink/seal move rigidly with Sheet 0!
+    const sigAnchor = new THREE.Group();
+    sheets[0].add(sigAnchor);
+
+    // Signature field coordinates in Sheet 0 local space (SHEET_W=1.38, SHEET_H=1.84)
+    const sigPoints = [
+      new THREE.Vector3(-0.46, -0.60, 0.020),
+      new THREE.Vector3(-0.37, -0.50, 0.022),
+      new THREE.Vector3(-0.32, -0.62, 0.020),
+      new THREE.Vector3(-0.22, -0.53, 0.022),
+      new THREE.Vector3(-0.16, -0.61, 0.020),
+      new THREE.Vector3(-0.07, -0.55, 0.022),
+      new THREE.Vector3(0.01, -0.60, 0.020),
+      new THREE.Vector3(-0.28, -0.65, 0.021),
+      new THREE.Vector3(0.05, -0.63, 0.021),
+    ];
+    const sigCurve = new THREE.CatmullRomCurve3(sigPoints);
+    const SIG_TUBULAR = 120;
+    const SIG_RADIAL = 10;
+    const sigGeo = new THREE.TubeGeometry(sigCurve, SIG_TUBULAR, 0.013, SIG_RADIAL, false);
+    const sigMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.accent,
+      emissive: PALETTE.ribbonShadow,
+      emissiveIntensity: 0.25,
+      roughness: 0.28,
+      metalness: 0.08,
+    });
+    const sigMesh = new THREE.Mesh(sigGeo, sigMat);
+    sigMesh.castShadow = true;
+    sigAnchor.add(sigMesh);
+
+    const nibMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.021, 16, 16),
+      new THREE.MeshStandardMaterial({
+        color: PALETTE.ribbonLight,
+        emissive: PALETTE.accent,
+        emissiveIntensity: 0.65,
+        roughness: 0.2,
+      })
+    );
+    sigAnchor.add(nibMesh);
+
+    const sealMesh = createOctagonalSeal(0.115, 0.018);
+    sealMesh.position.set(0.39, -0.58, 0.02);
+    sigAnchor.add(sealMesh);
+
+    const phasePills = Array.from(document.querySelectorAll('.phase-pill'));
+    const hudSub = document.getElementById('hud-sub');
+    const phaseLabels = [
+      'MERGE // BEZIER ASSEMBLY',
+      'SPLIT // CHAPTER SEAM SEPARATION',
+      'REORDER & ROTATE // 90° Z-LIFT',
+      'COMPRESS // BELLOWS VOLUME',
+      'SIGN & ANNOTATE // VECTOR INK + SEAL',
+    ];
+
+    function setActivePhase(idx) {
+      phasePills.forEach((el, k) => el.classList.toggle('active', k === idx));
+      hudSub.textContent = phaseLabels[idx];
+    }
+
+    const tmpPos = new THREE.Vector3();
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      // Subtle seamless studio camera breath
+      const orbit = t * Math.PI * 2;
+      camera.position.set(Math.sin(orbit) * 0.28, 2.32 + Math.cos(orbit) * 0.06, 5.32);
+      camera.lookAt(0, 0.06, 0);
+
+      // Determine active editorial phase
+      if (t < 0.21) setActivePhase(0);
+      else if (t < 0.39) setActivePhase(1);
+      else if (t < 0.59) setActivePhase(2);
+      else if (t < 0.77) setActivePhase(3);
+      else setActivePhase(4);
+
+      // Default visibility
+      bellowsGroup.visible = false;
+      seamBlade.visible = false;
+      sigAnchor.visible = false;
+      spineClasp.visible = false;
+
+      // Reset all sheet transforms cleanly
+      for (let s = 0; s < sheets.length; s++) {
+        sheets[s].visible = true;
+        sheets[s].scale.set(1, 1, 1);
+        sheets[s].rotation.set(BASE_TILT, 0, 0);
+      }
+
+      if (t < 0.21) {
+        // PHASE 1: MERGE (0.00 -> 0.21)
+        const u = smootherstep(0.015, 0.17, t);
+        for (let s = 0; s < sheets.length; s++) {
+          const isLeft = s < 3;
+          const localIdx = isLeft ? s : s - 3;
+          const p0 = new THREE.Vector3(isLeft ? -1.48 - localIdx * 0.04 : 1.48 + localIdx * 0.04, 0.14 - localIdx * 0.04, isLeft ? 0.22 - localIdx * 0.05 : -0.22 - localIdx * 0.05);
+          const p1 = new THREE.Vector3(isLeft ? -0.95 : 0.95, 0.52 + (5 - s) * 0.04, isLeft ? 0.36 : -0.18);
+          const p2 = new THREE.Vector3(isLeft ? -0.25 : 0.25, 0.26, 0.08 - s * 0.025);
+          const p3 = new THREE.Vector3(0, 0.04 - s * 0.012, 0.12 - s * 0.036);
+          cubicBezier3(p0, p1, p2, p3, u, tmpPos);
+          sheets[s].position.copy(tmpPos);
+          sheets[s].rotation.y = (isLeft ? 0.24 : -0.24) * (1 - u);
+          sheets[s].rotation.z = (isLeft ? 0.06 : -0.06) * (1 - u);
+        }
+        const claspIn = smootherstep(0.15, 0.20, t);
+        if (claspIn > 0.01) {
+          spineClasp.visible = true;
+          spineClasp.position.set(-SHEET_W * 0.5 - 0.015 - (1 - claspIn) * 0.35, 0.01, 0.03);
+          spineClasp.scale.setScalar(0.5 + 0.5 * claspIn);
+        }
+      } else if (t < 0.39) {
+        // PHASE 2: SPLIT (0.21 -> 0.39)
+        const claspOut = 1 - smootherstep(0.21, 0.25, t);
+        if (claspOut > 0.02) {
+          spineClasp.visible = true;
+          spineClasp.position.set(-SHEET_W * 0.5 - 0.015 - (1 - claspOut) * 0.35, 0.01, 0.03);
+          spineClasp.scale.setScalar(claspOut);
+        }
+
+        const splitU = smootherstep(0.22, 0.35, t);
+        for (let s = 0; s < sheets.length; s++) {
+          const isFront = s < 3;
+          const localIdx = isFront ? s : s - 3;
+          const baseZ = 0.12 - s * 0.036;
+          const baseY = 0.04 - s * 0.012;
+          const targetX = isFront ? -1.04 - localIdx * 0.035 : 1.04 + localIdx * 0.035;
+          const targetY = isFront ? 0.08 - localIdx * 0.03 : 0.02 - localIdx * 0.03;
+          const targetZ = isFront ? 0.18 - localIdx * 0.04 : -0.14 - localIdx * 0.04;
+          sheets[s].position.set(
+            targetX * splitU,
+            THREE.MathUtils.lerp(baseY, targetY, splitU),
+            THREE.MathUtils.lerp(baseZ, targetZ, splitU)
+          );
+          sheets[s].rotation.y = (isFront ? 0.16 : -0.16) * splitU;
+        }
+
+        const bladeFade = Math.sin(clamp01((t - 0.235) / 0.12) * Math.PI);
+        if (bladeFade > 0.02 && splitU > 0.15) {
+          seamBlade.visible = true;
+          seamBlade.position.set(0, 0.04, 0.02);
+          seamBlade.scale.set(1, bladeFade, 1);
+        }
+      } else if (t < 0.59) {
+        // PHASE 3: REORDER & ROTATE (0.39 -> 0.59)
+        const gatherU = smootherstep(0.39, 0.44, t);
+        const liftU = smootherstep(0.43, 0.48, t);
+        const rotU = easeInOutCubic(clamp01((t - 0.45) / 0.07));
+        const slotU = smootherstep(0.51, 0.56, t);
+        const unrotU = easeInOutCubic(clamp01((t - 0.56) / 0.03));
+
+        for (let s = 0; s < sheets.length; s++) {
+          const isFront = s < 3;
+          const localIdx = isFront ? s : s - 3;
+          const startX = isFront ? -1.04 - localIdx * 0.035 : 1.04 + localIdx * 0.035;
+          const startY = isFront ? 0.08 - localIdx * 0.03 : 0.02 - localIdx * 0.03;
+          const startZ = isFront ? 0.18 - localIdx * 0.04 : -0.14 - localIdx * 0.04;
+
+          let orderIdx = s;
+          if (s === 0 || s === 1) orderIdx = s + slotU;
+          else if (s === 2) orderIdx = 2 * (1 - slotU);
+
+          const deckX = THREE.MathUtils.lerp(startX, 0, gatherU);
+          const deckY = THREE.MathUtils.lerp(startY, 0.04 - orderIdx * 0.014, gatherU);
+          const deckZ = THREE.MathUtils.lerp(startZ, 0.12 - orderIdx * 0.042, gatherU);
+
+          sheets[s].position.set(deckX, deckY, deckZ);
+          sheets[s].rotation.y = (isFront ? 0.16 : -0.16) * (1 - gatherU);
+
+          if (s === 2) {
+            const liftAmt = Math.sin(clamp01((t - 0.43) / 0.12) * Math.PI);
+            sheets[s].position.z += liftAmt * 0.72;
+            sheets[s].position.y += liftAmt * 0.34;
+            sheets[s].position.x += Math.sin(clamp01((t - 0.43) / 0.12) * Math.PI) * 0.42;
+            sheets[s].rotation.z = (Math.PI / 2) * (rotU * (1 - unrotU));
+          }
+        }
+      } else if (t < 0.77) {
+        // PHASE 4: COMPRESS (0.59 -> 0.77)
+        const enterBellows = smootherstep(0.59, 0.63, t);
+        const exitBellows = smootherstep(0.735, 0.77, t);
+
+        if (enterBellows < 1 || exitBellows > 0) {
+          const stackAlpha = enterBellows < 1 ? 1 - enterBellows : exitBellows;
+          for (let s = 0; s < sheets.length; s++) {
+            sheets[s].visible = stackAlpha > 0.04;
+            sheets[s].position.set(0, 0.04 - s * 0.012, 0.12 - s * 0.036);
+            sheets[s].scale.setScalar(Math.max(0.01, stackAlpha));
+          }
+        } else {
+          for (let s = 0; s < sheets.length; s++) sheets[s].visible = false;
+        }
+
+        const bellowsScale = enterBellows * (1 - exitBellows);
+        if (bellowsScale > 0.02) {
+          bellowsGroup.visible = true;
+          bellowsGroup.scale.setScalar(bellowsScale);
+
+          // Expand then compress smoothly into tight volume
+          const compressU = smootherstep(0.635, 0.735, t);
+          const totalSpan = THREE.MathUtils.lerp(2.55, 0.56, compressU);
+          const stepX = totalSpan / PLEAT_COUNT;
+          const halfSpan = totalSpan * 0.5;
+
+          const angle = Math.acos(clamp01((stepX) / PLEAT_W) * 0.96);
+          for (let p = 0; p < PLEAT_COUNT; p++) {
+            const xCenter = -halfSpan + (p + 0.5) * stepX;
+            const sign = p % 2 === 0 ? 1 : -1;
+            pleats[p].position.set(xCenter, 0, 0);
+            pleats[p].rotation.y = sign * angle;
+          }
+          leftPlaten.position.set(-halfSpan - 0.04, 0, 0);
+          rightPlaten.position.set(halfSpan + 0.04, 0, 0);
+          topRail.scale.y = totalSpan + 0.34;
+          botRail.scale.y = totalSpan + 0.34;
+        }
+      } else if (t < 0.92) {
+        // PHASE 5: SIGN & ANNOTATE (0.77 -> 0.92)
+        const presentU = smootherstep(0.77, 0.81, t);
+        for (let s = 0; s < sheets.length; s++) {
+          if (s === 0) {
+            sheets[s].position.set(0, THREE.MathUtils.lerp(0.04, 0.16, presentU), THREE.MathUtils.lerp(0.12, 0.58, presentU));
+            sheets[s].rotation.x = THREE.MathUtils.lerp(BASE_TILT, -0.18, presentU);
+          } else {
+            sheets[s].position.set(0, 0.04 - s * 0.012, 0.12 - s * 0.036 - presentU * 0.25);
+          }
+        }
+
+        sigAnchor.visible = true;
+        const drawU = clamp01((t - 0.805) / 0.07);
+        const segCount = Math.floor(drawU * SIG_TUBULAR);
+        sigGeo.setDrawRange(0, segCount * SIG_RADIAL * 6);
+
+        if (drawU > 0.01 && drawU < 0.99) {
+          nibMesh.visible = true;
+          nibMesh.position.copy(sigCurve.getPointAt(drawU));
+        } else {
+          nibMesh.visible = false;
+        }
+
+        const sealU = smootherstep(0.865, 0.905, t);
+        if (sealU > 0.01) {
+          sealMesh.visible = true;
+          const dropZ = (1 - sealU) * 0.35;
+          sealMesh.position.set(0.39, -0.58, 0.02 + dropZ);
+          sealMesh.scale.setScalar(0.55 + 0.45 * sealU);
+        } else {
+          sealMesh.visible = false;
+        }
+      } else {
+        // PHASE 6: SEAMLESS LOOP RETURN (0.92 -> 1.00)
+        const u = smootherstep(0.92, 0.995, t);
+        const sigFade = 1 - smootherstep(0.92, 0.955, t);
+        if (sigFade > 0.02) {
+          sigAnchor.visible = true;
+          sigGeo.setDrawRange(0, Math.floor(sigFade * SIG_TUBULAR) * SIG_RADIAL * 6);
+          nibMesh.visible = false;
+          sealMesh.visible = true;
+          sealMesh.scale.setScalar(sigFade);
+        }
+
+        for (let s = 0; s < sheets.length; s++) {
+          const isLeft = s < 3;
+          const localIdx = isLeft ? s : s - 3;
+          const startPos = s === 0
+            ? new THREE.Vector3(0, 0.16, 0.58)
+            : new THREE.Vector3(0, 0.04 - s * 0.012, -0.13 - s * 0.036);
+          const p3 = new THREE.Vector3(
+            isLeft ? -1.48 - localIdx * 0.04 : 1.48 + localIdx * 0.04,
+            0.14 - localIdx * 0.04,
+            isLeft ? 0.22 - localIdx * 0.05 : -0.22 - localIdx * 0.05
+          );
+          const p1 = new THREE.Vector3(isLeft ? -0.35 : 0.35, 0.36, 0.25);
+          const p2 = new THREE.Vector3(isLeft ? -1.05 : 1.05, 0.44, isLeft ? 0.32 : -0.20);
+          cubicBezier3(startPos, p1, p2, p3, u, tmpPos);
+          sheets[s].position.copy(tmpPos);
+
+          const startTilt = s === 0 ? -0.18 : BASE_TILT;
+          sheets[s].rotation.x = THREE.MathUtils.lerp(startTilt, BASE_TILT, u);
+          sheets[s].rotation.y = (isLeft ? 0.24 : -0.24) * u;
+          sheets[s].rotation.z = (isLeft ? 0.06 : -0.06) * u;
+        }
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    window.sceneReady = Promise.resolve();
+  </script>
+</body>
+</html>

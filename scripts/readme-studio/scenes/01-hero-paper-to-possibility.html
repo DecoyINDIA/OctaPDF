@@ -1,0 +1,1134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — From Paper to Possibility</title>
+  <style>
+    @font-face {
+      font-family: 'OctaSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1200px;
+      height: 580px;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: 'OctaSans', 'Segoe UI', system-ui, sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 1200px;
+      height: 580px;
+    }
+    canvas {
+      display: block;
+      width: 1200px;
+      height: 580px;
+    }
+
+    /* Editorial Kinetic Typography Overlay (Scene 5) */
+    #editorial-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1200px;
+      height: 580px;
+      pointer-events: none;
+    }
+
+    .brand-lockup {
+      position: absolute;
+      left: 615px;
+      top: 172px;
+      width: 515px;
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #6E645D;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #E8501C;
+      display: inline-block;
+    }
+
+    .wordmark {
+      font-size: 76px;
+      line-height: 0.96;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 18px 0;
+      overflow: hidden;
+    }
+    .wordmark .octa { color: #241E1B; }
+    .wordmark .pdf  { color: #E8501C; }
+
+    .rule-bar {
+      height: 2px;
+      width: 0px;
+      background: linear-gradient(90deg, #FE9114 0%, #F54702 55%, #D53902 100%);
+      margin-bottom: 18px;
+      border-radius: 2px;
+    }
+
+    .tagline {
+      font-size: 21px;
+      line-height: 1.42;
+      font-weight: 400;
+      color: #241E1B;
+      letter-spacing: -0.01em;
+      margin: 0 0 18px 0;
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+
+    .meta-strip {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #6E645D;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .meta-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #D53902;
+      opacity: 0.55;
+    }
+
+    /* Subtle architectural corner brackets */
+    .corner-mark {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: rgba(110, 100, 93, 0.24);
+      border-style: solid;
+      border-width: 0;
+    }
+    .corner-tl { top: 24px; left: 26px; border-top-width: 1px; border-left-width: 1px; }
+    .corner-tr { top: 24px; right: 26px; border-top-width: 1px; border-right-width: 1px; }
+    .corner-bl { bottom: 24px; left: 26px; border-bottom-width: 1px; border-left-width: 1px; }
+    .corner-br { bottom: 24px; right: 26px; border-bottom-width: 1px; border-right-width: 1px; }
+
+    .scene-caption {
+      position: absolute;
+      left: 34px;
+      bottom: 26px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      color: #6E645D;
+      opacity: 0.72;
+    }
+    .scene-caption span {
+      color: #E8501C;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="editorial-hud">
+      <div class="corner-mark corner-tl"></div>
+      <div class="corner-mark corner-tr"></div>
+      <div class="corner-mark corner-bl"></div>
+      <div class="corner-mark corner-br"></div>
+
+      <div class="brand-lockup" id="brandLockup">
+        <div class="eyebrow"><span class="eyebrow-dot"></span>Project Origami &middot; Paper Desk</div>
+        <div class="wordmark"><span class="octa">OCTA</span><span class="pdf">PDF</span></div>
+        <div class="rule-bar" id="ruleBar"></div>
+        <p class="tagline" id="tagline">Local-first PDF craft. Precision paper architecture.</p>
+        <div class="meta-strip" id="metaStrip">
+          <span>Zero Telemetry</span>
+          <span class="meta-sep"></span>
+          <span>Self-Hosted</span>
+          <span class="meta-sep"></span>
+          <span>MIT Open Source</span>
+        </div>
+      </div>
+
+      <div class="scene-caption" id="sceneCaption"><span>01</span>Single Sheet &middot; Paper Fiber Studio</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = 1200;
+    const H = 580;
+
+    // Deterministic PRNG for procedural textures
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function () {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smooth = (t) => {
+      const x = clamp01(t);
+      return x * x * (3 - 2 * x);
+    };
+    const smoother = (t) => {
+      const x = clamp01(t);
+      return x * x * x * (x * (x * 6 - 15) + 10);
+    };
+    const band = (t, a, b) => smooth((t - a) / (b - a));
+    const easeOutCubic = (t) => 1 - Math.pow(1 - clamp01(t), 3);
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const stageEl = document.getElementById('stage');
+    stageEl.insertBefore(renderer.domElement, stageEl.firstChild);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#FAF7F2');
+    scene.fog = new THREE.Fog('#FAF7F2', 7.0, 19.0);
+
+    const camera = new THREE.PerspectiveCamera(33, W / H, 0.1, 45);
+    camera.position.set(0, 2.35, 6.2);
+    camera.lookAt(0, 0.35, 0);
+
+    // Architectural Studio Lighting
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DDD2C4', 1.15);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF9F2', 2.45);
+    keyLight.position.set(3.6, 6.8, 5.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1.0;
+    keyLight.shadow.camera.far = 20.0;
+    keyLight.shadow.camera.left = -4.8;
+    keyLight.shadow.camera.right = 4.8;
+    keyLight.shadow.camera.top = 4.2;
+    keyLight.shadow.camera.bottom = -4.2;
+    keyLight.shadow.bias = -0.0004;
+    keyLight.shadow.normalBias = 0.015;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight('#FFFDF9', 0.92);
+    fillLight.position.set(-4.2, 2.8, 3.8);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight('#FE9114', 0.55);
+    rimLight.position.set(-3.4, 3.6, -4.2);
+    scene.add(rimLight);
+
+    // Scene 4 directional sweep light (#FE9114 -> #F54702 -> #D53902)
+    const sweepLight = new THREE.SpotLight('#FE9114', 0.0, 14, Math.PI / 5, 0.65, 1.2);
+    sweepLight.position.set(-3.2, 2.6, 3.8);
+    const sweepTarget = new THREE.Object3D();
+    sweepTarget.position.set(-1.1, 0.35, 0);
+    scene.add(sweepTarget);
+    sweepLight.target = sweepTarget;
+    scene.add(sweepLight);
+
+    // Procedural Cotton Paper Fiber Bump + Roughness Texture
+    function createPaperFiberTextures() {
+      const size = 512;
+      const bumpCanvas = document.createElement('canvas');
+      bumpCanvas.width = size;
+      bumpCanvas.height = size;
+      const bctx = bumpCanvas.getContext('2d');
+
+      const roughCanvas = document.createElement('canvas');
+      roughCanvas.width = size;
+      roughCanvas.height = size;
+      const rctx = roughCanvas.getContext('2d');
+
+      const rng = mulberry32(46201);
+      bctx.fillStyle = '#808080';
+      bctx.fillRect(0, 0, size, size);
+      rctx.fillStyle = '#C8C8C8';
+      rctx.fillRect(0, 0, size, size);
+
+      // Soft paper mottled grain
+      for (let i = 0; i < 4200; i++) {
+        const x = rng() * size;
+        const y = rng() * size;
+        const rad = 0.8 + rng() * 2.4;
+        const shade = Math.floor(110 + rng() * 38);
+        bctx.fillStyle = `rgba(${shade},${shade},${shade},0.22)`;
+        bctx.beginPath();
+        bctx.arc(x, y, rad, 0, Math.PI * 2);
+        bctx.fill();
+
+        const rShade = Math.floor(180 + rng() * 55);
+        rctx.fillStyle = `rgba(${rShade},${rShade},${rShade},0.18)`;
+        rctx.beginPath();
+        rctx.arc(x, y, rad * 1.2, 0, Math.PI * 2);
+        rctx.fill();
+      }
+
+      // Fine cellulose fiber strands
+      for (let i = 0; i < 2600; i++) {
+        const x = rng() * size;
+        const y = rng() * size;
+        const len = 6 + rng() * 16;
+        const ang = rng() * Math.PI * 2;
+        const bright = rng() > 0.5 ? 168 : 96;
+        bctx.strokeStyle = `rgba(${bright},${bright},${bright},0.24)`;
+        bctx.lineWidth = 0.65;
+        bctx.beginPath();
+        bctx.moveTo(x, y);
+        bctx.quadraticCurveTo(
+          x + Math.cos(ang + 0.35) * len * 0.5,
+          y + Math.sin(ang + 0.35) * len * 0.5,
+          x + Math.cos(ang) * len,
+          y + Math.sin(ang) * len
+        );
+        bctx.stroke();
+      }
+
+      const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+      bumpTex.wrapS = THREE.RepeatWrapping;
+      bumpTex.wrapT = THREE.RepeatWrapping;
+      bumpTex.repeat.set(2, 2);
+
+      const roughTex = new THREE.CanvasTexture(roughCanvas);
+      roughTex.wrapS = THREE.RepeatWrapping;
+      roughTex.wrapT = THREE.RepeatWrapping;
+      roughTex.repeat.set(2, 2);
+
+      return { bumpTex, roughTex };
+    }
+
+    // Subtle architectural drafting desk surface texture (fades radially into #FAF7F2 so zero horizon seam)
+    function createDeskTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, 1024, 1024);
+
+      // Faint architectural drafting grid localized to studio center
+      ctx.strokeStyle = 'rgba(110, 100, 93, 0.14)';
+      ctx.lineWidth = 1;
+      for (let p = 0; p <= 1024; p += 64) {
+        ctx.beginPath();
+        ctx.moveTo(p, 0);
+        ctx.lineTo(p, 1024);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, p);
+        ctx.lineTo(1024, p);
+        ctx.stroke();
+      }
+
+      // Subtle registration crosses
+      ctx.strokeStyle = 'rgba(232, 80, 28, 0.22)';
+      ctx.lineWidth = 1.5;
+      for (let x = 128; x < 1024; x += 256) {
+        for (let y = 128; y < 1024; y += 256) {
+          ctx.beginPath();
+          ctx.moveTo(x - 7, y); ctx.lineTo(x + 7, y);
+          ctx.moveTo(x, y - 7); ctx.lineTo(x, y + 7);
+          ctx.stroke();
+        }
+      }
+
+      // Radial mask so grid dissolves smoothly into pure #FAF7F2 studio backdrop
+      ctx.globalCompositeOperation = 'destination-in';
+      const mask = ctx.createRadialGradient(512, 512, 120, 512, 512, 490);
+      mask.addColorStop(0, 'rgba(0,0,0,1)');
+      mask.addColorStop(0.65, 'rgba(0,0,0,0.45)');
+      mask.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = mask;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    // Subtle ivory document sheet print texture (clean editorial margin lines + ticks)
+    function createSheetSurfaceTexture() {
+      const c = document.createElement('canvas');
+      c.width = 768;
+      c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#FFFDF9';
+      ctx.fillRect(0, 0, 768, 1024);
+
+      // Soft warm vignette border
+      const grad = ctx.createRadialGradient(384, 512, 120, 384, 512, 620);
+      grad.addColorStop(0, 'rgba(255,253,249,0)');
+      grad.addColorStop(1, 'rgba(235,226,213,0.35)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 768, 1024);
+
+      // Minimalist architectural crop marks
+      ctx.strokeStyle = 'rgba(36, 30, 27, 0.16)';
+      ctx.lineWidth = 1.5;
+      const m = 48;
+      const tick = 18;
+      [[m, m, 1, 1], [768 - m, m, -1, 1], [m, 1024 - m, 1, -1], [768 - m, 1024 - m, -1, -1]].forEach(([x, y, dx, dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + dy * tick);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + dx * tick, y);
+        ctx.stroke();
+      });
+
+      // Subtle ruled document lines (architectural folio feel)
+      ctx.fillStyle = 'rgba(232, 80, 28, 0.16)';
+      ctx.fillRect(88, 110, 68, 4);
+
+      ctx.fillStyle = 'rgba(36, 30, 27, 0.08)';
+      ctx.fillRect(88, 132, 260, 10);
+      ctx.fillStyle = 'rgba(110, 100, 93, 0.07)';
+      for (let i = 0; i < 8; i++) {
+        const w = 520 - (i % 3) * 75;
+        ctx.fillRect(88, 190 + i * 32, w, 4);
+      }
+      for (let i = 0; i < 6; i++) {
+        const w = 500 - ((i + 1) % 3) * 85;
+        ctx.fillRect(88, 520 + i * 32, w, 4);
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    const { bumpTex, roughTex } = createPaperFiberTextures();
+    const deskTex = createDeskTexture();
+    const sheetTex = createSheetSurfaceTexture();
+
+    // Studio Desk Shadow-Catcher + Seamless Cyclorama Grid Decal (zero horizon seam)
+    const deskShadowCatcher = new THREE.Mesh(
+      new THREE.PlaneGeometry(34, 28),
+      new THREE.ShadowMaterial({ color: '#5C4D40', opacity: 0.19 })
+    );
+    deskShadowCatcher.rotation.x = -Math.PI / 2;
+    deskShadowCatcher.position.y = -1.05;
+    deskShadowCatcher.receiveShadow = true;
+    scene.add(deskShadowCatcher);
+
+    const deskGridDecal = new THREE.Mesh(
+      new THREE.PlaneGeometry(11, 11),
+      new THREE.MeshBasicMaterial({
+        map: deskTex,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false
+      })
+    );
+    deskGridDecal.rotation.x = -Math.PI / 2;
+    deskGridDecal.position.y = -1.052;
+    scene.add(deskGridDecal);
+
+    // =========================================================================
+    // SCENE 1 & 2: Deformable Origami Sheet + Score Lines + Geometric Facets
+    // =========================================================================
+    const sheetGroup = new THREE.Group();
+    sheetGroup.position.set(0, 0.36, 0);
+    scene.add(sheetGroup);
+
+    const SHEET_W = 1.95;
+    const SHEET_H = 2.55;
+    const SEG_X = 24;
+    const SEG_Y = 32;
+
+    const sheetGeo = new THREE.PlaneGeometry(SHEET_W, SHEET_H, SEG_X, SEG_Y);
+    const sheetBasePos = Float32Array.from(sheetGeo.attributes.position.array);
+    const sheetColors = new Float32Array(sheetGeo.attributes.position.count * 3);
+    sheetGeo.setAttribute('color', new THREE.BufferAttribute(sheetColors, 3));
+
+    const sheetMat = new THREE.MeshPhysicalMaterial({
+      map: sheetTex,
+      vertexColors: true,
+      bumpMap: bumpTex,
+      bumpScale: 0.016,
+      roughnessMap: roughTex,
+      roughness: 0.78,
+      metalness: 0.0,
+      clearcoat: 0.05,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 1.0
+    });
+
+    const sheetMesh = new THREE.Mesh(sheetGeo, sheetMat);
+    sheetMesh.castShadow = true;
+    sheetMesh.receiveShadow = true;
+    sheetGroup.add(sheetMesh);
+
+    // Deep terracotta origami score lines on the sheet
+    const scoreMat = new THREE.LineBasicMaterial({
+      color: '#D53902',
+      transparent: true,
+      opacity: 0.0
+    });
+    const scoreLinesGroup = new THREE.Group();
+    const scoreSpecs = [
+      [[0, -1.27, 0.014], [0, 1.27, 0.014]],
+      [[-0.97, 0, 0.014], [0.97, 0, 0.014]],
+      [[-0.97, -1.27, 0.014], [0.97, 1.27, 0.014]],
+      [[0.97, -1.27, 0.014], [-0.97, 1.27, 0.014]],
+      [[-0.97, 0.45, 0.014], [0.97, -0.45, 0.014]],
+      [[-0.97, -0.45, 0.014], [0.97, 0.45, 0.014]]
+    ];
+    scoreSpecs.forEach(([a, b]) => {
+      const g = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...a),
+        new THREE.Vector3(...b)
+      ]);
+      scoreLinesGroup.add(new THREE.Line(g, scoreMat));
+    });
+    sheetGroup.add(scoreLinesGroup);
+
+    function updateOrigamiSheetDeform(foldAmt, rippleAmt, timePhase) {
+      const pos = sheetGeo.attributes.position;
+      const col = sheetGeo.attributes.color;
+      for (let i = 0; i < pos.count; i++) {
+        const bx = sheetBasePos[i * 3];
+        const by = sheetBasePos[i * 3 + 1];
+
+        // Crisp origami valley/mountain creases along center spine & diagonals
+        const absX = Math.abs(bx);
+        const diagA = Math.abs(bx * 0.78 - by * 0.56);
+        const diagB = Math.abs(bx * 0.78 + by * 0.56);
+
+        const spineFold = absX * 0.94 * foldAmt;
+        const wingCup = Math.max(0, 0.52 - diagA) * 0.68 * foldAmt + Math.max(0, 0.52 - diagB) * 0.46 * foldAmt;
+        const gentleWave = Math.sin(bx * 2.1 + timePhase) * 0.045 * rippleAmt + Math.cos(by * 1.7 - timePhase) * 0.035 * rippleAmt;
+        const z = spineFold - wingCup + gentleWave;
+
+        const nx = bx * (1 - 0.22 * foldAmt);
+        const ny = by * (1 - 0.08 * foldAmt) + Math.sin(absX * 3.1) * 0.09 * foldAmt;
+
+        pos.setXYZ(i, nx, ny, z);
+
+        // Crease-valley shadow shading so ivory folds read boldly against #FAF7F2
+        const valley = Math.exp(-Math.pow(absX * 3.2, 2)) * 0.55 + Math.exp(-Math.pow(Math.min(diagA, diagB) * 3.6, 2)) * 0.45;
+        const shade = 1.0 - foldAmt * clamp01(valley) * 0.26 - (1 - foldAmt) * 0.02;
+        col.setXYZ(i, shade, shade * 0.975, shade * 0.945);
+      }
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
+      sheetGeo.computeVertexNormals();
+    }
+
+    // 8 Kinetic Geometric Paper Planes (Scene 2 division)
+    const facetsGroup = new THREE.Group();
+    facetsGroup.position.set(0, 0.36, 0);
+    scene.add(facetsGroup);
+
+    const facetMeshes = [];
+    const facetGeo = new THREE.BufferGeometry();
+    // Asymmetric kite origami shard
+    const fVerts = new Float32Array([
+       0.0,  0.52, 0.0,
+      -0.34, 0.04, 0.06,
+       0.0, -0.58, 0.0,
+       0.0,  0.52, 0.0,
+       0.0, -0.58, 0.0,
+       0.34, 0.04, 0.06
+    ]);
+    facetGeo.setAttribute('position', new THREE.BufferAttribute(fVerts, 3));
+    facetGeo.computeVertexNormals();
+
+    for (let i = 0; i < 8; i++) {
+      const isWarm = i % 2 === 0;
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: isWarm ? '#FFFDF9' : '#F5EFE6',
+        bumpMap: bumpTex,
+        bumpScale: 0.01,
+        roughness: 0.68,
+        metalness: 0.02,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0
+      });
+      const mesh = new THREE.Mesh(facetGeo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      // Subtle terracotta crease line down facet spine
+      const edgeLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0.52, 0.004),
+          new THREE.Vector3(0, -0.58, 0.004)
+        ]),
+        new THREE.LineBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0 })
+      );
+      mesh.add(edgeLine);
+
+      const angle = (i / 8) * Math.PI * 2;
+      mesh.userData = {
+        angle,
+        edgeLine,
+        orbitRadius: 1.45 + (i % 3) * 0.25,
+        startPos: new THREE.Vector3(Math.cos(angle) * 0.32, Math.sin(angle) * 0.42, 0),
+        midPos: new THREE.Vector3(Math.cos(angle) * 1.65, Math.sin(angle) * 0.88 + 0.15, Math.sin(angle * 2) * 0.65)
+      };
+      facetsGroup.add(mesh);
+      facetMeshes.push(mesh);
+    }
+
+    // =========================================================================
+    // SCENE 3: Eight Curved Terracotta & Ivory Origami Ribbons -> Sculpture
+    // =========================================================================
+    const ribbonsGroup = new THREE.Group();
+    ribbonsGroup.position.set(0, 0.35, 0);
+    scene.add(ribbonsGroup);
+
+    const RIBBON_SEGS = 42;
+    const cLight = new THREE.Color('#FE9114');
+    const cFace  = new THREE.Color('#F54702');
+    const cShadow = new THREE.Color('#D53902');
+    const cIvory = new THREE.Color('#FFFDF9');
+
+    // 8 custom octopus-inspired asymmetric spline definitions (sleeker origami paper ribbons)
+    const ribbonConfigs = [
+      // 0: Upper-right sweeping mantle crest (iconic OctaPDF crown fold)
+      {
+        pts: [
+          [0.01, 0.06, 0.04],
+          [0.14, 0.48, 0.16],
+          [0.52, 0.86, 0.05],
+          [0.78, 0.94, -0.10],
+          [0.62, 0.56, -0.18]
+        ],
+        baseWidth: 0.155,
+        ivoryBack: true
+      },
+      // 1: Upper-left high curl tentacle
+      {
+        pts: [
+          [-0.04, 0.12, 0.04],
+          [-0.48, 0.36, 0.20],
+          [-0.92, 0.68, 0.08],
+          [-0.72, 1.08, -0.08],
+          [-0.40, 0.98, -0.14]
+        ],
+        baseWidth: 0.125,
+        ivoryBack: false
+      },
+      // 2: Mid-left sweeping ribbon curl
+      {
+        pts: [
+          [-0.06, 0.02, 0.06],
+          [-0.64, -0.12, 0.22],
+          [-1.12, 0.18, 0.10],
+          [-1.04, 0.52, -0.06],
+          [-0.74, 0.42, -0.14]
+        ],
+        baseWidth: 0.12,
+        ivoryBack: true
+      },
+      // 3: Lower-left outer curl
+      {
+        pts: [
+          [-0.06, -0.08, 0.04],
+          [-0.58, -0.44, 0.18],
+          [-0.94, -0.76, 0.04],
+          [-0.74, -0.94, -0.10],
+          [-0.50, -0.72, -0.14]
+        ],
+        baseWidth: 0.11,
+        ivoryBack: false
+      },
+      // 4: Lower-center-left deep sweeping arm
+      {
+        pts: [
+          [-0.03, -0.06, 0.06],
+          [-0.32, -0.54, 0.20],
+          [-0.54, -1.00, 0.05],
+          [-0.30, -1.24, -0.08],
+          [-0.06, -1.00, -0.14]
+        ],
+        baseWidth: 0.13,
+        ivoryBack: true
+      },
+      // 5: Lower-center spiral tip (signature bottom coil)
+      {
+        pts: [
+          [0.03, -0.05, 0.07],
+          [0.24, -0.52, 0.20],
+          [0.42, -0.90, 0.06],
+          [0.14, -1.04, -0.08],
+          [-0.04, -0.78, -0.14]
+        ],
+        baseWidth: 0.125,
+        ivoryBack: false
+      },
+      // 6: Lower-right sweeping wave arm
+      {
+        pts: [
+          [0.06, -0.04, 0.05],
+          [0.52, -0.26, 0.18],
+          [0.94, -0.50, 0.04],
+          [0.84, -0.80, -0.10],
+          [0.56, -0.70, -0.14]
+        ],
+        baseWidth: 0.115,
+        ivoryBack: true
+      },
+      // 7: Mid-right outward curl
+      {
+        pts: [
+          [0.06, 0.05, 0.04],
+          [0.52, 0.10, 0.16],
+          [0.88, 0.26, 0.04],
+          [0.78, 0.50, -0.08],
+          [0.52, 0.40, -0.14]
+        ],
+        baseWidth: 0.11,
+        ivoryBack: false
+      }
+    ];
+
+    function buildRibbonGeometry(segs) {
+      const geo = new THREE.BufferGeometry();
+      // 3 verts per cross-section (left, center V-ridge, right)
+      const vertCount = (segs + 1) * 3;
+      const positions = new Float32Array(vertCount * 3);
+      const colors = new Float32Array(vertCount * 3);
+      const indices = [];
+
+      for (let s = 0; s < segs; s++) {
+        const a = s * 3;
+        const b = (s + 1) * 3;
+        // Left half of V-crease
+        indices.push(a + 0, a + 1, b + 0);
+        indices.push(a + 1, b + 1, b + 0);
+        // Right half of V-crease
+        indices.push(a + 1, a + 2, b + 1);
+        indices.push(a + 2, b + 2, b + 1);
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setIndex(indices);
+      return geo;
+    }
+
+    const ribbonMat = new THREE.MeshPhysicalMaterial({
+      vertexColors: true,
+      bumpMap: bumpTex,
+      bumpScale: 0.008,
+      roughness: 0.44,
+      metalness: 0.04,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.42,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0
+    });
+
+    const ribbonObjects = ribbonConfigs.map((cfg, idx) => {
+      const geo = buildRibbonGeometry(RIBBON_SEGS);
+      const mesh = new THREE.Mesh(geo, ribbonMat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      ribbonsGroup.add(mesh);
+      return { cfg, geo, mesh, idx };
+    });
+
+    const _p = new THREE.Vector3();
+    const _tan = new THREE.Vector3();
+    const _side = new THREE.Vector3();
+    const _up = new THREE.Vector3(0, 0, 1);
+    const _normal = new THREE.Vector3();
+    const _tmpC = new THREE.Color();
+
+    function updateRibbonMesh(rb, gatherFactor, wavePhase, spreadScale, creaseDepth, sweepPos) {
+      const { cfg, geo, idx } = rb;
+      const pts = cfg.pts.map(([x, y, z], k) => {
+        const outerPull = (1 - gatherFactor) * (1.25 + k * 0.35);
+        const angle = idx * 0.785 + wavePhase * 0.45 + k * 0.28;
+        const sx = x * spreadScale + Math.cos(angle) * outerPull * 0.85;
+        const sy = y * spreadScale + Math.sin(angle) * outerPull * 0.55;
+        const sz = z * (1.0 + (1 - gatherFactor) * 1.4) + Math.sin(wavePhase + k * 0.9 + idx) * 0.16 * (1 - gatherFactor * 0.55);
+        return new THREE.Vector3(sx, sy, sz);
+      });
+
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+      const posAttr = geo.attributes.position;
+      const colAttr = geo.attributes.color;
+
+      for (let s = 0; s <= RIBBON_SEGS; s++) {
+        const u = s / RIBBON_SEGS;
+        curve.getPoint(u, _p);
+        curve.getTangent(u, _tan).normalize();
+
+        _side.crossVectors(_tan, _up);
+        if (_side.lengthSq() < 0.0001) _side.set(1, 0, 0);
+        _side.normalize();
+        _normal.crossVectors(_side, _tan).normalize();
+
+        // Taper smoothly toward tip
+        const taper = Math.sin(Math.pow(u, 0.75) * Math.PI * 0.92 + 0.16);
+        const halfW = cfg.baseWidth * (0.45 + 0.75 * taper);
+        const ridge = halfW * 0.24 * creaseDepth;
+
+        // 3 vertices: left edge, raised V-crease spine, right edge
+        const lx = _p.x - _side.x * halfW;
+        const ly = _p.y - _side.y * halfW;
+        const lz = _p.z - _side.z * halfW;
+
+        const cx = _p.x + _normal.x * ridge;
+        const cy = _p.y + _normal.y * ridge;
+        const cz = _p.z + _normal.z * ridge;
+
+        const rx = _p.x + _side.x * halfW;
+        const ry = _p.y + _side.y * halfW;
+        const rz = _p.z + _side.z * halfW;
+
+        const base = s * 3;
+        posAttr.setXYZ(base + 0, lx, ly, lz);
+        posAttr.setXYZ(base + 1, cx, cy, cz);
+        posAttr.setXYZ(base + 2, rx, ry, rz);
+
+        // Lighting sweep across ribbon color gradient
+        const sweepBoost = Math.exp(-Math.pow((_p.x - sweepPos) * 1.45, 2)) * 0.45;
+
+        // Left wing: ivory or shadow gradient
+        if (cfg.ivoryBack) {
+          _tmpC.copy(cIvory).lerp(cLight, clamp01(u * 0.6 + sweepBoost));
+        } else {
+          _tmpC.copy(cShadow).lerp(cFace, clamp01(0.4 + u * 0.4 + sweepBoost));
+        }
+        colAttr.setXYZ(base + 0, _tmpC.r, _tmpC.g, _tmpC.b);
+
+        // Center ridge: bright #FE9114 -> #F54702
+        _tmpC.copy(cFace).lerp(cLight, clamp01(0.55 + sweepBoost * 0.9 - u * 0.2));
+        colAttr.setXYZ(base + 1, _tmpC.r, _tmpC.g, _tmpC.b);
+
+        // Right wing: rich #F54702 -> #D53902
+        _tmpC.copy(cFace).lerp(cShadow, clamp01(0.25 + u * 0.55 - sweepBoost * 0.5));
+        colAttr.setXYZ(base + 2, _tmpC.r, _tmpC.g, _tmpC.b);
+      }
+
+      posAttr.needsUpdate = true;
+      colAttr.needsUpdate = true;
+      geo.computeVertexNormals();
+    }
+
+    // =========================================================================
+    // SCENE 4: Embossed Paper Medallion + Authentic octapdf-emblem-alpha.png
+    // =========================================================================
+    const medallionGroup = new THREE.Group();
+    medallionGroup.position.set(0, 0.35, -0.08);
+    scene.add(medallionGroup);
+
+    // Outer octagonal heavy cardstock base
+    const basePlinthMat = new THREE.MeshPhysicalMaterial({
+      color: '#F5EFE6',
+      bumpMap: bumpTex,
+      bumpScale: 0.012,
+      roughness: 0.72,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0
+    });
+    const basePlinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.38, 1.44, 0.09, 8),
+      basePlinthMat
+    );
+    basePlinth.rotation.x = Math.PI / 2;
+    basePlinth.rotation.y = Math.PI / 8;
+    basePlinth.castShadow = true;
+    basePlinth.receiveShadow = true;
+    medallionGroup.add(basePlinth);
+
+    // Inner raised embossed ivory paper disc
+    const innerDiscMat = new THREE.MeshPhysicalMaterial({
+      color: '#FFFDF9',
+      bumpMap: bumpTex,
+      bumpScale: 0.014,
+      roughnessMap: roughTex,
+      roughness: 0.65,
+      metalness: 0.01,
+      clearcoat: 0.06,
+      transparent: true,
+      opacity: 0
+    });
+    const innerDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.18, 1.21, 0.045, 64),
+      innerDiscMat
+    );
+    innerDisc.rotation.x = Math.PI / 2;
+    innerDisc.position.z = 0.048;
+    innerDisc.castShadow = true;
+    innerDisc.receiveShadow = true;
+    medallionGroup.add(innerDisc);
+
+    // Delicate terracotta debossed hairline ring around emblem
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C',
+      roughness: 0.4,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0
+    });
+    const debossRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.06, 1.078, 96),
+      ringMat
+    );
+    debossRing.position.z = 0.074;
+    medallionGroup.add(debossRing);
+
+    // Authentic Brand Anchor Emblem Texture
+    let emblemMat = null;
+    let emblemMesh = null;
+
+    const texLoader = new THREE.TextureLoader();
+    window.sceneReady = new Promise((resolve, reject) => {
+      texLoader.load(
+        '/scripts/readme-studio/assets/octapdf-emblem-alpha.png',
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 8;
+          emblemMat = new THREE.MeshPhysicalMaterial({
+            map: tex,
+            transparent: true,
+            opacity: 0,
+            alphaTest: 0.01,
+            roughness: 0.42,
+            metalness: 0.03,
+            clearcoat: 0.14,
+            clearcoatRoughness: 0.35
+          });
+          emblemMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.78, 1.78), emblemMat);
+          emblemMesh.position.z = 0.088;
+          medallionGroup.add(emblemMesh);
+          resolve();
+        },
+        undefined,
+        (err) => reject(err)
+      );
+    });
+
+    // DOM elements for Scene 5 kinetic typography
+    const brandLockupEl = document.getElementById('brandLockup');
+    const ruleBarEl = document.getElementById('ruleBar');
+    const taglineEl = document.getElementById('tagline');
+    const metaStripEl = document.getElementById('metaStrip');
+    const sceneCaptionEl = document.getElementById('sceneCaption');
+
+    // =========================================================================
+    // DETERMINISTIC 6-SCENE CHOREOGRAPHY (t in [0, 1))
+    // =========================================================================
+    window.renderFrame = async function renderFrame(i, totalFrames, t) {
+      // Exact loop endpoints: at t=0 and t=1, all weights return identically to opening state.
+      const loopAngle = t * Math.PI * 2;
+
+      // Scene phase envelopes (clean overlapping choreography)
+      // Scene 1: 0.00 - 0.18 (Floating ivory sheet)
+      // Scene 2: 0.18 - 0.40 (Score lines -> fold -> split into planes & ribbons)
+      // Scene 3: 0.40 - 0.62 (8 terracotta/ivory ribbons converge into octopus sculpture)
+      // Scene 4: 0.62 - 0.76 (Lighting sweep -> resolve into octapdf-emblem-alpha on embossed paper)
+      // Scene 5: 0.76 - 0.90 (Kinetic typography OCTAPDF + tagline)
+      // Scene 6: 0.90 - 1.00 (Hold -> smooth reverse-fold back to opening ivory sheet)
+
+      const reverseBack = band(t, 0.915, 0.995); // 0 -> 1 during final reverse-fold
+
+      // 1) Opening Ivory Sheet visibility & fold
+      const sheetFadeOut = band(t, 0.23, 0.285);
+      const sheetFadeIn  = band(t, 0.94, 0.995);
+      const sheetVis = clamp01(1 - sheetFadeOut + sheetFadeIn);
+
+      const creaseStart = band(t, 0.14, 0.26);
+      const creaseEnd   = band(t, 0.935, 0.995);
+      const foldAmt = clamp01(creaseStart * (1 - sheetFadeOut) + (1 - creaseEnd) * sheetFadeIn * 0.4);
+      const scoreOpacity = clamp01((band(t, 0.11, 0.17) - band(t, 0.21, 0.27)) * 0.85);
+
+      sheetMesh.visible = sheetVis > 0.005;
+      sheetMat.opacity = sheetVis;
+      scoreMat.opacity = scoreOpacity;
+      updateOrigamiSheetDeform(foldAmt, sheetVis, loopAngle);
+
+      sheetGroup.rotation.x = -0.36 + Math.sin(loopAngle) * 0.045 - foldAmt * 0.16;
+      sheetGroup.rotation.y = -0.22 + Math.cos(loopAngle) * 0.08 + foldAmt * 0.24;
+      sheetGroup.rotation.z = Math.sin(loopAngle * 2) * 0.03;
+      sheetGroup.position.y = 0.38 + Math.sin(loopAngle) * 0.06;
+      sheetGroup.scale.setScalar(lerp(1.0, 0.84, foldAmt));
+
+      // 2) Geometric Facet Planes (Scene 2: emerge cleanly after sheet divides, zero z-clipping)
+      const facetsIn  = band(t, 0.275, 0.34);
+      const facetsOut = band(t, 0.39, 0.46);
+      const facetsVis = clamp01(facetsIn - facetsOut);
+      const facetExpand = smoother(clamp01((t - 0.26) / 0.16));
+
+      facetsGroup.visible = facetsVis > 0.005;
+      facetsGroup.rotation.y = lerp(0, Math.PI * 0.42, facetExpand);
+      facetMeshes.forEach((m, idx) => {
+        m.material.opacity = facetsVis * 0.96;
+        m.userData.edgeLine.material.opacity = facetsVis * 0.7;
+        m.position.lerpVectors(
+          new THREE.Vector3(Math.cos(m.userData.angle) * 0.65, Math.sin(m.userData.angle) * 0.75, 0.18),
+          m.userData.midPos,
+          facetExpand
+        );
+        m.rotation.set(
+          Math.sin(idx * 1.3 + facetExpand * 2.2) * 0.95,
+          m.userData.angle + facetExpand * 1.4,
+          Math.cos(idx * 0.9 + facetExpand * 1.8) * 0.75
+        );
+        m.scale.setScalar(lerp(0.68, 1.05, facetExpand));
+      });
+
+      // 3) 8 Curved Terracotta & Ivory Origami Ribbons (0.28 -> 0.72)
+      const ribbonsIn  = band(t, 0.28, 0.39);
+      const ribbonsOut = band(t, 0.65, 0.72);
+      const ribbonsVis = clamp01(ribbonsIn - ribbonsOut);
+
+      // Gather factor: 0 (dispersed wide) -> 1 (converged octopus sculptural form at 0.56-0.66)
+      const gather = smoother(clamp01((t - 0.33) / 0.23));
+      const spreadScale = lerp(1.42, 0.94, gather);
+      const creaseDepth = lerp(1.25, 0.75, gather);
+      const wavePhase = lerp(0, Math.PI * 2.2, clamp01((t - 0.28) / 0.44));
+
+      // Horizontal shift to match medallion left-of-center framing in Scene 4 (leaves clear margin for OCTAPDF)
+      const sculptureShiftX = lerp(0.0, -1.62, band(t, 0.60, 0.71)) * (1 - reverseBack);
+      ribbonsGroup.position.set(sculptureShiftX, 0.36, 0);
+      ribbonsGroup.rotation.y = lerp(0.85, 0.04, gather) * (1 - band(t, 0.58, 0.68));
+      ribbonsGroup.rotation.x = lerp(-0.35, -0.06, gather);
+
+      // Lighting sweep X coordinate (-2.2 -> +2.2 across 0.60..0.74)
+      const sweepPhase = clamp01((t - 0.60) / 0.14);
+      const sweepPos = lerp(-2.0, 2.0, sweepPhase);
+
+      ribbonsGroup.visible = ribbonsVis > 0.005;
+      ribbonMat.opacity = ribbonsVis;
+      if (ribbonsGroup.visible) {
+        for (const rb of ribbonObjects) {
+          updateRibbonMesh(rb, gather, wavePhase, spreadScale, creaseDepth, sweepPos);
+        }
+      }
+
+      // 4) Embossed Paper Medallion & Authentic octapdf-emblem-alpha.png (0.60 -> 0.96)
+      const medIn  = band(t, 0.59, 0.69);
+      const medOut = band(t, 0.92, 0.975);
+      const medVis = clamp01(medIn - medOut);
+      const emblemIn  = band(t, 0.63, 0.71);
+      const emblemOut = band(t, 0.915, 0.965);
+      const emblemVis = clamp01(emblemIn - emblemOut);
+
+      const lockupShiftX = lerp(0.0, -1.62, band(t, 0.60, 0.71)) * (1 - reverseBack);
+      medallionGroup.visible = medVis > 0.005;
+      medallionGroup.position.set(lockupShiftX, 0.35 + Math.sin(loopAngle) * 0.025, -0.04);
+      medallionGroup.scale.setScalar(lerp(0.78, 0.88, medIn) * lerp(1.0, 0.82, medOut));
+      medallionGroup.rotation.y = lerp(0.18, 0.10, band(t, 0.62, 0.76)) - medOut * 0.35;
+      medallionGroup.rotation.x = lerp(-0.08, -0.05, band(t, 0.62, 0.76));
+
+      basePlinthMat.opacity = medVis;
+      innerDiscMat.opacity = medVis;
+      ringMat.opacity = medVis * 0.42;
+      if (emblemMat) {
+        emblemMat.opacity = emblemVis;
+        emblemMesh.position.z = 0.088 + emblemVis * 0.014;
+      }
+
+      // Dynamic lighting sweep intensity in Scene 4
+      const sweepIntensity = Math.sin(sweepPhase * Math.PI) * 5.2 * (t > 0.59 && t < 0.76 ? 1 : 0);
+      sweepLight.intensity = sweepIntensity;
+      sweepLight.position.x = lerp(-3.4, 1.4, sweepPhase);
+      sweepTarget.position.x = lockupShiftX + lerp(-0.6, 0.6, sweepPhase);
+
+      // 5) Camera Choreography (continuous, seamless loop at t=0 and t=1)
+      const camOrbit = band(t, 0.16, 0.58) * (1 - band(t, 0.60, 0.98));
+      const camZoomIn = band(t, 0.34, 0.62) * (1 - band(t, 0.88, 0.99));
+      const camX = Math.sin(t * Math.PI * 2) * 0.32 * (1 - reverseBack) + camOrbit * 0.68;
+      const camY = lerp(2.35, 1.15, band(t, 0.48, 0.72)) + reverseBack * 1.20;
+      const camZ = lerp(6.2, 5.25, camZoomIn) + reverseBack * 0.95;
+      // Blend smoothly back to exact t=0 camera at t=1
+      const endBlend = band(t, 0.93, 1.0);
+      camera.position.set(
+        lerp(camX, 0.0, endBlend),
+        lerp(camY, 2.35, endBlend),
+        lerp(camZ, 6.2, endBlend)
+      );
+      const lookX = lerp(0.0, -0.10, band(t, 0.62, 0.74)) * (1 - endBlend);
+      const lookY = lerp(0.35, 0.32, band(t, 0.55, 0.74)) * (1 - endBlend) + 0.35 * endBlend;
+      camera.lookAt(lookX, lookY, 0);
+
+      // 6) Kinetic Typography Reveal (Scene 5: crisp by 75% contact sheet)
+      const typoIn  = easeOutCubic((t - 0.68) / 0.08);
+      const typoOut = band(t, 0.905, 0.955);
+      const typoVis = clamp01(typoIn - typoOut);
+
+      brandLockupEl.style.opacity = typoVis.toFixed(4);
+      brandLockupEl.style.transform = `translate3d(0, ${(1 - typoIn) * 18 - typoOut * 10}px, 0)`;
+
+      const ruleProgress = easeOutCubic((t - 0.70) / 0.08) * (1 - typoOut);
+      ruleBarEl.style.width = `${Math.round(ruleProgress * 84)}px`;
+
+      const tagIn = easeOutCubic((t - 0.72) / 0.08) * (1 - typoOut);
+      taglineEl.style.opacity = tagIn.toFixed(4);
+      taglineEl.style.transform = `translate3d(0, ${(1 - tagIn) * 10}px, 0)`;
+
+      const metaIn = easeOutCubic((t - 0.74) / 0.08) * (1 - typoOut);
+      metaStripEl.style.opacity = metaIn.toFixed(4);
+
+      // Editorial step caption
+      let capNum = '01';
+      let capText = 'Single Sheet &middot; Paper Fiber Studio';
+      if (t >= 0.18 && t < 0.40) {
+        capNum = '02'; capText = 'Origami Score &middot; Kinetic Plane Division';
+      } else if (t >= 0.40 && t < 0.62) {
+        capNum = '03'; capText = 'Eight Ribbons &middot; Sculptural Convergence';
+      } else if (t >= 0.62 && t < 0.76) {
+        capNum = '04'; capText = 'Emblem Seal &middot; Embossed Cardstock';
+      } else if (t >= 0.76 && t < 0.90) {
+        capNum = '05'; capText = 'OctaPDF &middot; Precision Paper Architecture';
+      } else if (t >= 0.90) {
+        capNum = '06'; capText = 'Seamless Return &middot; Back to Blank Sheet';
+      }
+      sceneCaptionEl.innerHTML = `<span>${capNum}</span>${capText}`;
+
+      renderer.render(scene, camera);
+    };
+  </script>
+</body>
+</html>

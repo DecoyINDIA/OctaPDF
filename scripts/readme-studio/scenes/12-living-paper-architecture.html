@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Living Paper Architecture</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #241E1B;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .placard {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #E5DDD2;
+      border-radius: 10px;
+      padding: 13px 16px;
+      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.06);
+      max-width: 390px;
+    }
+    .eyebrow {
+      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: #E8501C;
+      margin-bottom: 4px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #241E1B;
+      line-height: 1.15;
+    }
+    .subtitle {
+      margin-top: 5px;
+      font-size: 11.5px;
+      color: #6E645D;
+      line-height: 1.35;
+    }
+    .metrics-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 620px;
+    }
+    .pill {
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid #E5DDD2;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 6px 18px rgba(36, 30, 27, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .pill.accent {
+      background: #241E1B;
+      border-color: #241E1B;
+      color: #FAF7F2;
+    }
+    .pill-val {
+      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .pill.accent .pill-val {
+      color: #FF6B35;
+    }
+    .pill-lbl {
+      margin-top: 3px;
+      font-size: 9.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6E645D;
+    }
+    .pill.accent .pill-lbl {
+      color: #C8BFB5;
+    }
+    .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+    }
+    .strata-card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #E5DDD2;
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.05);
+    }
+    .strata-head {
+      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #6E645D;
+      margin-bottom: 4px;
+    }
+    .strata-list {
+      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10.5px;
+      color: #241E1B;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background: #E8501C;
+      display: inline-block;
+    }
+    .legend-card {
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid #E5DDD2;
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(36, 30, 27, 0.05);
+      max-width: 650px;
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(5, auto);
+      gap: 6px 14px;
+      margin-top: 5px;
+    }
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px;
+      color: #241E1B;
+      white-space: nowrap;
+    }
+    .swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(36, 30, 27, 0.14);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="top-row">
+      <div class="placard">
+        <div class="eyebrow">Repository Telemetry &middot; DecoyINDIA/OctaPDF</div>
+        <div class="title">Living Paper Architecture</div>
+        <div class="subtitle">9 radial origami sectors scaled to 2,826,562 source bytes &amp; 6 commit strata on <code>main</code> &mdash; 0 published GitHub releases.</div>
+      </div>
+      <div class="metrics-strip">
+        <div class="pill accent">
+          <div class="pill-val">6 Commits</div>
+          <div class="pill-lbl">main strata</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">2.83 MB</div>
+          <div class="pill-lbl">2,826,562 B</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">9 Langs</div>
+          <div class="pill-lbl">radial fins</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">0 Releases</div>
+          <div class="pill-lbl">0 tags &middot; 0 dl</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">MIT</div>
+          <div class="pill-lbl">license</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="strata-card">
+        <div class="strata-head">Base Plinth &middot; 6 Verified Commits (main)</div>
+        <div class="strata-list">
+          <span class="dot"></span>
+          <span>92c2b48 &rarr; ae836c9 &rarr; c3c431d &rarr; feea2cc &rarr; 4446aaa &rarr; c38c673</span>
+        </div>
+      </div>
+      <div class="legend-card">
+        <div class="strata-head">Radial Origami Proportions &middot; Verified GitHub Languages (100.00%)</div>
+        <div class="legend-grid">
+          <div class="leg-item"><span class="swatch" style="background:#E8501C"></span>Java 59.45%</div>
+          <div class="leg-item"><span class="swatch" style="background:#FAF7F2"></span>HTML 17.43%</div>
+          <div class="leg-item"><span class="swatch" style="background:#2B2521"></span>JS 14.44%</div>
+          <div class="leg-item"><span class="swatch" style="background:#8C7F75"></span>CSS 3.70%</div>
+          <div class="leg-item"><span class="swatch" style="background:#FE9114"></span>RTF 1.48%</div>
+          <div class="leg-item"><span class="swatch" style="background:#D9CFC4"></span>Python 1.34%</div>
+          <div class="leg-item"><span class="swatch" style="background:#6E645D"></span>Shell 1.32%</div>
+          <div class="leg-item"><span class="swatch" style="background:#F54702"></span>Gherkin 0.68%</div>
+          <div class="leg-item"><span class="swatch" style="background:#352F29"></span>Dockerfile 0.16%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = window.innerWidth || 1200;
+    const H = window.innerHeight || 600;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.06;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#FAF7F2');
+    scene.fog = new THREE.Fog('#FAF7F2', 11, 22);
+
+    const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 60);
+    camera.position.set(0, 4.55, 8.45);
+    camera.lookAt(0, 0.92, 0);
+
+    // Procedural fine paper-fiber normal/bump texture
+    function makePaperGrainTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(256, 256);
+      let seed = 1337;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.floor(122 + (rand() - 0.5) * 34);
+        img.data[i] = v;
+        img.data[i + 1] = v;
+        img.data[i + 2] = v;
+        img.data[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 0.75;
+      for (let i = 0; i < 160; i++) {
+        ctx.beginPath();
+        const x = rand() * 256;
+        const y = rand() * 256;
+        const len = 8 + rand() * 20;
+        const ang = rand() * Math.PI * 2;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+        ctx.stroke();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 3);
+      return tex;
+    }
+
+    const paperBump = makePaperGrainTexture();
+
+    function paperMat(hex, roughness = 0.76, metalness = 0.02) {
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color(hex),
+        roughness,
+        metalness,
+        bumpMap: paperBump,
+        bumpScale: 0.012,
+      });
+    }
+
+    // Lighting
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DDD2C4', 1.05);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF4E4', 2.25);
+    keyLight.position.set(4.5, 7.2, 4.8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 22;
+    keyLight.shadow.camera.left = -5.5;
+    keyLight.shadow.camera.right = 5.5;
+    keyLight.shadow.camera.top = 5.5;
+    keyLight.shadow.camera.bottom = -5.5;
+    keyLight.shadow.bias = -0.0004;
+    keyLight.shadow.radius = 3;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight('#EAE4DC', 0.85);
+    rimLight.position.set(-5.2, 3.8, -4.0);
+    scene.add(rimLight);
+
+    // Architectural studio floor (smooth matte so static background compresses cleanly)
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(18, 64),
+      new THREE.MeshStandardMaterial({
+        color: '#F5EFE6',
+        roughness: 0.96,
+        metalness: 0.0,
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.02;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Subtle concentric calibration hairline rings on floor
+    const ringMat = new THREE.MeshBasicMaterial({ color: '#DFD5C8', transparent: true, opacity: 0.65 });
+    [2.35, 3.05, 3.65].forEach((r) => {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + 0.012, 96), ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = -0.015;
+      scene.add(ring);
+    });
+
+    const sculpture = new THREE.Group();
+    scene.add(sculpture);
+
+    // 6 Commit Strata (layered octagonal paper plinths)
+    const strataSpecs = [
+      { r: 2.08, h: 0.09, color: '#EAE1D5', y: 0.05 },
+      { r: 1.88, h: 0.09, color: '#F5EFE6', y: 0.16 },
+      { r: 1.68, h: 0.09, color: '#FFFFFF', y: 0.27 },
+      { r: 1.48, h: 0.09, color: '#F5EFE6', y: 0.38 },
+      { r: 1.28, h: 0.09, color: '#FFFFFF', y: 0.49 },
+      { r: 1.08, h: 0.10, color: '#241E1B', y: 0.60 },
+    ];
+    const strataMeshes = [];
+    strataSpecs.forEach((s, idx) => {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(s.r, s.r * 1.02, s.h, 8),
+        paperMat(s.color, idx === 5 ? 0.65 : 0.78, 0.03)
+      );
+      mesh.position.y = s.y;
+      mesh.rotation.y = (idx * Math.PI) / 16;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      sculpture.add(mesh);
+      strataMeshes.push({ mesh, baseY: s.y, baseRot: mesh.rotation.y });
+    });
+
+    // Build folded origami wedge fin geometry (true creased double-face architectural wing)
+    function createOrigamiFinGeometry(rInner, rOuter, height, spanAngle, ridgeHeight) {
+      const half = spanAngle * 0.5;
+      const geom = new THREE.BufferGeometry();
+
+      // 6 vertices forming a crisp tented origami blade rising toward the center crease
+      const v0 = [rInner * Math.cos(-half), 0, rInner * Math.sin(-half)];
+      const v1 = [rOuter * Math.cos(-half), 0.04, rOuter * Math.sin(-half)];
+      const v2 = [rInner * Math.cos(half), 0, rInner * Math.sin(half)];
+      const v3 = [rOuter * Math.cos(half), 0.04, rOuter * Math.sin(half)];
+      const rMid = (rInner + rOuter) * 0.52;
+      const vPeakIn = [rInner * 1.04, ridgeHeight * 0.62, 0];
+      const vPeakOut = [rOuter * 0.96, height + ridgeHeight, 0];
+
+      const positions = new Float32Array([
+        // Left sloped facet
+        ...v0, ...v1, ...vPeakOut,
+        ...v0, ...vPeakOut, ...vPeakIn,
+        // Right sloped facet
+        ...vPeakIn, ...vPeakOut, ...v3,
+        ...vPeakIn, ...v3, ...v2,
+        // Outer folded cap
+        ...v1, ...v3, ...vPeakOut,
+        // Inner spine cap
+        ...v0, ...vPeakIn, ...v2,
+      ]);
+
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.computeVertexNormals();
+      return geom;
+    }
+
+    // 9 Verified Languages summing to 100.00% (2,826,562 bytes)
+    const languages = [
+      { name: 'Java', pct: 59.45, color: '#E8501C', fins: 7, h: 1.28, rOut: 2.34 },
+      { name: 'HTML', pct: 17.43, color: '#FFFFFF', fins: 3, h: 1.02, rOut: 2.12 },
+      { name: 'JavaScript', pct: 14.44, color: '#2B2521', fins: 3, h: 0.95, rOut: 2.05 },
+      { name: 'CSS', pct: 3.70, color: '#8C7F75', fins: 1, h: 0.78, rOut: 1.90 },
+      { name: 'RTF', pct: 1.48, color: '#FE9114', fins: 1, h: 0.68, rOut: 1.82 },
+      { name: 'Python', pct: 1.34, color: '#D9CFC4', fins: 1, h: 0.64, rOut: 1.80 },
+      { name: 'Shell', pct: 1.32, color: '#6E645D', fins: 1, h: 0.62, rOut: 1.78 },
+      { name: 'Gherkin', pct: 0.68, color: '#F54702', fins: 1, h: 0.54, rOut: 1.72 },
+      { name: 'Dockerfile', pct: 0.16, color: '#352F29', fins: 1, h: 0.46, rOut: 1.68 },
+    ];
+
+    const crownGroup = new THREE.Group();
+    crownGroup.position.y = 0.67;
+    sculpture.add(crownGroup);
+
+    const finRecords = [];
+    let cursorAngle = -Math.PI * 0.65;
+
+    languages.forEach((lang, langIdx) => {
+      const totalRad = (lang.pct / 100.0) * Math.PI * 2;
+      const subCount = lang.fins;
+      const subSpan = (totalRad * 0.88) / subCount;
+      const step = totalRad / subCount;
+
+      for (let f = 0; f < subCount; f++) {
+        const angleCenter = cursorAngle + step * (f + 0.5);
+        const span = Math.max(subSpan, 0.042);
+        const crestWave = subCount > 1 ? Math.sin((f / (subCount - 1)) * Math.PI) * 0.24 : 0;
+        const h = lang.h + crestWave;
+        const rOut = lang.rOut + crestWave * 0.35;
+
+        const geom = createOrigamiFinGeometry(0.46, rOut, h, span, 0.28);
+        // Subtle shade variation across Java terracotta pleats for depth
+        let hex = lang.color;
+        if (lang.name === 'Java') {
+          const shades = ['#D53902', '#E8501C', '#F54702', '#FE7A15', '#F54702', '#E8501C', '#D53902'];
+          hex = shades[f % shades.length];
+        }
+        const mat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(hex),
+          roughness: lang.name === 'JavaScript' ? 0.62 : 0.72,
+          metalness: 0.03,
+          bumpMap: paperBump,
+          bumpScale: 0.01,
+          side: THREE.DoubleSide,
+        });
+
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.rotation.y = -angleCenter;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        crownGroup.add(mesh);
+        finRecords.push({ mesh, phase: angleCenter + langIdx * 0.4, baseY: 0 });
+      }
+      cursorAngle += totalRad;
+    });
+
+    // Central Octagonal Core Seal & Calibration Halo
+    const coreHub = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.48, 0.54, 0.52, 8),
+      paperMat('#241E1B', 0.55, 0.08)
+    );
+    coreHub.position.y = 0.26;
+    coreHub.castShadow = true;
+    coreHub.receiveShadow = true;
+    crownGroup.add(coreHub);
+
+    const coreSeal = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.32, 0.06, 8),
+      paperMat('#E8501C', 0.40, 0.08)
+    );
+    coreSeal.position.y = 0.54;
+    coreSeal.castShadow = true;
+    crownGroup.add(coreSeal);
+
+    const haloRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.58, 0.014, 12, 96),
+      new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.4, metalness: 0.2 })
+    );
+    haloRing.rotation.x = Math.PI / 2;
+    haloRing.position.y = 0.76;
+    sculpture.add(haloRing);
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const theta = t * Math.PI * 2;
+
+      // Continuous architectural turntable + subtle breathing strata (exact seamless loop)
+      sculpture.rotation.y = theta;
+
+      strataMeshes.forEach((s, idx) => {
+        s.mesh.position.y = s.baseY + Math.sin(theta * 2 - idx * 0.6) * 0.018;
+        s.mesh.rotation.y = s.baseRot + Math.sin(theta + idx * 0.5) * 0.05;
+      });
+
+      finRecords.forEach((rec) => {
+        rec.mesh.position.y = Math.sin(theta * 2 + rec.phase) * 0.032;
+      });
+
+      haloRing.position.y = 0.78 + Math.sin(theta * 2) * 0.05;
+      haloRing.rotation.z = Math.sin(theta) * 0.06;
+
+      renderer.render(scene, camera);
+    };
+  </script>
+</body>
+</html>

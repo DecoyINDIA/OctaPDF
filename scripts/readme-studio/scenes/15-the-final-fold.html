@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — The Final Fold</title>
+  <style>
+    @font-face {
+      font-family: 'OctaSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaSans';
+      src: url('/src/main/resources/static/pdfjs-legacy/standard_fonts/LiberationSans-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+    }
+    @font-face {
+      font-family: 'OctaSerif';
+      src: url('/src/main/resources/static/fonts/Tinos-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1200px;
+      height: 560px;
+      overflow: hidden;
+      background: #161412;
+      font-family: 'OctaSans', 'Segoe UI', system-ui, sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 1200px;
+      height: 560px;
+    }
+    canvas {
+      display: block;
+      width: 1200px;
+      height: 560px;
+    }
+
+    #gallery-hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .gallery-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: rgba(245, 239, 230, 0.16);
+      border-style: solid;
+      border-width: 0;
+    }
+    .gc-tl { top: 24px; left: 26px; border-top-width: 1px; border-left-width: 1px; }
+    .gc-tr { top: 24px; right: 26px; border-top-width: 1px; border-right-width: 1px; }
+    .gc-bl { bottom: 24px; left: 26px; border-bottom-width: 1px; border-left-width: 1px; }
+    .gc-br { bottom: 24px; right: 26px; border-bottom-width: 1px; border-right-width: 1px; }
+
+    .exhibition-header {
+      position: absolute;
+      top: 26px;
+      left: 52px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(168, 158, 148, 0.78);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .exhibition-header .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #FF6B35;
+    }
+
+    .finale-backdrop {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 155px;
+      background: linear-gradient(to top, rgba(22, 20, 18, 0.92) 0%, rgba(22, 20, 18, 0.62) 55%, rgba(22, 20, 18, 0) 100%);
+    }
+
+    .finale-statement {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 28px;
+      text-align: center;
+      opacity: 0;
+      transform: translate3d(0, 14px, 0);
+    }
+
+    .statement-line {
+      font-family: 'OctaSerif', 'Georgia', serif;
+      font-size: 29px;
+      font-weight: 400;
+      letter-spacing: -0.005em;
+      color: #F5EFE6;
+      margin: 0 0 10px 0;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.75);
+    }
+    .statement-line em {
+      font-style: normal;
+      color: #FF6B35;
+    }
+
+    .statement-rule {
+      width: 0px;
+      height: 1.5px;
+      margin: 0 auto 10px auto;
+      background: linear-gradient(90deg, rgba(255,107,53,0), #FF6B35, rgba(255,107,53,0));
+    }
+
+    .colophon {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #A89E94;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="gallery-hud">
+      <div class="gallery-corner gc-tl"></div>
+      <div class="gallery-corner gc-tr"></div>
+      <div class="gallery-corner gc-bl"></div>
+      <div class="gallery-corner gc-br"></div>
+
+      <div class="exhibition-header">
+        <span class="dot"></span>
+        <span>Project Origami &middot; Closing Exhibition</span>
+      </div>
+
+      <div class="finale-backdrop"></div>
+      <div class="finale-statement" id="finaleStatement">
+        <p class="statement-line">Paper, precision, and control <em>&mdash;</em> entirely yours.</p>
+        <div class="statement-rule" id="statementRule"></div>
+        <p class="colophon">Local-First &middot; Zero Telemetry &middot; MIT Open Source</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = 1200;
+    const H = 560;
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function () {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const smooth = (t) => {
+      const x = clamp01(t);
+      return x * x * (3 - 2 * x);
+    };
+    const smoother = (t) => {
+      const x = clamp01(t);
+      return x * x * x * (x * (x * 6 - 15) + 10);
+    };
+    const band = (t, a, b) => smooth((t - a) / (b - a));
+    const easeOutCubic = (t) => 1 - Math.pow(1 - clamp01(t), 3);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const stageEl = document.getElementById('stage');
+    stageEl.insertBefore(renderer.domElement, stageEl.firstChild);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#161412');
+    scene.fog = new THREE.FogExp2('#161412', 0.068);
+
+    const camera = new THREE.PerspectiveCamera(34, W / H, 0.1, 45);
+    camera.position.set(0, 3.0, 6.8);
+    camera.lookAt(0, 0.42, 0);
+
+    // Warm Gallery Directional Spotlight Rig (#161412 -> #241E1B)
+    const hemi = new THREE.HemisphereLight('#4D433B', '#14110F', 0.75);
+    scene.add(hemi);
+
+    const gallerySpot = new THREE.SpotLight('#FFF0DF', 48, 22, Math.PI / 4.6, 0.72, 1.45);
+    gallerySpot.position.set(2.4, 6.2, 4.4);
+    gallerySpot.castShadow = true;
+    gallerySpot.shadow.mapSize.set(2048, 2048);
+    gallerySpot.shadow.camera.near = 1.0;
+    gallerySpot.shadow.camera.far = 18.0;
+    gallerySpot.shadow.bias = -0.0004;
+    gallerySpot.shadow.normalBias = 0.018;
+    const spotTarget = new THREE.Object3D();
+    spotTarget.position.set(0, 0.45, 0);
+    scene.add(spotTarget);
+    gallerySpot.target = spotTarget;
+    scene.add(gallerySpot);
+
+    // Warm terracotta raking rim light
+    const rimOrange = new THREE.DirectionalLight('#FF6B35', 1.35);
+    rimOrange.position.set(-4.2, 2.8, -3.5);
+    scene.add(rimOrange);
+
+    // Cool-warm architectural fill so charcoal sheets retain subtle edge highlights
+    const fillLight = new THREE.DirectionalLight('#8F8378', 0.55);
+    fillLight.position.set(-3.8, 2.2, 3.6);
+    scene.add(fillLight);
+
+    // Subtle local plinth glow
+    const plinthGlow = new THREE.PointLight('#E8501C', 1.4, 5.5, 1.8);
+    plinthGlow.position.set(0, 0.9, 1.4);
+    scene.add(plinthGlow);
+
+    // Procedural dark basalt & paper fiber textures
+    function createGalleryTextures() {
+      const rng = mulberry32(80802);
+
+      // Paper fiber bump
+      const bCan = document.createElement('canvas');
+      bCan.width = 512; bCan.height = 512;
+      const bctx = bCan.getContext('2d');
+      bctx.fillStyle = '#808080';
+      bctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 3200; i++) {
+        const x = rng() * 512;
+        const y = rng() * 512;
+        const len = 6 + rng() * 14;
+        const a = rng() * Math.PI * 2;
+        const v = rng() > 0.5 ? 164 : 96;
+        bctx.strokeStyle = `rgba(${v},${v},${v},0.22)`;
+        bctx.lineWidth = 0.7;
+        bctx.beginPath();
+        bctx.moveTo(x, y);
+        bctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+        bctx.stroke();
+      }
+      const bumpTex = new THREE.CanvasTexture(bCan);
+      bumpTex.wrapS = THREE.RepeatWrapping;
+      bumpTex.wrapT = THREE.RepeatWrapping;
+      bumpTex.repeat.set(2, 2);
+
+      // Radial museum floor texture
+      const fCan = document.createElement('canvas');
+      fCan.width = 1024; fCan.height = 1024;
+      const fctx = fCan.getContext('2d');
+      const g = fctx.createRadialGradient(512, 512, 40, 512, 512, 500);
+      g.addColorStop(0, '#241E1B');
+      g.addColorStop(0.55, '#1B1815');
+      g.addColorStop(1, '#161412');
+      fctx.fillStyle = g;
+      fctx.fillRect(0, 0, 1024, 1024);
+
+      // Concentric architectural rings & 8 radial compass hairlines
+      [110, 185, 270, 365, 460].forEach((r, idx) => {
+        fctx.strokeStyle = idx === 1 ? 'rgba(255, 107, 53, 0.16)' : 'rgba(245, 239, 230, 0.06)';
+        fctx.lineWidth = idx === 1 ? 1.5 : 1;
+        fctx.beginPath();
+        fctx.arc(512, 512, r, 0, Math.PI * 2);
+        fctx.stroke();
+      });
+      fctx.strokeStyle = 'rgba(245, 239, 230, 0.05)';
+      fctx.lineWidth = 1;
+      for (let k = 0; k < 8; k++) {
+        const ang = (k / 8) * Math.PI * 2;
+        fctx.beginPath();
+        fctx.moveTo(512 + Math.cos(ang) * 90, 512 + Math.sin(ang) * 90);
+        fctx.lineTo(512 + Math.cos(ang) * 485, 512 + Math.sin(ang) * 485);
+        fctx.stroke();
+      }
+      const floorTex = new THREE.CanvasTexture(fCan);
+      floorTex.colorSpace = THREE.SRGBColorSpace;
+
+      return { bumpTex, floorTex };
+    }
+
+    const { bumpTex, floorTex } = createGalleryTextures();
+
+    const galleryFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 18),
+      new THREE.MeshStandardMaterial({
+        map: floorTex,
+        roughness: 0.88,
+        metalness: 0.06
+      })
+    );
+    galleryFloor.rotation.x = -Math.PI / 2;
+    galleryFloor.position.y = -0.68;
+    galleryFloor.receiveShadow = true;
+    scene.add(galleryFloor);
+
+    // =========================================================================
+    // 1. LAYERED CARDSTOCK STRATA PEDESTAL (Center Monolith Base)
+    // =========================================================================
+    const monolithGroup = new THREE.Group();
+    monolithGroup.position.set(0, 0.36, 0);
+    scene.add(monolithGroup);
+
+    const strataSpecs = [
+      { r: 1.88, h: 0.08, color: '#1F1C19', restY: -0.96, startY: -1.35 },
+      { r: 1.68, h: 0.05, color: '#F5EFE6', restY: -0.89, startY: -1.16 },
+      { r: 1.54, h: 0.10, color: '#27221E', restY: -0.80, startY: -0.96 },
+      { r: 1.38, h: 0.03, color: '#E8501C', restY: -0.72, startY: -0.78 },
+      { r: 1.28, h: 0.10, color: '#1F1C19', restY: -0.64, startY: -0.58 }
+    ];
+
+    const strataMeshes = strataSpecs.map((sp) => {
+      const m = new THREE.Mesh(
+        new THREE.CylinderGeometry(sp.r, sp.r * 1.03, sp.h, 8),
+        new THREE.MeshPhysicalMaterial({
+          color: sp.color,
+          bumpMap: bumpTex,
+          bumpScale: 0.01,
+          roughness: sp.color === '#E8501C' ? 0.35 : 0.72,
+          metalness: sp.color === '#E8501C' ? 0.12 : 0.04,
+          clearcoat: sp.color === '#E8501C' ? 0.2 : 0.04
+        })
+      );
+      m.rotation.y = Math.PI / 8;
+      m.position.y = sp.startY;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      monolithGroup.add(m);
+      return { mesh: m, spec: sp };
+    });
+
+    // =========================================================================
+    // 2. MONOLITHIC EMBOSSED OCTAPDF SEAL TABLET (Dark Basalt + Ivory Lockup)
+    // =========================================================================
+    const tabletGroup = new THREE.Group();
+    tabletGroup.position.set(0, 0.56, 0);
+    scene.add(tabletGroup);
+
+    // Outer octagonal basalt housing
+    const tabletOuter = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.18, 1.24, 0.16, 8),
+      new THREE.MeshPhysicalMaterial({
+        color: '#1F1C19',
+        bumpMap: bumpTex,
+        bumpScale: 0.012,
+        roughness: 0.62,
+        metalness: 0.08
+      })
+    );
+    tabletOuter.rotation.x = Math.PI / 2;
+    tabletOuter.rotation.y = Math.PI / 8;
+    tabletOuter.castShadow = true;
+    tabletOuter.receiveShadow = true;
+    tabletGroup.add(tabletOuter);
+
+    // Thin glowing terracotta chamfer ring inside the monolith face
+    const chamferRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.99, 1.015, 8),
+      new THREE.MeshStandardMaterial({
+        color: '#FF6B35',
+        emissive: '#E8501C',
+        emissiveIntensity: 0.45,
+        roughness: 0.3
+      })
+    );
+    chamferRing.rotation.z = Math.PI / 8;
+    chamferRing.position.z = 0.084;
+    tabletGroup.add(chamferRing);
+
+    // Inner recessed slate face for crisp lockup contrast
+    const tabletInner = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.98, 0.99, 0.03, 8),
+      new THREE.MeshPhysicalMaterial({
+        color: '#241E1B',
+        bumpMap: bumpTex,
+        bumpScale: 0.01,
+        roughness: 0.72,
+        metalness: 0.04
+      })
+    );
+    tabletInner.rotation.x = Math.PI / 2;
+    tabletInner.rotation.y = Math.PI / 8;
+    tabletInner.position.z = 0.075;
+    tabletInner.receiveShadow = true;
+    tabletGroup.add(tabletInner);
+
+    // Load official dark-mode full lockup PNG (with emblem + ivory Octa + orange PDF)
+    let lockupMat = null;
+    let lockupMesh = null;
+    const texLoader = new THREE.TextureLoader();
+    window.sceneReady = new Promise((resolve, reject) => {
+      texLoader.load(
+        '/scripts/readme-studio/assets/octapdf-lockup-dark-alpha.png',
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 8;
+          lockupMat = new THREE.MeshPhysicalMaterial({
+            map: tex,
+            transparent: true,
+            opacity: 0,
+            alphaTest: 0.015,
+            roughness: 0.42,
+            metalness: 0.04,
+            clearcoat: 0.14
+          });
+          lockupMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.56, 1.56), lockupMat);
+          lockupMesh.position.set(0, -0.02, 0.098);
+          tabletGroup.add(lockupMesh);
+          resolve();
+        },
+        undefined,
+        (err) => reject(err)
+      );
+    });
+
+    // =========================================================================
+    // 3. EIGHT RADIAL ORIGAMI FACETS (Aperture blades closing around the seal)
+    // =========================================================================
+    const facetsGroup = new THREE.Group();
+    facetsGroup.position.set(0, 0.56, 0.04);
+    scene.add(facetsGroup);
+
+    const bladeGeo = new THREE.BufferGeometry();
+    bladeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+       0.0,  0.92,  0.0,
+      -0.36, 0.08,  0.08,
+       0.0, -0.34,  0.0,
+       0.0,  0.92,  0.0,
+       0.0, -0.34,  0.0,
+       0.36, 0.08,  0.08
+    ]), 3));
+    bladeGeo.computeVertexNormals();
+
+    const radialFacets = [];
+    for (let i = 0; i < 8; i++) {
+      const isIvory = i % 2 === 0;
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: isIvory ? '#F5EFE6' : '#2C2622',
+        bumpMap: bumpTex,
+        bumpScale: 0.012,
+        roughness: isIvory ? 0.65 : 0.52,
+        metalness: isIvory ? 0.02 : 0.08,
+        side: THREE.DoubleSide
+      });
+      const blade = new THREE.Mesh(bladeGeo, mat);
+      blade.castShadow = true;
+      blade.receiveShadow = true;
+
+      const edge = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0.92, 0.006),
+          new THREE.Vector3(0, -0.34, 0.006)
+        ]),
+        new THREE.LineBasicMaterial({
+          color: '#FF6B35',
+          transparent: true,
+          opacity: isIvory ? 0.45 : 0.72
+        })
+      );
+      blade.add(edge);
+
+      const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      facetsGroup.add(blade);
+      radialFacets.push({ blade, angle, isIvory });
+    }
+
+    // =========================================================================
+    // 4. OUTER GALLERY FOLDED IVORY & CHARCOAL SHEETS CONVERGING INWARD
+    // =========================================================================
+    const gallerySheetsGroup = new THREE.Group();
+    scene.add(gallerySheetsGroup);
+
+    const foldedSheetGeo = new THREE.PlaneGeometry(0.92, 1.24, 12, 16);
+    const fPos = foldedSheetGeo.attributes.position;
+    for (let k = 0; k < fPos.count; k++) {
+      const x = fPos.getX(k);
+      const y = fPos.getY(k);
+      fPos.setZ(k, Math.abs(x) * 0.28 + Math.sin(y * 2.2) * 0.04);
+    }
+    foldedSheetGeo.computeVertexNormals();
+
+    const gallerySheets = [];
+    for (let i = 0; i < 8; i++) {
+      const isIvory = i % 2 === 1;
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: isIvory ? '#F5EFE6' : '#26211E',
+        bumpMap: bumpTex,
+        bumpScale: 0.012,
+        roughness: isIvory ? 0.72 : 0.58,
+        metalness: 0.04,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.96
+      });
+      const mesh = new THREE.Mesh(foldedSheetGeo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      gallerySheetsGroup.add(mesh);
+
+      const angle = (i / 8) * Math.PI * 2;
+      gallerySheets.push({
+        mesh,
+        mat,
+        baseAngle: angle,
+        baseY: 0.35 + ((i % 3) - 1) * 0.45
+      });
+    }
+
+    // =========================================================================
+    // 5. FLOWING #FF6B35 / #E8501C ORANGE INK RIBBONS SWEEPING INWARD
+    // =========================================================================
+    const INK_SEGS = 48;
+    const inkMat = new THREE.MeshPhysicalMaterial({
+      vertexColors: true,
+      roughness: 0.32,
+      metalness: 0.08,
+      clearcoat: 0.24,
+      emissive: '#591804',
+      emissiveIntensity: 0.35,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.96
+    });
+
+    function createInkRibbonGeo() {
+      const geo = new THREE.BufferGeometry();
+      const verts = new Float32Array((INK_SEGS + 1) * 3 * 3);
+      const cols = new Float32Array((INK_SEGS + 1) * 3 * 3);
+      const idx = [];
+      for (let s = 0; s < INK_SEGS; s++) {
+        const a = s * 3;
+        const b = (s + 1) * 3;
+        idx.push(a + 0, a + 1, b + 0, a + 1, b + 1, b + 0);
+        idx.push(a + 1, a + 2, b + 1, a + 2, b + 2, b + 1);
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+      geo.setIndex(idx);
+      return geo;
+    }
+
+    const inkRibbons = [];
+    const colHot = new THREE.Color('#FE9114');
+    const colMid = new THREE.Color('#FF6B35');
+    const colDeep = new THREE.Color('#E8501C');
+
+    for (let i = 0; i < 4; i++) {
+      const geo = createInkRibbonGeo();
+      const mesh = new THREE.Mesh(geo, inkMat);
+      mesh.castShadow = true;
+      scene.add(mesh);
+      inkRibbons.push({
+        geo,
+        mesh,
+        phaseOffset: (i / 4) * Math.PI * 2,
+        yOffset: (i % 2 === 0 ? 0.22 : -0.18)
+      });
+    }
+
+    const _ip = new THREE.Vector3();
+    const _it = new THREE.Vector3();
+    const _is = new THREE.Vector3();
+    const _in = new THREE.Vector3();
+    const _iup = new THREE.Vector3(0, 1, 0);
+    const _ic = new THREE.Color();
+
+    function updateInkRibbon(rb, converge, swirlPhase) {
+      const pts = [];
+      // Outer gallery swirl smoothly coils down into the lower pedestal collar (never crossing over the monolith face)
+      const radiusOuter = lerp(4.15, 1.56, converge);
+      const radiusInner = lerp(2.25, 1.30, converge);
+
+      for (let k = 0; k <= 5; k++) {
+        const f = k / 5;
+        const ang = rb.phaseOffset + swirlPhase + f * Math.PI * 1.15;
+        const r = lerp(radiusOuter, radiusInner, f);
+        const y = lerp(0.85 + rb.yOffset, -0.34 + rb.yOffset * 0.25, converge) + Math.sin(f * Math.PI * 2 + swirlPhase) * 0.22 * (1 - converge * 0.78);
+        pts.push(new THREE.Vector3(Math.cos(ang) * r, y, Math.sin(ang) * r));
+      }
+
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const pos = rb.geo.attributes.position;
+      const col = rb.geo.attributes.color;
+
+      for (let s = 0; s <= INK_SEGS; s++) {
+        const u = s / INK_SEGS;
+        curve.getPoint(u, _ip);
+        curve.getTangent(u, _it).normalize();
+        _is.crossVectors(_it, _iup).normalize();
+        _in.crossVectors(_is, _it).normalize();
+
+        const width = 0.105 * Math.sin(u * Math.PI * 0.88 + 0.14);
+        const ridge = width * 0.25;
+        const b = s * 3;
+
+        pos.setXYZ(b + 0, _ip.x - _is.x * width, _ip.y - _is.y * width, _ip.z - _is.z * width);
+        pos.setXYZ(b + 1, _ip.x + _in.x * ridge, _ip.y + _in.y * ridge, _ip.z + _in.z * ridge);
+        pos.setXYZ(b + 2, _ip.x + _is.x * width, _ip.y + _is.y * width, _ip.z + _is.z * width);
+
+        _ic.copy(colDeep).lerp(colMid, u);
+        col.setXYZ(b + 0, _ic.r, _ic.g, _ic.b);
+        _ic.copy(colMid).lerp(colHot, 0.65);
+        col.setXYZ(b + 1, _ic.r, _ic.g, _ic.b);
+        _ic.copy(colDeep).lerp(colHot, u * 0.5);
+        col.setXYZ(b + 2, _ic.r, _ic.g, _ic.b);
+      }
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
+      rb.geo.computeVertexNormals();
+    }
+
+    const finaleStatementEl = document.getElementById('finaleStatement');
+    const statementRuleEl = document.getElementById('statementRule');
+
+    // =========================================================================
+    // SEAMLESS 10s GALLERY FINALE CHOREOGRAPHY (t in [0, 1))
+    // =========================================================================
+    window.renderFrame = async function renderFrame(i, totalFrames, t) {
+      const loopAngle = t * Math.PI * 2;
+
+      // Smooth symmetric convergence curve: 0 at t=0, peaks cleanly at t=0.52..0.82, returns to 0 at t=1.0
+      const convIn  = smoother(clamp01((t - 0.04) / 0.44));
+      const convOut = smoother(clamp01((t - 0.82) / 0.16));
+      const converge = clamp01(convIn * (1 - convOut));
+
+      // 1) Cardstock strata pedestal compresses & locks cleanly
+      strataMeshes.forEach(({ mesh, spec }) => {
+        mesh.position.y = lerp(spec.startY, spec.restY, converge);
+        mesh.rotation.y = Math.PI / 8 + (1 - converge) * 0.25;
+      });
+
+      // 2) Outer folded ivory & charcoal sheets glide inward from outer gallery and tuck into pedestal strata
+      const sheetFade = clamp01(1 - band(t, 0.34, 0.48) + band(t, 0.87, 0.96));
+      gallerySheets.forEach((s, idx) => {
+        const spiralAngle = s.baseAngle + converge * 0.95 + Math.sin(loopAngle) * 0.08;
+        const radius = lerp(4.35, 1.48, converge);
+        const y = lerp(s.baseY, -0.45, converge) + Math.sin(loopAngle + idx) * 0.07 * (1 - converge);
+        s.mesh.position.set(Math.cos(spiralAngle) * radius, y, Math.sin(spiralAngle) * radius);
+        s.mesh.rotation.set(
+          lerp(-0.28 + (idx % 2) * 0.22, -Math.PI / 2 + 0.12, converge),
+          -spiralAngle + Math.PI / 2,
+          lerp((idx % 3 - 1) * 0.2, 0, converge)
+        );
+        s.mesh.scale.setScalar(lerp(1.0, 0.56, converge));
+        s.mat.opacity = 0.95 * sheetFade;
+        s.mesh.visible = s.mat.opacity > 0.01;
+      });
+
+      // 3) Eight radial origami facets orbit inward & frame the seal perimeter cleanly
+      facetsGroup.position.set(0, 0.74, -0.12);
+      facetsGroup.rotation.z = lerp(-0.55, 0.0, converge);
+      radialFacets.forEach(({ blade, angle }) => {
+        const radialDist = lerp(2.85, 0.96, converge);
+        const tiltBack = lerp(0.92, 0.24, converge);
+        blade.position.set(
+          Math.cos(angle) * radialDist,
+          Math.sin(angle) * radialDist,
+          lerp(0.45, -0.08, converge)
+        );
+        blade.rotation.set(0, 0, angle - Math.PI / 2);
+        blade.rotateX(tiltBack);
+        blade.scale.setScalar(lerp(1.02, 0.46, converge));
+      });
+
+      // 4) Flowing orange ink ribbons coil inward around the monolith collar
+      const swirlPhase = loopAngle * 1.0;
+      inkRibbons.forEach((rb) => {
+        updateInkRibbon(rb, converge, swirlPhase);
+      });
+
+      // 5) Monolithic Embossed OctaPDF Seal rises cleanly above the plinth into the gallery spotlight
+      const sealLift = band(t, 0.34, 0.54) * (1 - band(t, 0.84, 0.96));
+      tabletGroup.position.y = lerp(0.28, 0.78, sealLift);
+      tabletGroup.scale.setScalar(lerp(0.76, 0.88, sealLift));
+      tabletGroup.rotation.x = lerp(-0.35, -0.05, sealLift);
+      tabletGroup.rotation.y = Math.sin(loopAngle) * 0.04;
+
+      if (lockupMat) {
+        const lockupVis = band(t, 0.40, 0.52) * (1 - band(t, 0.82, 0.92));
+        lockupMat.opacity = lockupVis;
+      }
+
+      // Subtle anchored spotlight over monolith (calmer floor pixels -> tighter WebP compression)
+      gallerySpot.position.x = lerp(1.4, 2.4, Math.sin(t * Math.PI));
+      gallerySpot.intensity = lerp(34, 48, converge);
+      plinthGlow.intensity = lerp(0.8, 2.0, sealLift);
+
+      // 6) Camera smooth dolly & elevation (mathematically identical at t=0 and t=1)
+      const camIn = band(t, 0.10, 0.54) * (1 - band(t, 0.82, 0.99));
+      const endBlend = band(t, 0.88, 1.0);
+      const camX = Math.sin(loopAngle) * 0.18 * (1 - endBlend);
+      const camY = lerp(3.0, 1.56, camIn);
+      const camZ = lerp(6.8, 5.92, camIn);
+      camera.position.set(
+        lerp(camX, 0, endBlend),
+        lerp(camY, 3.0, endBlend),
+        lerp(camZ, 6.8, endBlend)
+      );
+      camera.lookAt(0, lerp(0.35, 0.32, camIn), 0);
+
+      // 7) Closing Exhibition Statement HUD (0.56 -> 0.86)
+      const stmtIn = easeOutCubic((t - 0.56) / 0.10);
+      const stmtOut = band(t, 0.81, 0.88);
+      const stmtVis = clamp01(stmtIn - stmtOut);
+      finaleStatementEl.style.opacity = stmtVis.toFixed(4);
+      finaleStatementEl.style.transform = `translate3d(0, ${(1 - stmtIn) * 14 - stmtOut * 8}px, 0)`;
+      statementRuleEl.style.width = `${Math.round(stmtVis * 160)}px`;
+
+      renderer.render(scene, camera);
+    };
+  </script>
+</body>
+</html>

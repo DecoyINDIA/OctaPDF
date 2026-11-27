@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Precision Editing (Level 4)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .hud-top {
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .hud-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: #6E645D;
+    }
+    .hud-dot {
+      width: 7px;
+      height: 7px;
+      background: #E8501C;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    }
+    .hud-readout {
+      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #E8E2D8;
+      border-radius: 999px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: #241E1B;
+    }
+    .hud-readout span {
+      color: #E8501C;
+    }
+    .hud-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid #E8E2D8;
+      border-radius: 999px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      color: #6E645D;
+      pointer-events: none;
+    }
+    .hud-bottom strong {
+      color: #241E1B;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-top">
+    <div class="hud-kicker">
+      <span class="hud-dot"></span>
+      <span>OCTAPDF // PRECISION EDITING</span>
+    </div>
+    <div class="hud-readout" id="hud-angle">ROT <span>+90.0°</span> · Z-LAYER</div>
+  </div>
+
+  <div class="hud-bottom">
+    <strong>MULTI-TOOL</strong>
+    <span>·</span>
+    <span>Z-DEPTH LAYERS</span>
+    <span>·</span>
+    <span>90° ALIGN</span>
+    <span>·</span>
+    <span>SIGN &amp; SEAL</span>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      PALETTE,
+      clamp01,
+      smootherstep,
+      easeInOutCubic,
+      createPaperFiberMaps,
+      setupStudioLighting,
+      createOctagonalSeal,
+    } from '/scripts/readme-studio/scenes/paper-utils.js';
+
+    const W = window.innerWidth || 1200;
+    const H = window.innerHeight || 540;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.03;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    setupStudioLighting(scene, {
+      background: PALETTE.canvas,
+      shadowExtent: 4.0,
+      keyPosition: [3.6, 5.8, 3.8],
+      keyIntensity: 2.15,
+    });
+
+    const camera = new THREE.PerspectiveCamera(27, W / H, 0.1, 40);
+    camera.position.set(0.15, 1.82, 3.05);
+    camera.lookAt(0.05, 0.08, 0.08);
+
+    const { bumpMap } = createPaperFiberMaps(512, 219);
+
+    // Drafting surface floor
+    const studioFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 14),
+      new THREE.MeshStandardMaterial({ color: '#EFE8DC', roughness: 0.94 })
+    );
+    studioFloor.rotation.x = -Math.PI / 2;
+    studioFloor.position.y = -0.05;
+    studioFloor.receiveShadow = true;
+    scene.add(studioFloor);
+
+    // Macro Textured Ivory PDF Base Surface
+    const baseCanvas = document.createElement('canvas');
+    baseCanvas.width = 1024;
+    baseCanvas.height = 768;
+    const bctx = baseCanvas.getContext('2d');
+    bctx.fillStyle = '#FDFBF7';
+    bctx.fillRect(0, 0, 1024, 768);
+
+    // Fine architectural grid lines & edge ruler ticks
+    bctx.strokeStyle = '#ECE5D9';
+    bctx.lineWidth = 1;
+    for (let x = 64; x <= 960; x += 32) {
+      bctx.beginPath();
+      bctx.moveTo(x, 48);
+      bctx.lineTo(x, 720);
+      bctx.stroke();
+    }
+    for (let y = 48; y <= 720; y += 32) {
+      bctx.beginPath();
+      bctx.moveTo(64, y);
+      bctx.lineTo(960, y);
+      bctx.stroke();
+    }
+    bctx.strokeStyle = '#D5CCC0';
+    bctx.lineWidth = 2;
+    bctx.strokeRect(64, 48, 896, 672);
+
+    // Ruler ticks
+    bctx.fillStyle = '#8C8178';
+    for (let x = 64; x <= 960; x += 16) {
+      const len = (x - 64) % 64 === 0 ? 10 : 5;
+      bctx.fillRect(x, 48, 1.5, len);
+    }
+
+    // Subtle registration footprints on the paper
+    bctx.strokeStyle = 'rgba(232, 80, 28, 0.25)';
+    bctx.setLineDash([5, 5]);
+    bctx.lineWidth = 2;
+    bctx.strokeRect(390, 146, 260, 220);
+    bctx.setLineDash([]);
+
+    // Signature field baseline in lower-right quadrant
+    bctx.fillStyle = '#F5EFE6';
+    bctx.fillRect(430, 470, 440, 148);
+    bctx.strokeStyle = '#D8CFC2';
+    bctx.lineWidth = 2;
+    bctx.strokeRect(430, 470, 440, 148);
+    bctx.strokeStyle = '#6E645D';
+    bctx.beginPath();
+    bctx.moveTo(464, 578);
+    bctx.lineTo(836, 578);
+    bctx.stroke();
+    bctx.fillStyle = '#6E645D';
+    bctx.font = '600 15px ui-monospace, SFMono-Regular, Consolas, monospace';
+    bctx.fillText('SIGN // VECTOR INK FIELD', 464, 600);
+
+    const baseTex = new THREE.CanvasTexture(baseCanvas);
+    baseTex.colorSpace = THREE.SRGBColorSpace;
+    baseTex.anisotropy = 8;
+
+    const baseSheet = new THREE.Mesh(
+      new THREE.BoxGeometry(4.1, 0.036, 3.05),
+      [
+        new THREE.MeshStandardMaterial({ color: '#E4DBD0', roughness: 0.85 }),
+        new THREE.MeshStandardMaterial({ color: '#E4DBD0', roughness: 0.85 }),
+        new THREE.MeshStandardMaterial({
+          color: '#FFFFFF',
+          map: baseTex,
+          bumpMap,
+          bumpScale: 0.003,
+          roughness: 0.74,
+        }),
+        new THREE.MeshStandardMaterial({ color: '#F5EFE6', roughness: 0.85 }),
+        new THREE.MeshStandardMaterial({ color: '#E4DBD0', roughness: 0.85 }),
+        new THREE.MeshStandardMaterial({ color: '#E4DBD0', roughness: 0.85 }),
+      ]
+    );
+    baseSheet.position.set(0, -0.018, 0);
+    baseSheet.castShadow = true;
+    baseSheet.receiveShadow = true;
+    scene.add(baseSheet);
+
+    // 1. Elevated Left Typography Layer (Exploded Z-depth)
+    const typoGroup = new THREE.Group();
+    typoGroup.position.set(-1.12, 0.06, -0.22);
+    scene.add(typoGroup);
+
+    const typoCard = new THREE.Mesh(
+      new THREE.BoxGeometry(1.18, 0.02, 1.52),
+      new THREE.MeshStandardMaterial({ color: '#FFFFFF', bumpMap, bumpScale: 0.003, roughness: 0.62 })
+    );
+    typoCard.castShadow = true;
+    typoCard.receiveShadow = true;
+    typoGroup.add(typoCard);
+
+    // Extruded 3D typography bars rising off the card
+    const typoBars = [];
+    const barSpecs = [
+      { w: 0.42, h: 0.022, d: 0.055, x: -0.26, z: -0.56, col: PALETTE.accent },
+      { w: 0.86, h: 0.026, d: 0.075, x: -0.04, z: -0.40, col: PALETTE.ink },
+      { w: 0.78, h: 0.014, d: 0.034, x: -0.08, z: -0.22, col: PALETTE.muted },
+      { w: 0.84, h: 0.014, d: 0.034, x: -0.05, z: -0.11, col: PALETTE.muted },
+      { w: 0.64, h: 0.014, d: 0.034, x: -0.15, z: 0.00, col: PALETTE.muted },
+      { w: 0.82, h: 0.018, d: 0.042, x: -0.06, z: 0.18, col: PALETTE.ink },
+      { w: 0.76, h: 0.014, d: 0.034, x: -0.09, z: 0.30, col: PALETTE.muted },
+      { w: 0.58, h: 0.014, d: 0.034, x: -0.18, z: 0.41, col: PALETTE.muted },
+    ];
+    for (const b of barSpecs) {
+      const m = new THREE.Mesh(
+        new THREE.BoxGeometry(b.w, b.h, b.d),
+        new THREE.MeshStandardMaterial({ color: b.col, roughness: 0.48 })
+      );
+      m.position.set(b.x, 0.012 + b.h * 0.5, b.z);
+      m.castShadow = true;
+      typoGroup.add(m);
+      typoBars.push(m);
+    }
+
+    // 2. Central Precision Target Plate (elevates, rotates 90 deg, snaps into crosshair & selection frame)
+    const targetCenter = new THREE.Vector3(0.08, 0, -0.44);
+    const targetPlateGroup = new THREE.Group();
+    targetPlateGroup.position.set(targetCenter.x, 0.20, targetCenter.z);
+    scene.add(targetPlateGroup);
+
+    const plateMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.92, 0.024, 0.72),
+      new THREE.MeshStandardMaterial({ color: '#FFFFFF', bumpMap, bumpScale: 0.003, roughness: 0.58 })
+    );
+    plateMesh.castShadow = true;
+    plateMesh.receiveShadow = true;
+    targetPlateGroup.add(plateMesh);
+
+    const plateHeader = new THREE.Mesh(
+      new THREE.BoxGeometry(0.68, 0.018, 0.07),
+      new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.45 })
+    );
+    plateHeader.position.set(-0.04, 0.02, -0.20);
+    plateHeader.castShadow = true;
+    targetPlateGroup.add(plateHeader);
+
+    const plateAccent = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.022, 0.18),
+      new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.36 })
+    );
+    plateAccent.position.set(0.24, 0.022, 0.12);
+    plateAccent.castShadow = true;
+    targetPlateGroup.add(plateAccent);
+
+    const plateSub1 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.014, 0.05),
+      new THREE.MeshStandardMaterial({ color: PALETTE.muted, roughness: 0.55 })
+    );
+    plateSub1.position.set(-0.15, 0.018, 0.04);
+    plateSub1.castShadow = true;
+    targetPlateGroup.add(plateSub1);
+
+    const plateSub2 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.014, 0.05),
+      new THREE.MeshStandardMaterial({ color: PALETTE.muted, roughness: 0.55 })
+    );
+    plateSub2.position.set(-0.19, 0.018, 0.16);
+    plateSub2.castShadow = true;
+    targetPlateGroup.add(plateSub2);
+
+    // Sharp #E8501C Selection Frame around target plate
+    const selFrameGroup = new THREE.Group();
+    selFrameGroup.position.set(targetCenter.x, 0.02, targetCenter.z);
+    scene.add(selFrameGroup);
+
+    const selMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.accent,
+      emissive: PALETTE.ribbonFace,
+      emissiveIntensity: 0.35,
+      roughness: 0.25,
+    });
+    const FRAME_W = 1.04;
+    const FRAME_D = 0.84;
+    const RAIL_T = 0.016;
+    const topRail = new THREE.Mesh(new THREE.BoxGeometry(FRAME_W, RAIL_T, RAIL_T), selMat);
+    topRail.position.z = -FRAME_D * 0.5;
+    const botRail = new THREE.Mesh(new THREE.BoxGeometry(FRAME_W, RAIL_T, RAIL_T), selMat);
+    botRail.position.z = FRAME_D * 0.5;
+    const leftRail = new THREE.Mesh(new THREE.BoxGeometry(RAIL_T, RAIL_T, FRAME_D), selMat);
+    leftRail.position.x = -FRAME_W * 0.5;
+    const rightRail = new THREE.Mesh(new THREE.BoxGeometry(RAIL_T, RAIL_T, FRAME_D), selMat);
+    rightRail.position.x = FRAME_W * 0.5;
+    selFrameGroup.add(topRail, botRail, leftRail, rightRail);
+
+    // Corner handles
+    const handleGeo = new THREE.BoxGeometry(0.048, 0.028, 0.048);
+    [
+      [-FRAME_W * 0.5, -FRAME_D * 0.5],
+      [FRAME_W * 0.5, -FRAME_D * 0.5],
+      [-FRAME_W * 0.5, FRAME_D * 0.5],
+      [FRAME_W * 0.5, FRAME_D * 0.5],
+    ].forEach(([hx, hz]) => {
+      const h = new THREE.Mesh(handleGeo, selMat);
+      h.position.set(hx, 0.004, hz);
+      selFrameGroup.add(h);
+    });
+
+    // Architectural Crosshair Guides on paper surface
+    const crossMat = new THREE.LineBasicMaterial({ color: PALETTE.accent, transparent: true, opacity: 0.72 });
+    const crossPts = [
+      new THREE.Vector3(-1.95, 0.004, targetCenter.z),
+      new THREE.Vector3(1.95, 0.004, targetCenter.z),
+      new THREE.Vector3(targetCenter.x, 0.004, -1.45),
+      new THREE.Vector3(targetCenter.x, 0.004, 1.45),
+    ];
+    const crossLines = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(crossPts), crossMat);
+    scene.add(crossLines);
+
+    // 90-degree angle indicator ring on paper around target
+    const arcPts = [];
+    for (let k = 0; k <= 32; k++) {
+      const a = (k / 32) * (Math.PI / 2);
+      arcPts.push(new THREE.Vector3(targetCenter.x + Math.cos(a) * 0.66, 0.005, targetCenter.z - Math.sin(a) * 0.66));
+    }
+    const arcLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(arcPts),
+      new THREE.LineBasicMaterial({ color: PALETTE.ink, transparent: true, opacity: 0.55 })
+    );
+    scene.add(arcLine);
+
+    // 3. Vector Seal Stamp (hovering right-upper, descends to stamp)
+    const sealStamp = createOctagonalSeal(0.22, 0.028);
+    sealStamp.rotation.x = -Math.PI / 2;
+    sealStamp.position.set(1.25, 0.24, -0.45);
+    scene.add(sealStamp);
+
+    // 4. Fluid Orange Signature Ink in foreground signature field (XZ plane above paper)
+    const sigCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.02, 0.016, 0.68),
+      new THREE.Vector3(0.11, 0.020, 0.49),
+      new THREE.Vector3(0.18, 0.016, 0.69),
+      new THREE.Vector3(0.28, 0.022, 0.56),
+      new THREE.Vector3(0.36, 0.016, 0.68),
+      new THREE.Vector3(0.47, 0.021, 0.54),
+      new THREE.Vector3(0.57, 0.016, 0.67),
+      new THREE.Vector3(0.68, 0.020, 0.58),
+      new THREE.Vector3(0.79, 0.016, 0.66),
+      new THREE.Vector3(0.95, 0.018, 0.61),
+      new THREE.Vector3(1.14, 0.017, 0.65),
+    ]);
+    const SIG_TUBULAR = 140;
+    const SIG_RADIAL = 12;
+    const sigGeo = new THREE.TubeGeometry(sigCurve, SIG_TUBULAR, 0.019, SIG_RADIAL, false);
+    const sigMesh = new THREE.Mesh(
+      sigGeo,
+      new THREE.MeshStandardMaterial({
+        color: PALETTE.accent,
+        emissive: PALETTE.ribbonShadow,
+        emissiveIntensity: 0.22,
+        roughness: 0.24,
+        metalness: 0.08,
+      })
+    );
+    sigMesh.castShadow = true;
+    scene.add(sigMesh);
+
+    const stylusTip = new THREE.Mesh(
+      new THREE.ConeGeometry(0.032, 0.14, 16),
+      new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.35, metalness: 0.35 })
+    );
+    stylusTip.rotation.x = Math.PI;
+    stylusTip.castShadow = true;
+    scene.add(stylusTip);
+
+    const stylusCollar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.034, 0.034, 0.025, 16),
+      new THREE.MeshStandardMaterial({ color: PALETTE.ribbonLight, emissive: PALETTE.accent, emissiveIntensity: 0.5 })
+    );
+    stylusTip.add(stylusCollar);
+    stylusCollar.position.y = -0.05;
+
+    const hudAngle = document.getElementById('hud-angle');
+
+    let camInit = false;
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const orbit = t * Math.PI * 2;
+      // Lock macro camera steady so drafting grid & paper stay crisp and WebP compresses cleanly (< 2.8 MB)
+      if (!camInit) {
+        camera.position.set(0.14, 1.78, 3.02);
+        camera.lookAt(0.06, 0.06, 0.10);
+        camInit = true;
+      }
+
+      // Z-depth elevation wave for left typography card & extruded bars
+      const typoLift = Math.sin(orbit) * 0.06 + 0.11;
+      typoGroup.position.y = typoLift;
+      for (let k = 0; k < typoBars.length; k++) {
+        typoBars[k].position.y = 0.018 + (Math.sin(orbit + k * 0.35) * 0.5 + 0.5) * 0.032;
+      }
+
+      // Central plate: starts elevated & rotated -45°, rotates smoothly to exact 90° snap, settles flush, then resets seamlessly
+      const snapIn = smootherstep(0.10, 0.36, t);
+      const snapOut = smootherstep(0.84, 0.98, t);
+      const aligned = snapIn * (1 - snapOut);
+
+      const angleRad = THREE.MathUtils.lerp(-Math.PI * 0.25, Math.PI * 0.5, aligned);
+      const plateY = THREE.MathUtils.lerp(0.24, 0.022, aligned);
+      targetPlateGroup.position.y = plateY;
+      targetPlateGroup.rotation.y = angleRad;
+
+      // Selection frame tracks and tightens on snap
+      const frameScale = THREE.MathUtils.lerp(1.16, 1.0, aligned);
+      selFrameGroup.position.y = plateY + 0.018;
+      selFrameGroup.rotation.y = angleRad;
+      selFrameGroup.scale.set(frameScale, 1, frameScale);
+
+      // Crosshair & angle readout
+      const deg = Math.round(THREE.MathUtils.radToDeg(angleRad));
+      if (aligned > 0.96) {
+        hudAngle.innerHTML = 'ROT <span>90.0°</span> · LOCKED';
+      } else {
+        hudAngle.innerHTML = `ROT <span>${deg >= 0 ? '+' : ''}${deg}°</span> · ALIGN`;
+      }
+      crossMat.opacity = 0.35 + aligned * 0.55;
+
+      // Vector seal stamp descends cleanly
+      const sealU = smootherstep(0.28, 0.44, t) * (1 - smootherstep(0.84, 0.96, t));
+      sealStamp.position.y = THREE.MathUtils.lerp(0.28, 0.018, sealU);
+      sealStamp.rotation.z = THREE.MathUtils.lerp(0.4, 0, sealU);
+
+      // Fluid orange signature ink drawing (0.40 -> 0.74 draw, hold -> 0.86, retract cleanly 0.86 -> 0.97)
+      let drawProgress = 0;
+      if (t >= 0.40 && t < 0.74) {
+        drawProgress = easeInOutCubic((t - 0.40) / 0.34);
+      } else if (t >= 0.74 && t < 0.86) {
+        drawProgress = 1;
+      } else if (t >= 0.86 && t < 0.97) {
+        drawProgress = 1 - easeInOutCubic((t - 0.86) / 0.11);
+      }
+
+      const segCount = Math.floor(drawProgress * SIG_TUBULAR);
+      sigGeo.setDrawRange(0, segCount * SIG_RADIAL * 6);
+
+      if (t >= 0.40 && t < 0.74) {
+        stylusTip.visible = true;
+        const pt = sigCurve.getPointAt(clamp01(drawProgress));
+        stylusTip.position.set(pt.x, pt.y + 0.072, pt.z);
+        stylusTip.rotation.z = -0.18;
+      } else {
+        stylusTip.visible = false;
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    window.sceneReady = Promise.resolve();
+  </script>
+</body>
+</html>

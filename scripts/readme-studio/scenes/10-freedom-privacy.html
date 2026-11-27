@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Freedom by Design</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1200px;
+      height: 520px;
+      overflow: hidden;
+      background: #161412;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #FAF7F2;
+    }
+    #stage {
+      position: relative;
+      width: 1200px;
+      height: 520px;
+      background: #161412;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 1200px;
+      height: 520px;
+    }
+    #hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .header {
+      position: absolute;
+      top: 24px;
+      left: 34px;
+    }
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #FF6B35;
+      margin-bottom: 4px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #FAF7F2;
+      line-height: 1.15;
+    }
+    .subtitle {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #A89E94;
+      margin-top: 3px;
+    }
+    .facts-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      background: rgba(31, 28, 25, 0.94);
+      border: 1px solid #3D362F;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #F5EFE6;
+      white-space: nowrap;
+    }
+    .facts-bar .dot {
+      color: #FF6B35;
+      font-weight: 800;
+    }
+    .perimeter-tag {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border-radius: 7px;
+      background: rgba(31, 28, 25, 0.94);
+      border: 1px solid #423B33;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      color: #F5EFE6;
+      white-space: nowrap;
+      transform: translateY(-50%);
+    }
+    .perimeter-tag.align-right {
+      transform: translate(-100%, -50%);
+    }
+    .perimeter-tag .pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #FF6B35;
+      flex-shrink: 0;
+    }
+    .perimeter-tag .k {
+      color: #FF6B35;
+      font-weight: 700;
+    }
+    svg#leaders {
+      position: absolute;
+      inset: 0;
+      width: 1200px;
+      height: 520px;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="hud">
+      <div class="header">
+        <div class="eyebrow">Air-Gapped Sanctuary</div>
+        <div class="title">Freedom by Design</div>
+        <div class="subtitle">Documents circulate freely within a sealed local ceramic perimeter</div>
+      </div>
+
+      <svg id="leaders" viewBox="0 0 1200 520"></svg>
+      <div id="tags"></div>
+
+      <div class="facts-bar">
+        <span>Zero Telemetry</span>
+        <span class="dot">·</span>
+        <span>Local Processing</span>
+        <span class="dot">·</span>
+        <span>MIT Open Source</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = 1200;
+    const H = 520;
+    const stage = document.getElementById('stage');
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    stage.insertBefore(renderer.domElement, document.getElementById('hud'));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#161412');
+    scene.fog = new THREE.Fog('#161412', 11, 24);
+
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 60);
+    camera.position.set(0, 6.2, 7.6);
+    camera.lookAt(0, 0.0, 0);
+
+    // Architectural obsidian lighting with crisp rim separation on outer ceramic shell
+    const hemi = new THREE.HemisphereLight('#FFF5EB', '#221E1A', 0.92);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF0E2', 2.3);
+    keyLight.position.set(4.5, 8.5, 4.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 22;
+    keyLight.shadow.camera.left = -5.5;
+    keyLight.shadow.camera.right = 5.5;
+    keyLight.shadow.camera.top = 5.5;
+    keyLight.shadow.camera.bottom = -5.5;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const sanctuaryGlow = new THREE.PointLight('#FF6B35', 2.2, 7.5, 1.5);
+    sanctuaryGlow.position.set(0, 0.9, 0);
+    scene.add(sanctuaryGlow);
+
+    const coolRim = new THREE.DirectionalLight('#9E9286', 1.15);
+    coolRim.position.set(-5.0, 3.8, -5.0);
+    scene.add(coolRim);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 60),
+      new THREE.MeshStandardMaterial({ color: '#161412', roughness: 0.92, metalness: 0.06 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.25;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const floorGridMat = new THREE.MeshBasicMaterial({ color: '#38312B', transparent: true, opacity: 0.78 });
+    for (const r of [1.1, 2.0, 2.88, 3.65]) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.012, r + 0.012, 96), floorGridMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = -0.244;
+      scene.add(ring);
+    }
+
+    // Elevated contrast ceramic shell so the outer sanctuary ring reads sharply on #161412
+    const ceramicShellMat = new THREE.MeshStandardMaterial({
+      color: '#37302A',
+      roughness: 0.36,
+      metalness: 0.25
+    });
+    const ceramicCapMat = new THREE.MeshStandardMaterial({
+      color: '#574D44',
+      roughness: 0.32,
+      metalness: 0.18
+    });
+    const innerRingMat = new THREE.MeshStandardMaterial({
+      color: '#F5EFE6',
+      roughness: 0.34,
+      metalness: 0.08
+    });
+    const terracottaMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C',
+      emissive: '#FF6B35',
+      emissiveIntensity: 0.62,
+      roughness: 0.28,
+      metalness: 0.12
+    });
+    const ivoryDocMat = new THREE.MeshStandardMaterial({
+      color: '#FAF7F2',
+      emissive: '#FFF5E8',
+      emissiveIntensity: 0.24,
+      roughness: 0.36,
+      metalness: 0.02
+    });
+    const probeMat = new THREE.MeshStandardMaterial({
+      color: '#B5AAA0',
+      emissive: '#6E645D',
+      emissiveIntensity: 0.35,
+      roughness: 0.32,
+      metalness: 0.45
+    });
+
+    const sanctuaryGroup = new THREE.Group();
+    scene.add(sanctuaryGroup);
+
+    function makeSegmentedRing(radius, height, thickness, segments, gapRad, mat, accentEdge = false) {
+      const group = new THREE.Group();
+      const span = (Math.PI * 2) / segments - gapRad;
+      for (let k = 0; k < segments; k++) {
+        const startA = k * ((Math.PI * 2) / segments);
+        const arcShape = new THREE.Shape();
+        const rIn = radius - thickness / 2;
+        const rOut = radius + thickness / 2;
+        arcShape.absarc(0, 0, rOut, startA, startA + span, false);
+        arcShape.lineTo(Math.cos(startA + span) * rIn, Math.sin(startA + span) * rIn);
+        arcShape.absarc(0, 0, rIn, startA + span, startA, true);
+        arcShape.closePath();
+
+        const geo = new THREE.ExtrudeGeometry(arcShape, {
+          depth: height,
+          bevelEnabled: true,
+          bevelThickness: 0.018,
+          bevelSize: 0.015,
+          bevelSegments: 2,
+          curveSegments: 20
+        });
+        geo.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+
+        if (accentEdge) {
+          // Crisp brushed ceramic top rim + terracotta keystone fillet
+          const capShape = new THREE.Shape();
+          capShape.absarc(0, 0, rOut - 0.01, startA + 0.02, startA + span - 0.02, false);
+          capShape.lineTo(Math.cos(startA + span - 0.02) * (rIn + 0.01), Math.sin(startA + span - 0.02) * (rIn + 0.01));
+          capShape.absarc(0, 0, rIn + 0.01, startA + span - 0.02, startA + 0.02, true);
+          capShape.closePath();
+          const capGeo = new THREE.ExtrudeGeometry(capShape, { depth: 0.028, bevelEnabled: false, curveSegments: 16 });
+          capGeo.rotateX(-Math.PI / 2);
+          const capMesh = new THREE.Mesh(capGeo, ceramicCapMat);
+          capMesh.position.y = height + 0.012;
+          group.add(capMesh);
+
+          const fillet = new THREE.Mesh(
+            new THREE.BoxGeometry(0.045, height * 0.8, thickness + 0.035),
+            terracottaMat
+          );
+          const midA = startA + span * 0.5;
+          fillet.position.set(Math.cos(midA) * radius, height * 0.5, -Math.sin(midA) * radius);
+          fillet.rotation.y = midA;
+          group.add(fillet);
+        }
+      }
+      return group;
+    }
+
+    const outerShell = makeSegmentedRing(2.65, 0.44, 0.28, 8, 0.09, ceramicShellMat, true);
+    outerShell.position.y = -0.18;
+    sanctuaryGroup.add(outerShell);
+
+    const midRing = makeSegmentedRing(2.14, 0.24, 0.14, 4, 0.16, innerRingMat, false);
+    midRing.position.y = -0.10;
+    sanctuaryGroup.add(midRing);
+
+    const innerTrack = new THREE.Mesh(
+      new THREE.TorusGeometry(1.66, 0.024, 12, 96),
+      terracottaMat
+    );
+    innerTrack.rotation.x = Math.PI / 2;
+    innerTrack.position.y = 0.02;
+    sanctuaryGroup.add(innerTrack);
+
+    const centerPedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.56, 0.68, 0.14, 8),
+      ceramicShellMat
+    );
+    centerPedestal.position.y = -0.15;
+    centerPedestal.castShadow = true;
+    centerPedestal.receiveShadow = true;
+    sanctuaryGroup.add(centerPedestal);
+
+    const centerBeacon = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.24, 0),
+      terracottaMat
+    );
+    centerBeacon.position.y = 0.24;
+    sanctuaryGroup.add(centerBeacon);
+
+    const docs = [];
+    for (let k = 0; k < 6; k++) {
+      const docGroup = new THREE.Group();
+      const sheet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.024, 0.42), ivoryDocMat);
+      sheet.castShadow = true;
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.028, 0.045), terracottaMat);
+      stripe.position.set(0, 0.005, -0.11);
+      docGroup.add(sheet, stripe);
+      sanctuaryGroup.add(docGroup);
+      docs.push({ group: docGroup, phase: (k / 6) * Math.PI * 2 });
+    }
+
+    const PROBE_COUNT = 8;
+    const probes = [];
+    for (let k = 0; k < PROBE_COUNT; k++) {
+      const azimuth = (k / PROBE_COUNT) * Math.PI * 2 + 0.22;
+      const dart = new THREE.Mesh(new THREE.ConeGeometry(0.072, 0.30, 4), probeMat);
+      dart.rotation.x = Math.PI / 2;
+      const pivot = new THREE.Group();
+      pivot.add(dart);
+      scene.add(pivot);
+
+      const sparkRing = new THREE.Mesh(
+        new THREE.RingGeometry(0.11, 0.16, 24),
+        new THREE.MeshBasicMaterial({ color: '#FF6B35', side: THREE.DoubleSide, transparent: true, opacity: 0.0 })
+      );
+      sparkRing.rotation.x = -Math.PI / 2;
+      scene.add(sparkRing);
+
+      probes.push({
+        azimuth,
+        phase: (k * 0.375) % 1.0,
+        pivot,
+        sparkRing
+      });
+    }
+
+    const TAGS = [
+      { key: 'internal: true',     desc: 'network',       side: 'left',  y: 162, world: new THREE.Vector3(-2.65, 0.15, -0.85) },
+      { key: 'read_only',          desc: 'rootfs',        side: 'left',  y: 356, world: new THREE.Vector3(-2.55, 0.15,  1.05) },
+      { key: "connect-src 'self'", desc: 'CSP policy',    side: 'right', y: 162, world: new THREE.Vector3( 2.65, 0.15, -0.85) },
+      { key: 'zero telemetry',     desc: 'no egress',     side: 'right', y: 356, world: new THREE.Vector3( 2.55, 0.15,  1.05) }
+    ];
+
+    const tagsEl = document.getElementById('tags');
+    const leadersSvg = document.getElementById('leaders');
+
+    const tagBindings = TAGS.map((tag) => {
+      const el = document.createElement('div');
+      el.className = `perimeter-tag ${tag.side === 'left' ? 'align-right' : 'align-left'}`;
+      el.style.left = tag.side === 'left' ? '230px' : '970px';
+      el.style.top = `${tag.y}px`;
+      el.innerHTML = `<span class="pip"></span><span class="k">${tag.key}</span><span>${tag.desc}</span>`;
+      tagsEl.appendChild(el);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#FF6B35');
+      line.setAttribute('stroke-width', '1.3');
+      line.setAttribute('stroke-opacity', '0.78');
+      leadersSvg.appendChild(line);
+
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '3.2');
+      dot.setAttribute('fill', '#FF6B35');
+      leadersSvg.appendChild(dot);
+
+      return { tag, line, dot };
+    });
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const loopAngle = t * Math.PI * 2;
+
+      outerShell.rotation.y = (loopAngle / 8) * 2;
+      midRing.rotation.y = -(loopAngle / 4) * 2;
+      centerBeacon.rotation.y = loopAngle;
+      centerBeacon.position.y = 0.24 + Math.sin(loopAngle * 2) * 0.05;
+      sanctuaryGlow.intensity = 2.0 + Math.sin(loopAngle * 2) * 0.35;
+
+      docs.forEach((d, idx) => {
+        const a = loopAngle + d.phase;
+        const r = 1.12 + 0.24 * Math.sin(a * 2 + idx);
+        d.group.position.set(
+          Math.cos(a) * r,
+          0.24 + Math.sin(a * 2) * 0.14,
+          Math.sin(a) * r
+        );
+        d.group.rotation.y = -a + Math.PI / 2;
+        d.group.rotation.x = Math.sin(a * 2) * 0.18;
+        d.group.rotation.z = Math.cos(a) * 0.14;
+      });
+
+      probes.forEach((p) => {
+        const u = (t * 2 + p.phase) % 1.0;
+        const impactR = 2.86;
+        const outerR = 4.65;
+        const dirX = Math.cos(p.azimuth);
+        const dirZ = Math.sin(p.azimuth);
+        const tanX = -dirZ;
+        const tanZ = dirX;
+
+        if (u < 0.45) {
+          const s = u / 0.45;
+          const r = THREE.MathUtils.lerp(outerR, impactR, s * s);
+          p.pivot.position.set(dirX * r, 0.18, dirZ * r);
+          p.pivot.lookAt(0, 0.18, 0);
+          p.pivot.visible = true;
+          p.sparkRing.material.opacity = 0;
+        } else {
+          const s = (u - 0.45) / 0.55;
+          const r = impactR + s * 1.45;
+          const slide = s * 1.65;
+          p.pivot.position.set(dirX * r + tanX * slide, 0.18 + s * 0.32, dirZ * r + tanZ * slide);
+          p.pivot.lookAt(
+            p.pivot.position.x + dirX + tanX * 1.3,
+            0.18 + (s + 0.1) * 0.32,
+            p.pivot.position.z + dirZ + tanZ * 1.3
+          );
+          p.pivot.visible = s < 0.92;
+
+          const ripple = Math.min(1, s * 2.1);
+          p.sparkRing.position.set(dirX * impactR, 0.22, dirZ * impactR);
+          p.sparkRing.scale.setScalar(0.8 + ripple * 2.2);
+          p.sparkRing.material.opacity = Math.max(0, 0.92 * (1 - ripple));
+        }
+      });
+
+      renderer.render(scene, camera);
+
+      for (const b of tagBindings) {
+        const proj = b.tag.world.clone().project(camera);
+        const sx = (proj.x * 0.5 + 0.5) * W;
+        const sy = (-proj.y * 0.5 + 0.5) * H;
+        const anchorX = b.tag.side === 'left' ? 230 : 970;
+        const elbowX = b.tag.side === 'left' ? 268 : 932;
+        b.line.setAttribute('points', `${sx.toFixed(1)},${sy.toFixed(1)} ${elbowX},${b.tag.y} ${anchorX},${b.tag.y}`);
+        b.dot.setAttribute('cx', sx.toFixed(1));
+        b.dot.setAttribute('cy', sy.toFixed(1));
+      }
+    };
+
+    window.renderFrame(0, 192, 0);
+  </script>
+</body>
+</html>

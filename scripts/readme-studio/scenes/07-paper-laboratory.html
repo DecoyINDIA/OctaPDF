@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Paper Laboratory (Level 4)</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .hud-top {
+      position: absolute;
+      top: 18px;
+      left: 34px;
+      right: 34px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .hud-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: #6E645D;
+    }
+    .hud-dot {
+      width: 7px;
+      height: 7px;
+      background: #E8501C;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    }
+    .hud-sub {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.13em;
+      color: #6E645D;
+    }
+    .cell-label {
+      position: absolute;
+      transform: translate(-50%, 0);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid #E8E2D8;
+      border-radius: 999px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      color: #241E1B;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 3px 10px rgba(36, 30, 27, 0.05);
+    }
+    .cell-label .idx {
+      color: #E8501C;
+    }
+    .cell-label .engine {
+      color: #6E645D;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-top">
+    <div class="hud-kicker">
+      <span class="hud-dot"></span>
+      <span>OCTAPDF // PAPER LABORATORY</span>
+    </div>
+    <div class="hud-sub">6 VERIFIED CAPABILITY EXHIBITS · PDFBOX · TESSERACT · LIBREOFFICE · POPPLER</div>
+  </div>
+
+  <div class="cell-label" id="lbl-0"><span class="idx">01</span><span>MERGE</span><span class="engine">· PLATES</span></div>
+  <div class="cell-label" id="lbl-1"><span class="idx">02</span><span>SPLIT</span><span class="engine">· CHAPTERS</span></div>
+  <div class="cell-label" id="lbl-2"><span class="idx">03</span><span>ROTATE &amp; CROP</span><span class="engine">· 90° APERTURE</span></div>
+  <div class="cell-label" id="lbl-3"><span class="idx">04</span><span>COMPRESS</span><span class="engine">· QPDF + PDFBOX</span></div>
+  <div class="cell-label" id="lbl-4"><span class="idx">05</span><span>OCR</span><span class="engine">· TESSERACT</span></div>
+  <div class="cell-label" id="lbl-5"><span class="idx">06</span><span>CONVERT</span><span class="engine" id="convert-state">· PDF → PDF/A · DOCX · MD</span></div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+    import {
+      PALETTE,
+      clamp01,
+      smootherstep,
+      easeInOutCubic,
+      createPaperFiberMaps,
+      setupStudioLighting,
+      createOctagonalSeal,
+    } from '/scripts/readme-studio/scenes/paper-utils.js';
+
+    const W = window.innerWidth || 1200;
+    const H = window.innerHeight || 660;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.03;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    setupStudioLighting(scene, {
+      background: PALETTE.canvas,
+      shadowExtent: 6.5,
+      keyPosition: [4.2, 6.8, 7.2],
+      keyIntensity: 2.05,
+    });
+
+    const camera = new THREE.PerspectiveCamera(25, W / H, 0.1, 50);
+    camera.position.set(0, 0.32, 9.65);
+    camera.lookAt(0, -0.02, 0);
+
+    const { bumpMap } = createPaperFiberMaps(512, 313);
+
+    // Architectural exhibition backdrop wall
+    const galleryGroup = new THREE.Group();
+    galleryGroup.rotation.x = -0.22;
+    galleryGroup.position.y = 0.04;
+    scene.add(galleryGroup);
+
+    const backWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(14, 9),
+      new THREE.MeshStandardMaterial({ color: '#F3EDE3', roughness: 0.94 })
+    );
+    backWall.position.z = -0.14;
+    backWall.receiveShadow = true;
+    galleryGroup.add(backWall);
+
+    // 2x3 Exhibition Grid Coordinates
+    const colX = [-2.36, 0, 2.36];
+    const rowY = [0.92, -0.94];
+    const PLINTH_W = 2.04;
+    const PLINTH_H = 1.44;
+    const PLINTH_D = 0.075;
+
+    const plinths = [];
+    const labelAnchors = [];
+
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 3; c++) {
+        const idx = r * 3 + c;
+        const bay = new THREE.Group();
+        bay.position.set(colX[c], rowY[r], 0);
+        galleryGroup.add(bay);
+
+        // Recessed shadow-tray border
+        const tray = new THREE.Mesh(
+          new THREE.BoxGeometry(PLINTH_W + 0.08, PLINTH_H + 0.08, 0.03),
+          new THREE.MeshStandardMaterial({ color: '#E8E2D8', roughness: 0.85 })
+        );
+        tray.position.z = -0.04;
+        tray.castShadow = true;
+        tray.receiveShadow = true;
+        bay.add(tray);
+
+        // Ivory museum plinth slab
+        const plinth = new THREE.Mesh(
+          new THREE.BoxGeometry(PLINTH_W, PLINTH_H, PLINTH_D),
+          new THREE.MeshStandardMaterial({
+            color: '#FDFBF7',
+            roughness: 0.78,
+            bumpMap,
+            bumpScale: 0.0025,
+          })
+        );
+        plinth.position.z = 0.01;
+        plinth.castShadow = true;
+        plinth.receiveShadow = true;
+        bay.add(plinth);
+
+        // Small terracotta index pin top-left of plinth
+        const pin = new THREE.Mesh(
+          new THREE.BoxGeometry(0.14, 0.025, 0.015),
+          new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.35 })
+        );
+        pin.position.set(-PLINTH_W * 0.5 + 0.16, PLINTH_H * 0.5 - 0.10, PLINTH_D * 0.5 + 0.015);
+        bay.add(pin);
+
+        // Stage group resting atop the plinth front face
+        const stage = new THREE.Group();
+        stage.position.set(0, 0.02, PLINTH_D * 0.5 + 0.02);
+        bay.add(stage);
+        plinths.push(stage);
+
+        // Anchor for crisp projected HTML label directly under plinth
+        const anchor = new THREE.Object3D();
+        anchor.position.set(0, -PLINTH_H * 0.5 - 0.11, 0.06);
+        bay.add(anchor);
+        labelAnchors.push(anchor);
+      }
+    }
+
+    // =========================================================================
+    // EXHIBIT 1: MERGE — Interlocking architectural paper plates sliding flush
+    // =========================================================================
+    const ex1Left = new THREE.Group();
+    const ex1Right = new THREE.Group();
+    plinths[0].add(ex1Left, ex1Right);
+
+    for (let k = 0; k < 3; k++) {
+      const lp = new THREE.Mesh(
+        new THREE.BoxGeometry(0.56, 0.86, 0.032),
+        new THREE.MeshStandardMaterial({ color: k === 0 ? '#FFFFFF' : '#F5EFE6', bumpMap, bumpScale: 0.003, roughness: 0.68 })
+      );
+      lp.position.set(-0.26, 0, k * 0.042);
+      lp.castShadow = true;
+      lp.receiveShadow = true;
+      ex1Left.add(lp);
+
+      // Interlocking tongue tab
+      const tab = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.22, 0.034),
+        new THREE.MeshStandardMaterial({ color: k === 1 ? PALETTE.accent : '#FFFFFF', roughness: 0.5 })
+      );
+      tab.position.set(0.06, (k - 1) * 0.26, k * 0.042);
+      tab.castShadow = true;
+      ex1Left.add(tab);
+
+      const rp = new THREE.Mesh(
+        new THREE.BoxGeometry(0.56, 0.86, 0.032),
+        new THREE.MeshStandardMaterial({ color: k === 2 ? '#FFFFFF' : '#F2EAE0', bumpMap, bumpScale: 0.003, roughness: 0.68 })
+      );
+      rp.position.set(0.26, 0, k * 0.042);
+      rp.castShadow = true;
+      rp.receiveShadow = true;
+      ex1Right.add(rp);
+    }
+    const ex1Spine = new THREE.Mesh(
+      new THREE.BoxGeometry(0.045, 0.88, 0.16),
+      new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.34 })
+    );
+    ex1Spine.position.set(0, 0, 0.06);
+    ex1Spine.castShadow = true;
+    plinths[0].add(ex1Spine);
+
+    // =========================================================================
+    // EXHIBIT 2: SPLIT — Precision crease cut separating chapter folios
+    // =========================================================================
+    const ex2Left = new THREE.Group();
+    const ex2Right = new THREE.Group();
+    plinths[1].add(ex2Left, ex2Right);
+
+    for (let k = 0; k < 4; k++) {
+      const lCol = k === 2 ? PALETTE.accent : (k === 3 ? '#FFFFFF' : '#F5EFE6');
+      const rCol = k === 2 ? PALETTE.accent : (k === 3 ? '#FAF7F2' : '#F2EAE0');
+      const lSheet = new THREE.Mesh(
+        new THREE.BoxGeometry(0.54, 0.86, 0.028),
+        new THREE.MeshStandardMaterial({ color: lCol, bumpMap, bumpScale: 0.003, roughness: 0.66 })
+      );
+      lSheet.position.set(-0.27, 0, k * 0.036);
+      lSheet.castShadow = true;
+      lSheet.receiveShadow = true;
+      ex2Left.add(lSheet);
+
+      const rSheet = new THREE.Mesh(
+        new THREE.BoxGeometry(0.54, 0.86, 0.028),
+        new THREE.MeshStandardMaterial({ color: rCol, bumpMap, bumpScale: 0.003, roughness: 0.66 })
+      );
+      rSheet.position.set(0.27, 0, k * 0.036);
+      rSheet.castShadow = true;
+      rSheet.receiveShadow = true;
+      ex2Right.add(rSheet);
+    }
+    const ex2Blade = new THREE.Mesh(
+      new THREE.BoxGeometry(0.018, 1.06, 0.24),
+      new THREE.MeshStandardMaterial({ color: PALETTE.accent, emissive: PALETTE.ribbonFace, emissiveIntensity: 0.55 })
+    );
+    ex2Blade.position.set(0, 0, 0.12);
+    plinths[1].add(ex2Blade);
+
+    // =========================================================================
+    // EXHIBIT 3: ROTATE & CROP — Gimbaled 90° sheet + crisp aperture trim
+    // =========================================================================
+    const ex3Ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.52, 0.016, 12, 48),
+      new THREE.MeshStandardMaterial({ color: PALETTE.muted, roughness: 0.45, metalness: 0.25 })
+    );
+    ex3Ring.position.z = 0.06;
+    ex3Ring.castShadow = true;
+    plinths[2].add(ex3Ring);
+
+    const ex3Sheet = new THREE.Group();
+    ex3Sheet.position.z = 0.08;
+    plinths[2].add(ex3Sheet);
+    const ex3Card = new THREE.Mesh(
+      new THREE.BoxGeometry(0.62, 0.78, 0.024),
+      new THREE.MeshStandardMaterial({ color: '#FFFFFF', bumpMap, bumpScale: 0.003, roughness: 0.62 })
+    );
+    ex3Card.castShadow = true;
+    ex3Sheet.add(ex3Card);
+    const ex3Header = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.06, 0.03),
+      new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.5 })
+    );
+    ex3Header.position.set(-0.02, 0.24, 0.008);
+    const ex3Photo = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.26, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#E8E2D8', roughness: 0.7 })
+    );
+    ex3Photo.position.set(0, -0.02, 0.008);
+    ex3Sheet.add(ex3Header, ex3Photo);
+
+    // 4 L-shaped terracotta crop aperture brackets
+    const ex3Brackets = [];
+    const brkMat = new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.3 });
+    [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(([sx, sy]) => {
+      const bg = new THREE.Group();
+      const hBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.028, 0.035), brkMat);
+      hBar.position.set(-sx * 0.075, 0, 0);
+      const vBar = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.18, 0.035), brkMat);
+      vBar.position.set(0, -sy * 0.075, 0);
+      bg.add(hBar, vBar);
+      bg.position.set(sx * 0.34, sy * 0.34, 0.14);
+      plinths[2].add(bg);
+      ex3Brackets.push({ g: bg, sx, sy });
+    });
+
+    // =========================================================================
+    // EXHIBIT 4: COMPRESS — Accordion-folded bellows compressing smoothly
+    // =========================================================================
+    const ex4Group = new THREE.Group();
+    ex4Group.position.set(0, 0, 0.16);
+    plinths[3].add(ex4Group);
+
+    const EX4_PLEATS = 8;
+    const EX4_PW = 0.19;
+    const ex4Pleats = [];
+    for (let p = 0; p < EX4_PLEATS; p++) {
+      const m = new THREE.Mesh(
+        new THREE.BoxGeometry(EX4_PW, 0.78, 0.014),
+        new THREE.MeshStandardMaterial({
+          color: p % 2 === 0 ? '#FFFFFF' : '#EDE4D8',
+          bumpMap,
+          bumpScale: 0.003,
+          roughness: 0.68,
+        })
+      );
+      m.castShadow = true;
+      m.receiveShadow = true;
+      ex4Group.add(m);
+      ex4Pleats.push(m);
+    }
+    const ex4PlatenGeo = new THREE.BoxGeometry(0.048, 0.86, 0.30);
+    const ex4PlatenMat = new THREE.MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.42, metalness: 0.18 });
+    const ex4LeftP = new THREE.Mesh(ex4PlatenGeo, ex4PlatenMat);
+    const ex4RightP = new THREE.Mesh(ex4PlatenGeo, ex4PlatenMat);
+    ex4LeftP.castShadow = true;
+    ex4RightP.castShadow = true;
+    const ex4Rod = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 1.56, 12),
+      new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.32 })
+    );
+    ex4Rod.rotation.z = Math.PI / 2;
+    ex4Rod.position.set(0, 0.44, 0);
+    const ex4Rod2 = ex4Rod.clone();
+    ex4Rod2.position.set(0, -0.44, 0);
+    ex4Group.add(ex4LeftP, ex4RightP, ex4Rod, ex4Rod2);
+
+    // =========================================================================
+    // EXHIBIT 5: OCR (Tesseract) — Scan plane resolving raster noise -> sharp vector
+    // =========================================================================
+    const ex5Paper = new THREE.Mesh(
+      new THREE.BoxGeometry(1.18, 0.94, 0.025),
+      new THREE.MeshStandardMaterial({ color: '#F5EFE6', bumpMap, bumpScale: 0.009, roughness: 0.86 })
+    );
+    ex5Paper.position.z = 0.02;
+    ex5Paper.castShadow = true;
+    ex5Paper.receiveShadow = true;
+    plinths[4].add(ex5Paper);
+
+    const ex5Rows = [];
+    for (let r = 0; r < 5; r++) {
+      const ry = 0.30 - r * 0.15;
+      // Blurred noisy raster bar (starts visible, shrinks as scan passes)
+      const raster = new THREE.Mesh(
+        new THREE.BoxGeometry(0.84 - (r % 2) * 0.18, 0.068, 0.014),
+        new THREE.MeshStandardMaterial({ color: '#C2B8AC', roughness: 0.95 })
+      );
+      raster.position.set(-0.04, ry, 0.04);
+      raster.rotation.z = (r % 2 === 0 ? 1 : -1) * 0.045;
+      plinths[4].add(raster);
+
+      // Sharp crisp vector glyph bars (extrude cleanly after scan passes)
+      const vecGroup = new THREE.Group();
+      vecGroup.position.set(-0.04, ry, 0.045);
+      const segments = r === 0 ? 2 : 3;
+      for (let seg = 0; seg < segments; seg++) {
+        const w = r === 0 ? (seg === 0 ? 0.24 : 0.44) : 0.22 + ((r + seg) % 2) * 0.08;
+        const bar = new THREE.Mesh(
+          new THREE.BoxGeometry(w, 0.046, 0.028),
+          new THREE.MeshStandardMaterial({
+            color: r === 0 && seg === 0 ? PALETTE.accent : PALETTE.ink,
+            roughness: 0.38,
+          })
+        );
+        bar.position.x = -0.30 + seg * 0.29;
+        bar.castShadow = true;
+        vecGroup.add(bar);
+      }
+      plinths[4].add(vecGroup);
+      ex5Rows.push({ y: ry, raster, vecGroup });
+    }
+
+    const ex5Scanner = new THREE.Mesh(
+      new THREE.BoxGeometry(1.34, 0.026, 0.16),
+      new THREE.MeshStandardMaterial({
+        color: PALETTE.accent,
+        emissive: PALETTE.ribbonLight,
+        emissiveIntensity: 0.85,
+        roughness: 0.2,
+      })
+    );
+    ex5Scanner.position.set(0, 0.44, 0.09);
+    plinths[4].add(ex5Scanner);
+
+    // =========================================================================
+    // EXHIBIT 6: CONVERT (LibreOffice/Poppler) — Origami sheet transforming states
+    // =========================================================================
+    const ex6Root = new THREE.Group();
+    ex6Root.position.set(0, 0, 0.06);
+    plinths[5].add(ex6Root);
+
+    const ex6LeftLeaf = new THREE.Group();
+    const ex6RightLeaf = new THREE.Group();
+    ex6Root.add(ex6LeftLeaf, ex6RightLeaf);
+
+    const ex6MatLeft = new THREE.MeshStandardMaterial({ color: '#FFFFFF', bumpMap, bumpScale: 0.003, roughness: 0.65 });
+    const ex6MatRight = new THREE.MeshStandardMaterial({ color: '#FAF7F2', bumpMap, bumpScale: 0.003, roughness: 0.65 });
+
+    const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.86, 0.022), ex6MatLeft);
+    leftPanel.position.x = -0.26;
+    leftPanel.castShadow = true;
+    leftPanel.receiveShadow = true;
+    ex6LeftLeaf.add(leftPanel);
+
+    const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.86, 0.022), ex6MatRight);
+    rightPanel.position.x = 0.26;
+    rightPanel.castShadow = true;
+    rightPanel.receiveShadow = true;
+    ex6RightLeaf.add(rightPanel);
+
+    // State decorations on the unfolding origami sheet
+    const ex6Seal = createOctagonalSeal(0.14, 0.018);
+    ex6Seal.position.set(0.26, -0.22, 0.025);
+    ex6RightLeaf.add(ex6Seal);
+
+    const ex6ArchBand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.06, 0.028),
+      new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.35 })
+    );
+    ex6ArchBand.position.set(-0.26, 0.28, 0.02);
+    ex6LeftLeaf.add(ex6ArchBand);
+
+    const ex6MdBars = new THREE.Group();
+    for (let r = 0; r < 4; r++) {
+      const b = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36 - (r % 2) * 0.1, 0.036, 0.026),
+        new THREE.MeshStandardMaterial({ color: r === 0 ? PALETTE.accent : PALETTE.ink, roughness: 0.45 })
+      );
+      b.position.set(-0.26, 0.12 - r * 0.12, 0.022);
+      ex6MdBars.add(b);
+    }
+    ex6LeftLeaf.add(ex6MdBars);
+
+    const convertLabel = document.getElementById('convert-state');
+    const labelEls = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`lbl-${i}`));
+    const projVec = new THREE.Vector3();
+
+    function syncLabels() {
+      for (let k = 0; k < 6; k++) {
+        labelAnchors[k].getWorldPosition(projVec);
+        projVec.project(camera);
+        const sx = (projVec.x * 0.5 + 0.5) * W;
+        const sy = (-projVec.y * 0.5 + 0.5) * H;
+        labelEls[k].style.left = `${sx.toFixed(1)}px`;
+        labelEls[k].style.top = `${sy.toFixed(1)}px`;
+      }
+    }
+
+    let labelsSynced = false;
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const phase = t * Math.PI * 2;
+
+      // Keep museum wall camera locked steady so 6 exhibits pop & libwebp_anim stays compact (<2 MB)
+      if (!labelsSynced) {
+        camera.position.set(0, 0.32, 9.65);
+        camera.lookAt(0, -0.02, 0);
+        camera.updateMatrixWorld();
+        syncLabels();
+        labelsSynced = true;
+      }
+
+      // 1. MERGE: slide apart and interlock flush
+      const mergeU = 0.5 - 0.5 * Math.cos(phase);
+      const mergeSpread = (1 - easeInOutCubic(mergeU)) * 0.34;
+      ex1Left.position.x = -mergeSpread;
+      ex1Right.position.x = mergeSpread;
+      ex1Left.rotation.y = mergeSpread * 0.55;
+      ex1Right.rotation.y = -mergeSpread * 0.55;
+      ex1Spine.scale.y = 0.25 + 0.75 * easeInOutCubic(mergeU);
+      ex1Spine.position.z = 0.06 + (1 - easeInOutCubic(mergeU)) * 0.14;
+
+      // 2. SPLIT: laser crease cut + symmetric chapter separation
+      const splitWave = 0.5 - 0.5 * Math.cos(phase + 0.8);
+      const splitGap = easeInOutCubic(splitWave) * 0.26;
+      ex2Left.position.x = -splitGap;
+      ex2Right.position.x = splitGap;
+      ex2Left.rotation.y = -splitGap * 0.75;
+      ex2Right.rotation.y = splitGap * 0.75;
+      ex2Blade.position.y = (0.5 - splitWave) * 0.35;
+      ex2Blade.scale.z = 0.4 + 0.6 * Math.sin(splitWave * Math.PI);
+
+      // 3. ROTATE & CROP: smooth 90° gimbal rotation + aperture trim closing in
+      const rotWave = 0.5 - 0.5 * Math.cos(phase + 1.6);
+      const rotU = easeInOutCubic(rotWave);
+      ex3Sheet.rotation.z = rotU * (Math.PI / 2);
+      const cropIn = THREE.MathUtils.lerp(0.36, 0.24, rotU);
+      ex3Brackets.forEach(({ g, sx, sy }) => {
+        g.position.x = sx * cropIn;
+        g.position.y = sy * cropIn;
+      });
+
+      // 4. COMPRESS: accordion bellows compression
+      const compWave = 0.5 - 0.5 * Math.cos(phase + 2.4);
+      const compU = easeInOutCubic(compWave);
+      const span = THREE.MathUtils.lerp(1.22, 0.26, compU);
+      const step = span / EX4_PLEATS;
+      const half = span * 0.5;
+      const pAngle = Math.acos(clamp01(step / EX4_PW) * 0.95);
+      for (let p = 0; p < EX4_PLEATS; p++) {
+        ex4Pleats[p].position.x = -half + (p + 0.5) * step;
+        ex4Pleats[p].rotation.y = (p % 2 === 0 ? 1 : -1) * pAngle;
+      }
+      ex4LeftP.position.x = -half - 0.032;
+      ex4RightP.position.x = half + 0.032;
+
+      // 5. OCR: sweeping luminous optical scan plane resolving raster -> sharp vector
+      const scanWave = 0.5 - 0.5 * Math.cos(phase + 3.2);
+      const scanY = THREE.MathUtils.lerp(0.42, -0.42, scanWave);
+      ex5Scanner.position.y = scanY;
+      for (let r = 0; r < ex5Rows.length; r++) {
+        const row = ex5Rows[r];
+        const resolved = smootherstep(row.y + 0.09, row.y - 0.07, scanY);
+        row.raster.scale.set(1 - resolved * 0.88, 1 - resolved * 0.7, 1);
+        row.raster.visible = resolved < 0.94;
+        row.vecGroup.scale.set(0.15 + 0.85 * resolved, 0.2 + 0.8 * resolved, 0.2 + 0.8 * resolved);
+      }
+
+      // 6. CONVERT: origami fold + state transformation (PDF -> PDF/A -> DOCX/MD)
+      const foldAngle = 0.42 * (0.5 - 0.5 * Math.cos(phase));
+      ex6LeftLeaf.rotation.y = foldAngle;
+      ex6RightLeaf.rotation.y = -foldAngle;
+      ex6Root.rotation.z = Math.sin(phase) * 0.035;
+
+      if (t < 0.34) {
+        ex6MatLeft.color.set('#FFFFFF');
+        ex6MatRight.color.set('#FAF7F2');
+        ex6Seal.visible = true;
+        ex6ArchBand.visible = false;
+        ex6MdBars.visible = false;
+        convertLabel.textContent = '· PDF SOURCE';
+      } else if (t < 0.67) {
+        ex6MatLeft.color.set('#FDF6EC');
+        ex6MatRight.color.set('#F5EFE6');
+        ex6Seal.visible = true;
+        ex6ArchBand.visible = true;
+        ex6MdBars.visible = false;
+        convertLabel.textContent = '· PDF → PDF/A';
+      } else {
+        ex6MatLeft.color.set('#FFFFFF');
+        ex6MatRight.color.set('#F5EFE6');
+        ex6Seal.visible = false;
+        ex6ArchBand.visible = true;
+        ex6MdBars.visible = true;
+        convertLabel.textContent = '· PDF → DOCX · MD';
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    window.sceneReady = Promise.resolve();
+  </script>
+</body>
+</html>

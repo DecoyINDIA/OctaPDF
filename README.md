@@ -1,426 +1,330 @@
-# OctaPDF
+# OctaPDF — Project Origami
 
 <p align="center">
-  <a href="#quickstart">
-    <img src="assets/readme/hero-cinematic.svg" alt="OctaPDF — Powerful PDF tools. Beautifully simple. Local-first document workspace." width="980">
+  <a href="#03--download--quick-start">
+    <img src="assets/readme/01-hero-from-paper-to-possibility.webp" width="960" alt="OctaPDF Project Origami — From Paper to Possibility">
   </a>
 </p>
 
 <p align="center">
-  <strong>Powerful PDF tools. Beautifully simple.</strong><br>
-  A calm, private, local-first document workspace for editing, organizing, converting, and securing PDFs.
+  <strong>Local-first PDF craft. Precision paper architecture.</strong><br>
+  A calm, self-hosted document studio for assembling, signing, inspecting, compressing, and converting PDFs—without leaving your machine.
 </p>
 
 <p align="center">
-  <a href="https://github.com/DecoyINDIA/OctaPDF/releases"><img src="https://img.shields.io/badge/Release-v0.46.2--hardened-E8501C?style=flat-square&logo=git&logoColor=white" alt="Release v0.46.2"></a>
-  <a href="https://github.com/DecoyINDIA/OctaPDF/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-241E1B?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License MIT"></a>
-  <a href="#zero-egress-architecture"><img src="https://img.shields.io/badge/Telemetry-Zero%20Egress-10B981?style=flat-square&logo=shield&logoColor=white" alt="Zero Egress"></a>
-  <a href="https://hub.docker.com/"><img src="https://img.shields.io/badge/Docker-Ready-0284C7?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
-  <a href="https://adoptium.net/"><img src="https://img.shields.io/badge/Java-JDK%2021+-5A4E45?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21+"></a>
+  <a href="#03--download--quick-start"><img src="https://img.shields.io/badge/Version-v0.46.2-E8501C?style=flat-square&logo=git&logoColor=white" alt="Version v0.46.2"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-241E1B?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="License MIT"></a>
+  <a href="#10--freedom-by-design"><img src="https://img.shields.io/badge/Telemetry-Zero%20Telemetry-10B981?style=flat-square&logo=shield&logoColor=white" alt="Zero Telemetry"></a>
+  <a href="#03--download--quick-start"><img src="https://img.shields.io/badge/Docker-Hardened%20Compose-0284C7?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
+  <a href="#03--download--quick-start"><img src="https://img.shields.io/badge/Java-21%2B%20Runtime-5A4E45?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21+"></a>
 </p>
 
 <p align="center">
-  <a href="#why-octapdf">Why OctaPDF</a> &bull;
-  <a href="#universal-intake-deck">Intake Deck</a> &bull;
-  <a href="#the-four-core-document-jobs">4 Core Jobs</a> &bull;
-  <a href="#command-palette">Command Palette</a> &bull;
-  <a href="#zero-egress-architecture">Architecture</a> &bull;
-  <a href="#pipeline-automation">Pipelines</a> &bull;
-  <a href="#quickstart">Quickstart</a> &bull;
-  <a href="#production-deployment">Deployment</a> &bull;
-  <a href="#the-paper-desk-design-system">Design System</a> &bull;
-  <a href="#license">License</a>
+  <a href="#01--the-art-of-transformation">01 Manifesto</a> &middot;
+  <a href="#02--meet-octapdf">02 Product</a> &middot;
+  <a href="#03--download--quick-start">03 Quick Start</a> &middot;
+  <a href="#04--a-new-way-to-work-with-documents">04 Workflows</a> &middot;
+  <a href="#05--the-document-orchestra">05 Orchestra &amp; API</a> &middot;
+  <a href="#06--precision-in-every-page">06 Precision</a> &middot;
+  <a href="#07--the-paper-laboratory">07 Laboratory</a> &middot;
+  <a href="#08--eight-arms-endless-possibilities">08 Eight Arms</a><br>
+  <a href="#09--engineering-beneath-the-paper">09 Engineering</a> &middot;
+  <a href="#10--freedom-by-design">10 Privacy</a> &middot;
+  <a href="#11--light-meets-dark">11 Light &amp; Dark</a> &middot;
+  <a href="#12--living-paper-architecture">12 Telemetry</a> &middot;
+  <a href="#13--releases-builds--roadmap">13 Releases</a> &middot;
+  <a href="#14--documentation--community">14 Docs</a> &middot;
+  <a href="#15--the-final-fold">15 Finale</a>
 </p>
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-## Product Identity & Philosophy
-
-<p align="center">
-  <img src="assets/readme/logo-identity-animated.svg" alt="OctaPDF Brand Identity in Motion" width="880">
-</p>
-
-### Why OctaPDF?
-
-OctaPDF is engineered for people who work with documents every day and value **privacy, precision, and craft**.
-
-Instead of routing sensitive agreements, healthcare records, tax returns, or confidential drafts through third-party cloud SaaS converters, OctaPDF runs entirely on your local workstation or isolated private network. **Your files never leave your control.**
-
-```
-+---------------------------------------------------------------------------------+
-|                               THE OCTAPDF PRINCIPLES                            |
-+---------------------------------------------------------------------------------+
-|  1. 100% Local-First Engine    | Zero telemetry. Zero tracking pixels. Zero    |
-|                                | third-party phone-home calls. Ever.            |
-|  2. The Paper Desk Aesthetic   | Warm eggshell tones, obsidian dark mode, crisp |
-|                                | typography, and thoughtful tactile micro-UX.   |
-|  3. Universal Intake Deck      | Drop any PDF to instantly view, split, redact, |
-|                                | annotate, and shrink without menu hunting.     |
-|  4. Single-Pass Pipelines      | Chain multi-step operations into fluid, single- |
-|                                | execution batch routines via GUI, API, or CLI. |
-|  5. Command Palette (⌘K)       | Instant keyboard navigation across 50+ tools.  |
-+---------------------------------------------------------------------------------+
-```
-
-> [!IMPORTANT]
-> **Zero Outbound Telemetry Guarantee:** In OctaPDF, all third-party tracking pixels, hard-coded analytics keys, and external phone-home endpoints have been permanently stripped. Containers operate with read-only root filesystems and internal network isolation (`internal: true`), completely blocking WAN egress.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="universal-intake-deck"></a>
-## Universal Intake Deck
-
-<p align="center">
-  <img src="assets/readme/product-intake-demo.svg" alt="Universal Intake Deck Demonstration" width="940">
-</p>
-
-The **Universal Intake Deck** rethinks how you interact with PDF documents. Instead of hunting through separate tools for merging, rotating, redacting, and compressing, simply drag any document onto the Paper Desk:
-
-1. **Instant Page Breakout:** Pages fan out into interactive vector thumbnails with page indices, rotation orientations, and content tags.
-2. **Automated Intelligence:**
-   - **Blank Page Ejection:** Automatically flags and strips blank divider pages from physical scanner feeds.
-   - **PII Pattern Detection:** Highlights sensitive social security numbers, tax identifiers, and credit card numbers for one-click redaction.
-   - **Stream Analysis:** Calculates instant stream compaction estimates (e.g. 18.4 MB &rarr; 2.1 MB).
-3. **One-Pass Execution:** Apply reordering, redaction, signatures, and compression simultaneously in a single local execution pass.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="the-four-core-document-jobs"></a>
-## The Four Core Document Jobs
-
-OctaPDF organizes over 50 specialized PDF operations into four human-centered document jobs:
-
-<p align="center">
-  <img src="assets/readme/workflow-showcase-grid.svg" alt="The Four Core Document Jobs" width="960">
-</p>
-
-### 1. Assemble & Clean
-*Craft, restructure, and curate multi-page document packets.*
-
-- **Multi-Tool Visual Organizer:** Interactive thumbnail canvas to drag-and-drop reorder, rotate in 90° increments, duplicate, and delete pages.
-- **Merge & Split:** Combine disparate PDFs into cohesive packets, or split by chapters, fixed page counts, bookmark levels, or file size boundaries.
-- **Physical Scan Automation:** Insert printed barcode or blank divider sheets into a scan batch; OctaPDF detects the dividers and creates cleanly separated documents automatically.
-- **Page Extraction & N-Up Layout:** Extract designated page intervals, or assemble 2-up, 4-up, and booklet spreads for print publication.
-
-### 2. Sign & Annotate
-*Review, approve, and finalize contracts with authentic marks.*
-
-- **Pressure-Curved Digital Signatures:** Draw authentic signatures with smooth stylus pressure simulation, type styled cursive approvals, or upload transparent PNG/SVG signature assets.
-- **Draft Markups & Highlights:** Freeform pencil sketching, highlighter pens, sticky notes, callouts, and date/approval stamps.
-- **Watermarking & Notary Seals:** Stamp custom text or image watermarks diagonally with adjustable opacity, rotation, and repetition.
-- **Form Flattening:** Flatten interactive AcroForms, form fields, and annotations into permanent, non-editable page layers prior to sharing.
-
-### 3. Redact & Secure
-*Sterilize sensitive information and harden document permissions.*
-
-- **True Stream Redaction:** Permanently sanitize underlying PDF content streams, removing text glyphs and vectors rather than simply covering them with visual black boxes.
-- **Regex & Pattern Blackout:** Automatically scrub Social Security numbers, bank routing numbers, credit cards, emails, and phone numbers.
-- **Metadata Scrubbing:** Strip author identities, camera EXIF, software fingerprints, and historical revision streams in one click.
-- **AES-256 Encryption & Permissions:** Lock PDFs with user and owner passwords; granularly toggle permissions for printing, modification, and content extraction.
-- **Archival PDF/A:** Convert modern PDFs into ISO-standardized PDF/A-1b, PDF/A-2b, and PDF/A-3b documents for decades-long legal preservation.
-
-### 4. Compress & OCR
-*Transform paper scans into searchable intelligence and shrink weights.*
-
-- **Lossless Stream Compaction:** Powered by `qpdf`, compact redundant font streams, cross-reference tables, and object streams without sacrificing DPI or legibility.
-- **Searchable Neural OCR:** Powered by `tesseract-ocr` v5, generate high-accuracy selectable text layers across 100+ languages, including right-to-left scripts.
-- **Two-Way Conversion:** Transform images, Markdown, HTML, and Office documents (`.docx`, `.xlsx`, `.pptx`) into crisp vector PDFs, or export pages as PNG, JPEG, and TIFF.
-- **OCR Deskew & Binarization:** Clean scanned pages by straightening skewed text and filtering scanner artifacts.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="command-palette"></a>
-## Instant Navigation: The Command Palette (`⌘K`)
-
-<p align="center">
-  <img src="assets/readme/command-palette-demo.svg" alt="Command Palette Navigation" width="920">
-</p>
-
-Navigate all 50+ operations in under two keystrokes using the keyboard-driven **Command Palette**:
-
-| Keybinding | Scope | Function |
-|:---|:---|:---|
-| <kbd>⌘</kbd> + <kbd>K</kbd> / <kbd>Ctrl</kbd> + <kbd>K</kbd> | Global | Open the Command Palette from any workspace view |
-| <kbd>⌘</kbd> + <kbd>O</kbd> / <kbd>Ctrl</kbd> + <kbd>O</kbd> | Workspace | Open local file selector or trigger Intake Deck |
-| <kbd>⌘</kbd> + <kbd>S</kbd> / <kbd>Ctrl</kbd> + <kbd>S</kbd> | Workspace | Process and download the active document packet |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Palette | Navigate through filtered tool options |
-| <kbd>Enter</kbd> | Palette | Execute selected tool or pipeline |
-| <kbd>Esc</kbd> | Palette / Modal | Dismiss active palette, modal, or preview overlay |
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="zero-egress-architecture"></a>
-## Zero-Egress Runtime Architecture
-
-<p align="center">
-  <img src="assets/readme/architecture-flow.svg" alt="Zero-Egress Runtime Architecture" width="960">
-</p>
-
-OctaPDF is architected with a **defense-in-depth isolation perimeter**:
-
-```
-+------------------------------------------------------------------------------------+
-|                               THE ISOLATION PERIMETER                              |
-+------------------------------------------------------------------------------------+
-|                                                                                    |
-|   [ Client Browser ] ----(HTTP loopback)----> [ Spring Boot 3 / Security 6 ]       |
-|                                                       |                            |
-|                                             [ SSRF Lockdown Guard ]                |
-|                                             [ Zero Telemetry Egress ]              |
-|                                                       |                            |
-|                                                       v                            |
-|                                            [ Engine Dispatcher ]                   |
-|                                          /     |          |     \                  |
-|                                         v      v          v      v                 |
-|                                      PDFBox   QPDF    Tesseract  LibreOffice       |
-|                                         \      |          |      /                 |
-|                                          v     v          v     v                  |
-|                                         [ In-Memory Temp Deck ]                    |
-|                                                    |                               |
-|                                             (Instant Shred)                        |
-|                                                    |                               |
-|                                                    v                               |
-|   [ Client Browser ] <---(Direct Stream)--- [ Response Stream ]                    |
-|                                                                                    |
-+------------------------------------------------------------------------------------+
-|  OUTBOUND INTERNET ROUTE: BLOCKED (0.00 KB) | EPHEMERAL DISK PERSISTENCE: NONE     |
-+------------------------------------------------------------------------------------+
-```
-
-- **No Remote Telemetry:** All third-party analytics endpoints, update checks, and tracking pixels are completely disabled.
-- **SSRF Hardening:** File converters are locked to local file descriptors. Network URL fetching inside conversion routes is disabled in production.
-- **Ephemeral Processing:** Uploaded files and transformation artifacts are held in memory or temporary directories that are wiped immediately upon stream delivery.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="pipeline-automation"></a>
-## Pipeline Automation & REST API
-
-<p align="center">
-  <img src="assets/readme/pipeline-automation.svg" alt="Pipeline Automation" width="940">
-</p>
-
-Automate complex repetitive document tasks by chaining operations into unified routines.
-
-### CLI Pipeline Run
-
-Execute multi-step chains directly from your terminal:
-
-```sh
-# Run multi-step document intake pipeline
-octapdf pipeline run \
-  --config ./configs/corporate-audit.yml \
-  --input ./scans/batch_2026.pdf \
-  --output ./sanitized/
-```
-
-### Local REST API Integration
-
-OctaPDF exposes a local, documented REST API for seamless integration with internal scripts:
-
-```sh
-# 1. Merge disparate PDFs into a unified packet
-curl -X POST "http://localhost:8080/api/v1/general/merge-pdfs" \
-  -F "fileInput=@cover.pdf" \
-  -F "fileInput=@report.pdf" \
-  -F "fileInput=@appendix.pdf" \
-  -o "combined_packet.pdf"
-
-# 2. Add searchable multilingual OCR text layer
-curl -X POST "http://localhost:8080/api/v1/ocr/pdf" \
-  -F "fileInput=@scanned_contract.pdf" \
-  -F "languages=eng" \
-  -F "ocrType=skip-text" \
-  -o "searchable_contract.pdf"
-
-# 3. Stream-compact with QPDF (-85% file size)
-curl -X POST "http://localhost:8080/api/v1/general/compress-pdf" \
-  -F "fileInput=@searchable_contract.pdf" \
-  -F "optimizeLevel=2" \
-  -o "contract_compressed.pdf"
-```
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="quickstart"></a>
-## Quickstart
-
-### Prerequisites
-- **Java JDK 21** or later
-- Optional local utilities for advanced features:
-  - `qpdf` (for stream compaction and linearization)
-  - `tesseract-ocr` (for optical character recognition)
-  - `libreoffice` (for Office-to-PDF transformations)
-
-### Run from Source
-
-Clone the repository and launch with the Gradle wrapper:
-
-```sh
-# 1. Clone the repository
-git clone https://github.com/DecoyINDIA/OctaPDF.git
-cd OctaPDF
-
-# 2. Run on macOS / Linux
-./gradlew bootRun
-
-# 2. Run on Windows (PowerShell)
-.\gradlew.bat bootRun
-```
-
-Once initialized, open your browser to **<http://localhost:8080>**.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="production-deployment"></a>
-## Production Deployment
-
-<p align="center">
-  <img src="assets/readme/closing-cta.svg" alt="Production Deployment Launch Console" width="960">
-</p>
-
-### Docker Compose (Recommended)
-
-Run OctaPDF in an isolated container with all underlying OCR and conversion engines pre-configured:
-
-```yaml
-version: '3.8'
-
-services:
-  octapdf:
-    image: ghcr.io/decoyindia/octapdf:latest
-    container_name: octapdf-app
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SECURITY_ENABLELOGIN=false
-    volumes:
-      - octapdf-configs:/configs
-      - octapdf-logs:/logs
-    networks:
-      - octapdf-internal
-
-networks:
-  octapdf-internal:
-    driver: bridge
-    internal: true # Disables default gateway / blocks WAN egress
-
-volumes:
-  octapdf-configs:
-  octapdf-logs:
-```
-
-Launch with:
-
-```sh
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Production Security Checklist
-
-OctaPDF is engineered for hardened enterprise deployments:
-- [x] **Read-Only Root Filesystem:** Mount container filesystem with `read_only: true`.
-- [x] **Non-Root User Execution:** Container processes execute under unprivileged UID `1000`.
-- [x] **Network Lockdown:** Deploy on Docker bridge network with `internal: true` to prevent external telemetry.
-- [x] **Zero Tracking Pixels:** Verified zero requests to external analytics providers.
-- [x] **SSRF Mitigations:** External URL-fetching endpoints disabled in production.
-
-For detailed hardening parameters, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-## Inside the OctaPDF Studio
-
-<p align="center">
-  <img src="assets/readme/octa-lab-playful.svg" alt="The OctaPDF Laboratory and Drafting Desk" width="920">
-</p>
-
-<p align="center">
-  <em>The OctaPDF mascot drafting desk: Multi-tasking tentacles handling signatures, OCR inspection, stamping, paper origami, and stream compression vices.</em>
-</p>
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="the-paper-desk-design-system"></a>
-## The Paper Desk Design System
-
-OctaPDF is built on the **"Paper Desk"** design philosophy—an aesthetic inspired by tactile drafting desks, warm stationery, and European editorial discipline:
-
-```
-+------------------------------------------------------------------------------------+
-| COLOR PALETTE                                                                      |
-+-------------------+--------------------+-------------------------------------------+
-| Token             | Hex Value          | Semantic Role                             |
-+-------------------+--------------------+-------------------------------------------+
-| Canvas (Light)    | #FAF7F2            | Warm eggshell desk background              |
-| Paper Surface     | #FFFFFF            | Elevated document cards and workspace deck|
-| Ink Primary       | #241E1B            | Deep espresso headlines and typography     |
-| Hairline Border   | #E8E2D8 / #DFD4C4  | Tactile paper edges and grid dividers      |
-| Canvas (Dark)     | #161412            | Warm obsidian night desk canvas           |
-| Surface (Dark)    | #1F1C19            | Charcoal elevated cards                   |
-| Ink (Dark)        | #F5EFE6            | Bone-white high-contrast text              |
-| Terracotta Accent | #E8501C / #FF6B35  | Radiant focus indicators and key actions   |
-| Emerald Secure    | #10B981            | Verified state, zero-egress status, and seals |
-+-------------------+--------------------+-------------------------------------------+
-```
-
-For logo spacing, typography rules, and geometry specifications, consult the [OctaPDF Logo Guidelines](docs/OctaPDF-Logo-Guidelines.pdf).
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-## Community & Development
-
-We welcome contributions, translations, bug reports, and UX feedback:
-
-- **Contributing Guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Developer Guide:** [DeveloperGuide.md](DeveloperGuide.md)
-- **Adding New Languages:** [HowToAddNewLanguage.md](HowToAddNewLanguage.md)
-- **Production Roadmap:** [docs/PRODUCTION_ROADMAP.md](docs/PRODUCTION_ROADMAP.md)
-- **Security Policy:** [SECURITY.md](SECURITY.md)
-
-### Formatting & Code Quality
-- Java files use 4 spaces; HTML, JS, and CSS use 2 spaces.
-- Format Java code with `./gradlew spotlessApply` prior to committing.
-- Run `./gradlew build` to verify compilation and test suites pass.
-
-<p align="center">
-  <img src="assets/readme/divider-kinetic.svg" alt="Section divider" width="960">
-</p>
-
-<a id="license"></a>
-## Attribution & License
-
-- **Project:** OctaPDF
-- **Maintainer:** [XolverLabs (DecoyINDIA)](https://github.com/DecoyINDIA) & Contributors.
-- **Lineage:** Forked from and based on [Stirling-PDF](https://github.com/Stirling-Tools/Stirling-PDF) v0.46.2 by Anthony Stirling & Stirling Tools.
-- **License:** Licensed under the [MIT License](LICENSE). Third-party open-source components and licenses are cataloged in `3rdPartyLicenses.json`.
 
 ---
 
+<a id="01--the-art-of-transformation"></a>
+## 01 — The Art of Transformation
+
+Most document tools ask you to upload contracts, tax records, medical scans, and internal briefs to remote servers before a single page can be rotated or merged. **OctaPDF** returns the entire craft to your own desk.
+
+Built on the **Paper Desk** design language—warm eggshell `#FAF7F2` daylight sheets and `#161412` obsidian-graphite dark surfaces accented in `#E8501C` terracotta—OctaPDF pairs tactile visual restraint with battle-tested local engines (`Apache PDFBox 3.0.5`, `qpdf`, `Tesseract OCR`, `LibreOffice`, and `Poppler`).
+
 <p align="center">
-  <strong>OctaPDF</strong> &mdash; Crafted with care on the Paper Desk. 100% Private. Always.
+  <img src="assets/readme/captures/home-light.png" width="900" alt="OctaPDF 0.46.2 Paper Desk Home Workspace in Light Mode">
+</p>
+
+---
+
+<a id="02--meet-octapdf"></a>
+## 02 — Meet OctaPDF
+
+<p align="center">
+  <img src="assets/readme/02-product-cinematography.webp" width="960" alt="OctaPDF Product Cinematography — Real UI Capture Reel">
+</p>
+
+Every frame above is captured directly from the live **OctaPDF `0.46.2`** web application:
+
+- **Universal Intake Dropzone (`home.html`)**: Drop any PDF directly onto the Paper Desk intake deck to validate `application/pdf` input and jump straight into the `/multi-tool` page organizer.
+- **Command Palette (`Ctrl+K` / `⌘K` on Home)**: Opens `#paletteBackdrop` over the home workspace with 9 curated quick-jump links (`Multi-Tool`, `Sign`, `Redact`, `Compress`, `OCR`, `Merge`, `Split`, `Rotate`, and `Pipelines`).
+- **Multi-Tool Canvas (`/multi-tool`)**: Visual page grid for reordering, rotating in 90° steps, duplicating, selecting page ranges, and exporting cleanly.
+- **PDF.js Reader (`/view-pdf`) & Sign Studio (`/sign`)**: Thumbnail-navigated viewing alongside freehand `signature_pad` strokes, typed signatures, and image stamps placed directly onto document pages.
+
+---
+
+<a id="03--download--quick-start"></a>
+## 03 — Download & Quick Start
+
+<p align="center">
+  <img src="assets/readme/03-download-platforms.webp" width="960" alt="OctaPDF Deployment Platforms — Docker Compose, Java 21+, and Native Source Packaging">
+</p>
+
+> [!NOTE]
+> **Release Status:** `0` pre-built binary releases are currently published on [GitHub Releases](https://github.com/DecoyINDIA/OctaPDF/releases). Build and run directly from `main` or deploy via the hardened Docker configurations below.
+
+### Option A — Hardened Docker Compose Stack (Recommended)
+
+The repository includes a two-service hardened stack in [`docker-compose.prod.yml`](docker-compose.prod.yml) pairing `octapdf` (`read_only: true`, `cap_drop: ALL`, `no-new-privileges:true`, UID/GID `1000`, `tmpfs` `/tmp` & `$HOME`, isolated `internal: true` bridge network) with an `nginx:alpine` TLS reverse proxy (`nginx.conf`):
+
+```sh
+git clone https://github.com/DecoyINDIA/OctaPDF.git
+cd OctaPDF
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Three Dockerfile profiles are provided:
+- [`Dockerfile`](Dockerfile) — Alpine `3.24.4` production image with JDK 21 JRE, `qpdf`, `tesseract-ocr` (13 languages), `libreoffice` + `unoserver`, `poppler-utils`, and `weasyprint==64.1` (`weasyprint_safe.py`).
+- [`Dockerfile.fat`](Dockerfile.fat) — Multi-stage Alpine `3.21.3` build with full CLI toolset.
+- [`Dockerfile.ultra-lite`](Dockerfile.ultra-lite) — Minimal Alpine `3.21.3` JRE-only image (`ENDPOINTS_GROUPS_TO_REMOVE=CLI`).
+
+### Option B — Java 21+ Source & Desktop UI
+
+Requires **Java 21+** runtime (`sourceCompatibility = 17` in [`build.gradle`](build.gradle)):
+
+```sh
+# Build the Spring Boot fat JAR (outputs build/libs/Stirling-PDF-0.46.2.jar)
+./gradlew bootJar
+
+# Run the web workspace on http://localhost:8080
+./gradlew bootRun
+
+# Optional: launch with embedded JCEF/JavaFX Desktop UI
+STIRLING_PDF_DESKTOP_UI=true java -jar build/libs/Stirling-PDF-0.46.2.jar
+```
+
+### Option C — Native Packaging from Source
+
+Package platform installers locally via Gradle tasks defined in [`build.gradle`](build.gradle):
+
+- **jpackage** (`.exe` / `.dmg` / `.deb`): `./gradlew jpackage` (or `./gradlew jpackageMacX64` on Intel macOS)
+- **Launch4j** (Windows `.exe`): `./gradlew createExe`
+
+---
+
+<a id="04--a-new-way-to-work-with-documents"></a>
+## 04 — A New Way to Work with Documents
+
+OctaPDF groups its implemented tools into four clear document workflows on the Paper Desk home hub:
+
+1. **Assemble & Clean**
+   - `Multi-Tool` (`/multi-tool`), `Merge` (`/merge-pdfs`), `Split` (`/split-pages`), `Split by Chapters` (`/split-pdf-by-chapters`), `Split by Sections` (`/split-pdf-by-sections`), `Split by Size/Count` (`/split-by-size-or-count`), `Auto-Split` (`/api/v1/misc/auto-split-pdf`), `Rotate` (`/rotate-pdf`), `Crop` (`/crop`), `Rearrange / Remove Pages`, `Multi-Page Layout`, `Scale Pages`, `Overlay`, and `Remove Blank Pages` (`/api/v1/misc/remove-blanks`).
+2. **Sign & Annotate**
+   - `View & Edit` (`/view-pdf` via PDF.js), `Sign` (`/sign`), `Cert Sign` (`/cert-sign`), `Validate Signature` (`/validate-signature`), `Add Image`, `Add Stamp`, `Watermark`, `Page Numbers`, `Flatten`, `Remove Annotations`, `Unlock PDF Forms`, and `Compare` (`/compare`).
+3. **Redact & Secure**
+   - `Add / Remove Password`, `Change Permissions`, `Sanitize PDF` (`/sanitize-pdf`), `Metadata` (`/api/v1/misc/update-metadata`), `Inspect PDF Info` (`/get-info-on-pdf`), `Show JavaScript` (`/api/v1/misc/show-javascript`), and `Filter` (`/api/v1/filter/*`).
+   - *Production hardening note:* `/redact` and `/auto-redact` are disabled in production via `endpoints.toRemove` (`application-prod.properties` / `docker-compose.prod.yml`). When enabled in local/dev profiles, `RedactController` draws filled overlay rectangles via PDFBox `PDPageContentStream.AppendMode.APPEND` (full glyph removal occurs only when `convertPDFToImage=true` rasterizes pages).
+4. **Compress & OCR**
+   - `Compress` (`/api/v1/misc/compress-pdf` via PDFBox image recompression + `qpdf`), `Decompress`, `OCR` (`/api/v1/misc/ocr-pdf` via Tesseract), `Repair` (`/api/v1/misc/repair` via `qpdf`), `Replace / Invert Color`, `Extract Images`, `Image ↔ PDF`, `PDF → PDF/A`, `PDF → Word / Presentation / Text / XML` (LibreOffice), `PDF → HTML` (`pdftohtml`), `PDF → Markdown`, and `PDF → CSV` (Tabula `1.0.5`).
+
+---
+
+<a id="05--the-document-orchestra"></a>
+## 05 — The Document Orchestra
+
+<p align="center">
+  <img src="assets/readme/05-document-orchestra.webp" width="960" alt="The Document Orchestra — Coordinated Local PDF Pipeline">
+</p>
+
+Every operation is exposed both through the Paper Desk UI and verified local REST controllers:
+
+| Operation | Controller | Verified Endpoint | Engine |
+|:---|:---|:---|:---|
+| Merge PDFs | `MergeController` | `POST /api/v1/general/merge-pdfs` | Apache PDFBox `3.0.5` |
+| Split Pages | `SplitPDFController` | `POST /api/v1/general/split-pages` | Apache PDFBox `3.0.5` |
+| Sign Document | `SignatureController` | `POST /api/v1/general/sign/{fileName}` | Apache PDFBox `3.0.5` |
+| Compress PDF | `CompressController` | `POST /api/v1/misc/compress-pdf` | PDFBox + `qpdf` |
+| OCR PDF | `OCRController` | `POST /api/v1/misc/ocr-pdf` | Tesseract OCR (13 langs) |
+| Repair PDF | `RepairController` | `POST /api/v1/misc/repair` | `qpdf` |
+| Sanitize PDF | `SanitizeController` | `POST /api/v1/security/sanitize-pdf` | Apache PDFBox `3.0.5` |
+| PDF to HTML | `ConvertPDFToHtml` | `POST /api/v1/convert/pdf/html` | Poppler `pdftohtml` |
+| PDF to PDF/A | `ConvertPDFToPDFA` | `POST /api/v1/convert/pdf/pdfa` | LibreOffice / `unoserver` |
+
+> [!TIP]
+> **Hardened Prod Defaults:** `pipeline`, `html-to-pdf`, `markdown-to-pdf`, `file-to-pdf`, `redact`, and `auto-redact` are disabled in [`docker-compose.prod.yml`](docker-compose.prod.yml) and `application-prod.properties` (`ENDPOINTS_TOREMOVE`), and `system.enableUrlToPDF` defaults to `false`.
+
+---
+
+<a id="06--precision-in-every-page"></a>
+## 06 — Precision in Every Page
+
+<p align="center">
+  <img src="assets/readme/06-precision-editing.webp" width="960" alt="Precision in Every Page — Multi-Tool Page Choreography and Signature Placement">
+</p>
+
+OctaPDF treats individual pages as physical sheets on a drafting table—preserving page geometry, rotation matrices, and signature placement across the client (`PDF.js`, `pdf-lib`, `signature_pad`, `interact.js`) and server (`PDFBox 3.0.5`, `BouncyCastle 1.80`).
+
+---
+
+<a id="07--the-paper-laboratory"></a>
+## 07 — The Paper Laboratory
+
+<p align="center">
+  <img src="assets/readme/07-paper-laboratory.webp" width="960" alt="The Paper Laboratory — Curated Six-Experiment Exhibition Grid">
+</p>
+
+Six distinct mechanical paper transformations powered by local engines:
+
+1. **Merge (`MergeController`)** — Interlocking page assembly via Apache PDFBox `3.0.5`.
+2. **Split (`SplitPDFController`)** — Precision page-interval, size/count, and chapter separation.
+3. **Rotate & Crop (`RotationController` / `CropController`)** — Exact 90° page orientation and crop-box trimming.
+4. **Compress (`CompressController`)** — Image recompression and object-stream compaction via Apache PDFBox and `qpdf`.
+5. **OCR (`OCRController`)** — Searchable text layers powered by `tesseract-ocr` with 13 languages baked into `Dockerfile` (`eng`, `chi_sim`, `chi_tra`, `deu`, `fra`, `por`, `spa`, `ita`, `rus`, `jpn`, `kor`, `hin`, `ara`).
+6. **Convert (`ConvertPDFToPDFA` / `ConvertPDFToOffice` / `ConvertPDFToHtml`)** — Material conversions across `PDF/A`, Office formats, and HTML via LibreOffice/`unoserver` and Poppler `pdftohtml`.
+
+---
+
+<a id="08--eight-arms-endless-possibilities"></a>
+## 08 — Eight Arms, Endless Possibilities
+
+<p align="center">
+  <img src="assets/readme/08-eight-arms-endless-possibilities.webp" width="960" alt="Eight Arms, Endless Possibilities — Eight Sculptural Capability Pillars">
+</p>
+
+Eight sculptural origami pillars radiating from the central Paper Desk core:
+
+| Pillar | Scope | Pillar | Scope |
+|:---|:---|:---|:---|
+| **01 Assemble** | Merge, multi-tool reorder, overlay, n-up | **05 Secure & Sanitize** | Passwords, permissions, cert sign, sanitize |
+| **02 Split & Extract** | Page intervals, size/count, chapters, auto-split | **06 Compress & Repair** | PDFBox + `qpdf` compaction & repair |
+| **03 Sign & Stamp** | `signature_pad`, certs, stamps, watermarks | **07 OCR & Enhance** | Tesseract 13-language OCR, color invert, deskew |
+| **04 View & Annotate** | PDF.js viewer, flatten, forms, compare | **08 Convert & Export** | PDF/A, Word/PPTX/CSV, HTML, Markdown, Images |
+
+---
+
+<a id="09--engineering-beneath-the-paper"></a>
+## 09 — Engineering Beneath the Paper
+
+<p align="center">
+  <img src="assets/readme/09-engineering-beneath-the-paper.webp" width="960" alt="Engineering Beneath the Paper — Exploded Isometric Four-Tier Stack">
+</p>
+
+Every layer executes locally inside your host perimeter:
+
+- **Layer 01 — Client Workspace:** `Bootstrap 5`, `jQuery`, `PDF.js`, `pdf-lib`, `signature_pad`, `jszip`, `interact.js`, plus bundled `Material Symbols Rounded` and `bootstrap-icons` (zero external Google Fonts CDN requests).
+- **Layer 02 — Web & Security Perimeter:** `Spring Boot 3.4.5` on embedded **Jetty** (Tomcat excluded), `SecurityHeadersFilter`, `IPRateLimitingFilter`, `EnterpriseEndpointFilter`, and `TempFileJanitorService`.
+- **Layer 03 — JVM Document Core:** `Apache PDFBox 3.0.5` (`pdfbox`, `preflight`, `xmpbox`), `BouncyCastle 1.80`, `Tabula 1.0.5`, `TwelveMonkeys ImageIO 3.12.0`, `ZXing 3.5.3`, `JBIG2 ImageIO 3.0.4`, `Batik 1.19`, `OWASP HTML Sanitizer`, and `Bucket4j 8.14.0`.
+- **Layer 04 — Local Native Engines:** `qpdf`, `tesseract-ocr` (13 baked languages), `libreoffice` + `unoserver 3.7` (port `2003`, supervised by `scripts/supervise.sh`), `poppler-utils` (`pdftohtml`), and `weasyprint 64.1` wrapped by `scripts/weasyprint_safe.py`.
+
+---
+
+<a id="10--freedom-by-design"></a>
+## 10 — Freedom by Design
+
+<p align="center">
+  <img src="assets/readme/10-freedom-by-design.webp" width="960" alt="Freedom by Design — Air-Gapped Local Architectural Sanctuary">
+</p>
+
+Verified privacy and hardening controls present in the codebase:
+
+- **Telemetry Permanently Removed:** PostHog SDK/keys and the upstream `pixel.stirlingpdf.com` tracking pixel are completely stripped from `src/`. `scripts/download-security-jar.sh` is a no-op stub and `scripts/init.sh` executes zero runtime `apk add` downloads.
+- **Optional External Calls Gated Off by Default:** `githubVersion.js` (`system.showUpdate=false`), `KeygenLicenseVerifier` (`premium.enabled=false`), and `GoogleDrive` (`premium.proFeatures.googleDrive.enabled=false`) remain inactive unless explicitly configured.
+- **Single-Source HTTP Security Headers (`SecurityHeadersFilter`):** Enforces `default-src 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self'`, `HSTS`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, and `Permissions-Policy`.
+- **Abuse & Temp-File Controls:** `IPRateLimitingFilter` (`60 req/min` general, `10 req/min` heavy with CIDR `trustedProxies`), `EnterpriseEndpointFilter` (exposes `/actuator/health` only, suppresses stack traces, caps uploads at `100 MB` / `250 MB` request / `1,000` pages / `50` files), `TempFileJanitorService` (reaps temp files `> 30 min` every `10 min`), and `weasyprint_safe.py` + `CustomHtmlSanitizer` + `OfficeDocumentSanitizer` SSRF guards.
+- **Container Lockdown (`docker-compose.prod.yml`):** `read_only: true`, `cap_drop: ALL`, `no-new-privileges:true`, unprivileged UID/GID `1000`, `tmpfs` mounts, and `internal: true` bridge network blocking WAN egress.
+
+---
+
+<a id="11--light-meets-dark"></a>
+## 11 — Light Meets Dark
+
+<p align="center">
+  <img src="assets/readme/11-light-meets-dark.webp" width="960" alt="Light Meets Dark — OctaPDF Paper Desk Theme Duality">
+</p>
+
+| Token | Paper Desk Light (`theme.light.css`) | Obsidian Dark (`theme.dark.css`) | Semantic Role |
+|:---|:---|:---|:---|
+| `--octapdf-bg-canvas` | `#FAF7F2` | `#161412` | Primary workspace canvas |
+| `--octapdf-bg-surface` | `#FFFFFF` | `#1F1C19` | Elevated document cards & modals |
+| `--octapdf-bg-surface-subtle` | `#F5EFE6` | `#292521` | Recessed trays & secondary panels |
+| `--octapdf-text-main` | `#241E1B` | `#F5EFE6` | Primary headings & body ink |
+| `--octapdf-text-muted` | `#6E645D` | `#A89E94` | Secondary labels & metadata |
+| `--octapdf-border-subtle` | `#E8E2D8` | `#36312B` | Paper edges & hairline dividers |
+| Primary Accent | `#E8501C` | `#FF6B35` | Wordmark accent, focus & active controls |
+
+<details>
+<summary><strong>Explore Authentic OctaPDF 0.46.2 Light &amp; Dark Mode UI Captures</strong></summary>
+
+<br>
+
+| Light Mode (`#FAF7F2`) | Dark Mode (`#161412`) |
+|:---:|:---:|
+| <img src="assets/readme/captures/home-light.png" width="440" alt="Home Light Mode"><br><sub>Home &amp; Universal Intake Deck (Light)</sub> | <img src="assets/readme/captures/home-dark.png" width="440" alt="Home Dark Mode"><br><sub>Home &amp; Universal Intake Deck (Dark)</sub> |
+| <img src="assets/readme/captures/palette-light.png" width="440" alt="Command Palette Light"><br><sub>Command Palette <code>Ctrl+K</code> (Light)</sub> | <img src="assets/readme/captures/palette-dark.png" width="440" alt="Command Palette Dark"><br><sub>Command Palette <code>Ctrl+K</code> (Dark)</sub> |
+| <img src="assets/readme/captures/multitool-light.png" width="440" alt="Multi-Tool Light"><br><sub>Multi-Tool Page Canvas (Light)</sub> | <img src="assets/readme/captures/multitool-dark.png" width="440" alt="Multi-Tool Dark"><br><sub>Multi-Tool Page Canvas (Dark)</sub> |
+| <img src="assets/readme/captures/sign-light.png" width="440" alt="Sign Studio Light"><br><sub>Signature Placement Studio (Light)</sub> | <img src="assets/readme/captures/sign-dark.png" width="440" alt="Sign Studio Dark"><br><sub>Signature Placement Studio (Dark)</sub> |
+| <img src="assets/readme/captures/view-light.png" width="440" alt="PDF.js Viewer Light"><br><sub>PDF.js Document Viewer (Light)</sub> | <img src="assets/readme/captures/view-dark.png" width="440" alt="PDF.js Viewer Dark"><br><sub>PDF.js Document Viewer (Dark)</sub> |
+| <img src="assets/readme/captures/compress-light.png" width="440" alt="Compress PDF Light"><br><sub>PDF Compression Controls (Light)</sub> | <img src="assets/readme/captures/settings-light-v046.png" width="440" alt="Settings Modal v0.46.2"><br><sub>Settings Modal — OctaPDF <code>0.46.2</code></sub> |
+
+</details>
+
+---
+
+<a id="12--living-paper-architecture"></a>
+## 12 — Living Paper Architecture
+
+<p align="center">
+  <img src="assets/readme/12-living-paper-architecture.webp" width="960" alt="Living Paper Architecture — Verified Repository Telemetry">
+</p>
+
+Verified repository metrics for [`DecoyINDIA/OctaPDF`](https://github.com/DecoyINDIA/OctaPDF) (`main` branch):
+
+| Metric | Verified Value | Language Breakdown (`2,826,562` Bytes) | Share |
+|:---|:---|:---|:---|
+| **Default Branch** | `main` (`6` commits) | Java | `59.45%` (`1,680,528` B) |
+| **Stars / Forks / Watchers** | `0` / `0` / `0` | HTML | `17.43%` (`492,643` B) |
+| **Open Issues** | `0` | JavaScript | `14.44%` (`408,121` B) |
+| **Published GitHub Releases** | `0` (`0` assets, `0` downloads) | CSS | `3.70%` (`104,565` B) |
+| **License** | MIT ([`LICENSE`](LICENSE)) | RTF / Python / Shell / Gherkin / Dockerfile | `1.48%` / `1.34%` / `1.32%` / `0.68%` / `0.16%` |
+
+---
+
+<a id="13--releases-builds--roadmap"></a>
+## 13 — Releases, Builds & Roadmap
+
+- **Current Baseline:** `v0.46.2` source baseline (`build.gradle`). No prebuilt GitHub release artifacts are published on `/releases` yet—deploy from source via `./gradlew bootJar` or `docker-compose.prod.yml`.
+- **Production Roadmap:** Track completed hardening work (`SEC-01`..`SEC-11`, `D1`–`D8` architecture decisions) and deferred items—such as `P2-03` (renaming the Gradle artifact output from `Stirling-PDF-0.46.2.jar` to `OctaPDF-0.46.2.jar`)—in [`docs/PRODUCTION_ROADMAP.md`](docs/PRODUCTION_ROADMAP.md).
+- **Operations & QA:** See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md), [`docs/RUNBOOK.md`](docs/RUNBOOK.md), and [`docs/QA_MATRIX.md`](docs/QA_MATRIX.md).
+
+---
+
+<a id="14--documentation--community"></a>
+## 14 — Documentation & Community
+
+- **Architecture & Development:** [`DeveloperGuide.md`](DeveloperGuide.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`DATABASE.md`](DATABASE.md) · [`USERS.md`](USERS.md)
+- **Localization & OCR:** [`HowToAddNewLanguage.md`](HowToAddNewLanguage.md) · [`HowToUseOCR.md`](HowToUseOCR.md)
+- **Brand & Security:** [`docs/OctaPDF-Logo-Guidelines.pdf`](docs/OctaPDF-Logo-Guidelines.pdf) · [`SECURITY.md`](SECURITY.md)
+- **Licensing & Attribution:**
+  - Licensed under the [MIT License](LICENSE).
+  - Maintained by [XolverLabs (`DecoyINDIA`)](https://github.com/DecoyINDIA) & contributors.
+  - Forked from and based on [Stirling-PDF](https://github.com/Stirling-Tools/Stirling-PDF) `v0.46.2` by Anthony Stirling & Stirling Tools.
+  - Third-party component licenses are cataloged in [`src/main/resources/static/3rdPartyLicenses.json`](src/main/resources/static/3rdPartyLicenses.json).
+
+---
+
+<a id="15--the-final-fold"></a>
+## 15 — The Final Fold
+
+<p align="center">
+  <img src="assets/readme/15-the-final-fold.webp" width="960" alt="The Final Fold — Paper, Precision, and Control">
+</p>
+
+<p align="center">
+  <strong>OctaPDF · Project Origami</strong><br>
+  <sub>Zero Telemetry &middot; Local Processing &middot; MIT Open Source</sub>
 </p>

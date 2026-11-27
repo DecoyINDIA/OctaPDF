@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Engineering Beneath the Paper</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1120px;
+      height: 578px;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #241E1B;
+    }
+    #stage {
+      position: relative;
+      width: 1120px;
+      height: 578px;
+      background: #FAF7F2;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 1120px;
+      height: 578px;
+    }
+    #hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 32px;
+    }
+    .eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #E8501C;
+      margin-bottom: 3px;
+    }
+    .title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #241E1B;
+      line-height: 1.15;
+    }
+    .subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: #6E645D;
+      margin-top: 2px;
+    }
+    .boundary-badge {
+      position: absolute;
+      bottom: 18px;
+      left: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 11px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #DFD5C8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #241E1B;
+      letter-spacing: 0.04em;
+    }
+    .boundary-badge .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #E8501C;
+    }
+    svg#leaders {
+      position: absolute;
+      inset: 0;
+      width: 1120px;
+      height: 578px;
+    }
+    .layer-card {
+      position: absolute;
+      right: 32px;
+      width: 452px;
+      padding: 9px 13px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #E4DBD0;
+      box-shadow: 0 4px 14px rgba(36, 30, 27, 0.06);
+      transform: translateY(-50%);
+    }
+    .layer-card.dark-accent {
+      border-left: 3px solid #241E1B;
+    }
+    .layer-card.terra-accent {
+      border-left: 3px solid #E8501C;
+    }
+    .layer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .layer-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #241E1B;
+      letter-spacing: -0.01em;
+    }
+    .layer-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #E8501C;
+      background: #FDF1EA;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .layer-card.dark-accent .layer-tag {
+      color: #241E1B;
+      background: #F5EFE6;
+    }
+    .layer-tech {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.45;
+      color: #6E645D;
+    }
+    .layer-tech strong {
+      color: #241E1B;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="hud">
+      <div class="header">
+        <div class="eyebrow">Verified Stack · Exploded Isometric</div>
+        <div class="title">Engineering Beneath the Paper</div>
+        <div class="subtitle">Four-tier local execution pipeline — zero cloud dependencies</div>
+      </div>
+
+      <svg id="leaders" viewBox="0 0 1120 578"></svg>
+      <div id="cards"></div>
+
+      <div class="boundary-badge">
+        <span class="pulse"></span>
+        <span>LOCAL HOST BOUNDARY · INTERNAL LOOPBACK · ZERO EXTERNAL EGRESS</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = 1120;
+    const H = 578;
+    const stage = document.getElementById('stage');
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.04;
+    stage.insertBefore(renderer.domElement, document.getElementById('hud'));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#FAF7F2');
+
+    // True isometric orthographic camera framed with clear margin below the header
+    const frustumH = 7.9;
+    const aspect = W / H;
+    const camera = new THREE.OrthographicCamera(
+      (-frustumH * aspect) / 2,
+      (frustumH * aspect) / 2,
+      frustumH / 2,
+      -frustumH / 2,
+      0.1,
+      50
+    );
+    camera.position.set(11.5, 9.2, 11.5);
+    camera.lookAt(1.85, 0.0, -1.85);
+
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#D6CEC3', 1.15);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF7EE', 2.0);
+    keyLight.position.set(6, 12, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 30;
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight('#FFEFE5', 0.65);
+    fillLight.position.set(-6, 5, 8);
+    scene.add(fillLight);
+
+    // Materials
+    const paperMat = new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.42, metalness: 0.02 });
+    const subtleMat = new THREE.MeshStandardMaterial({ color: '#F5EFE6', roughness: 0.62, metalness: 0.02 });
+    const borderMat = new THREE.MeshStandardMaterial({ color: '#E2D8CB', roughness: 0.55, metalness: 0.04 });
+    const inkMat = new THREE.MeshStandardMaterial({ color: '#241E1B', roughness: 0.44, metalness: 0.14 });
+    const mutedMat = new THREE.MeshStandardMaterial({ color: '#6E645D', roughness: 0.52, metalness: 0.08 });
+    const terracottaMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C',
+      emissive: '#E8501C',
+      emissiveIntensity: 0.15,
+      roughness: 0.32,
+      metalness: 0.08
+    });
+    const pulseMat = new THREE.MeshStandardMaterial({
+      color: '#FF6B35',
+      emissive: '#E8501C',
+      emissiveIntensity: 1.4,
+      roughness: 0.2
+    });
+
+    const stackRoot = new THREE.Group();
+    stackRoot.position.y = -0.22;
+    scene.add(stackRoot);
+
+    const baseGrid = new THREE.GridHelper(4.5, 10, '#CFC4B6', '#E5DDD1');
+    baseGrid.position.y = -2.35;
+    stackRoot.add(baseGrid);
+
+    const hostCage = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(3.8, 4.75, 3.8)),
+      new THREE.LineDashedMaterial({ color: '#B5A99B', dashSize: 0.14, gapSize: 0.10 })
+    );
+    hostCage.computeLineDistances();
+    hostCage.position.y = -0.05;
+    stackRoot.add(hostCage);
+
+    const pillarGeo = new THREE.CylinderGeometry(0.015, 0.015, 4.65, 8);
+    for (const [cx, cz] of [[-1.70, -1.70], [1.70, -1.70], [-1.70, 1.70], [1.70, 1.70]]) {
+      const p = new THREE.Mesh(pillarGeo, borderMat);
+      p.position.set(cx, -0.05, cz);
+      stackRoot.add(p);
+    }
+
+    function makeSlab(w, h, d, mat, outlineColor = '#D7CCBE') {
+      const g = new THREE.Group();
+      const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      box.castShadow = true;
+      box.receiveShadow = true;
+      g.add(box);
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.004, h + 0.004, d + 0.004)),
+        new THREE.LineBasicMaterial({ color: outlineColor, transparent: true, opacity: 0.7 })
+      );
+      g.add(edges);
+      return g;
+    }
+
+    // Layer 1 (Top): Client Workspace — Paper Desk UI
+    const layer1 = new THREE.Group();
+    layer1.baseY = 1.80;
+    layer1.add(makeSlab(3.10, 0.16, 3.10, paperMat));
+    const uiHeader = makeSlab(2.70, 0.04, 0.36, subtleMat);
+    uiHeader.position.set(0, 0.10, -1.14);
+    const uiCanvas = makeSlab(1.72, 0.05, 1.90, paperMat);
+    uiCanvas.position.set(-0.46, 0.105, 0.22);
+    const uiDocCard = makeSlab(1.10, 0.04, 1.38, subtleMat);
+    uiDocCard.position.set(-0.46, 0.14, 0.22);
+    const uiSigStroke = makeSlab(0.54, 0.03, 0.10, terracottaMat, '#E8501C');
+    uiSigStroke.position.set(-0.46, 0.175, 0.54);
+    const uiSidebar = makeSlab(0.74, 0.05, 1.90, subtleMat);
+    uiSidebar.position.set(0.96, 0.105, 0.22);
+    layer1.add(uiHeader, uiCanvas, uiDocCard, uiSigStroke, uiSidebar);
+    stackRoot.add(layer1);
+
+    // Layer 2: Web & Security Perimeter — Spring Boot 3.4.5 + Jetty
+    const layer2 = new THREE.Group();
+    layer2.baseY = 0.58;
+    layer2.add(makeSlab(3.10, 0.18, 3.10, subtleMat));
+    const secRing = new THREE.Mesh(new THREE.BoxGeometry(2.70, 0.08, 2.70), borderMat);
+    secRing.position.y = 0.12;
+    layer2.add(secRing);
+    const innerCore = makeSlab(2.12, 0.12, 2.12, paperMat);
+    innerCore.position.y = 0.13;
+    layer2.add(innerCore);
+    for (const [px, pz, isTerra] of [[-1.10, -1.10, true], [1.10, -1.10, false], [-1.10, 1.10, false], [1.10, 1.10, true]]) {
+      const pylon = makeSlab(0.32, 0.24, 0.32, isTerra ? terracottaMat : inkMat, isTerra ? '#E8501C' : '#241E1B');
+      pylon.position.set(px, 0.21, pz);
+      layer2.add(pylon);
+    }
+    stackRoot.add(layer2);
+
+    // Layer 3: JVM Document Core
+    const layer3 = new THREE.Group();
+    layer3.baseY = -0.64;
+    layer3.add(makeSlab(3.10, 0.20, 3.10, inkMat, '#463D36'));
+    const jvmModules = [
+      { x: -0.76, z: -0.56, w: 1.10, d: 0.92, terra: true },
+      { x:  0.62, z: -0.56, w: 1.10, d: 0.92, terra: false },
+      { x: -0.86, z:  0.62, w: 0.82, d: 0.86, terra: false },
+      { x:  0.04, z:  0.62, w: 0.70, d: 0.86, terra: false },
+      { x:  0.90, z:  0.62, w: 0.70, d: 0.86, terra: true }
+    ];
+    for (const m of jvmModules) {
+      const blk = makeSlab(m.w, 0.16, m.d, m.terra ? terracottaMat : paperMat, m.terra ? '#E8501C' : '#D7CCBE');
+      blk.position.set(m.x, 0.18, m.z);
+      layer3.add(blk);
+    }
+    stackRoot.add(layer3);
+
+    // Layer 4 (Bottom): Local Native Engines
+    const layer4 = new THREE.Group();
+    layer4.baseY = -1.86;
+    layer4.add(makeSlab(3.25, 0.24, 3.25, mutedMat, '#4F4741'));
+    const nativeDeck = makeSlab(2.92, 0.08, 2.92, subtleMat);
+    nativeDeck.position.y = 0.15;
+    layer4.add(nativeDeck);
+    for (let k = 0; k < 5; k++) {
+      const x = -1.00 + k * 0.50;
+      const fin = makeSlab(0.35, 0.22, 2.10, k % 2 === 0 ? inkMat : paperMat, k === 1 ? '#E8501C' : '#8E8378');
+      fin.position.set(x, 0.28, 0);
+      layer4.add(fin);
+      if (k === 1 || k === 3) {
+        const cap = makeSlab(0.35, 0.04, 2.10, terracottaMat, '#E8501C');
+        cap.position.set(x, 0.41, 0);
+        layer4.add(cap);
+      }
+    }
+    stackRoot.add(layer4);
+
+    // Vertical data-bus conduits + glowing #E8501C pulses strictly inside local host boundary
+    const busCoords = [
+      { x: -0.45, z: -0.35, phase: 0.0 },
+      { x:  0.55, z:  0.35, phase: 0.33 },
+      { x:  0.05, z: -0.80, phase: 0.66 }
+    ];
+    const buses = busCoords.map((b) => {
+      const rail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.012, 3.7, 8),
+        new THREE.MeshBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0.35 })
+      );
+      rail.position.set(b.x, 0.0, b.z);
+      stackRoot.add(rail);
+
+      const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), pulseMat);
+      orb.position.set(b.x, 0, b.z);
+      stackRoot.add(orb);
+
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(0.16, 0.014, 8, 24),
+        new THREE.MeshBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0.55 })
+      );
+      halo.rotation.x = Math.PI / 2;
+      stackRoot.add(halo);
+
+      return { ...b, orb, halo };
+    });
+
+    const LAYER_SPECS = [
+      {
+        layer: layer1,
+        anchorLocal: new THREE.Vector3(1.55, 0.08, -0.45),
+        cardY: 132,
+        tag: 'Layer 01 · Client',
+        title: 'Paper Desk UI Workspace',
+        tech: '<strong>Bootstrap 5</strong> · <strong>PDF.js</strong> · <strong>pdf-lib</strong> · <strong>signature_pad</strong>',
+        styleClass: 'terra-accent'
+      },
+      {
+        layer: layer2,
+        anchorLocal: new THREE.Vector3(1.55, 0.10, -0.45),
+        cardY: 250,
+        tag: 'Layer 02 · Web & Security',
+        title: 'Spring Boot 3.4.5 + Jetty Perimeter',
+        tech: '<strong>SecurityHeadersFilter</strong> (CSP \'self\') · <strong>IPRateLimitingFilter</strong><br><strong>EnterpriseEndpointFilter</strong> · <strong>TempFileJanitorService</strong>',
+        styleClass: 'dark-accent'
+      },
+      {
+        layer: layer3,
+        anchorLocal: new THREE.Vector3(1.55, 0.12, -0.45),
+        cardY: 370,
+        tag: 'Layer 03 · JVM Core',
+        title: 'JVM Document Engine Core',
+        tech: '<strong>Apache PDFBox 3.0.5</strong> · <strong>BouncyCastle 1.80</strong> · <strong>Tabula 1.0.5</strong><br><strong>TwelveMonkeys ImageIO</strong> · <strong>ZXing</strong>',
+        styleClass: 'terra-accent'
+      },
+      {
+        layer: layer4,
+        anchorLocal: new THREE.Vector3(1.62, 0.12, -0.45),
+        cardY: 488,
+        tag: 'Layer 04 · Native Host',
+        title: 'Local Native Engines',
+        tech: '<strong>qpdf</strong> · <strong>Tesseract OCR</strong> (13 langs) · <strong>LibreOffice / unoserver</strong><br><strong>Poppler pdftohtml</strong> · <strong>weasyprint_safe.py</strong> (SSRF-guarded)',
+        styleClass: 'dark-accent'
+      }
+    ];
+
+    const cardsEl = document.getElementById('cards');
+    const leadersSvg = document.getElementById('leaders');
+
+    // Static crisp architectural blueprint grid drawn once in SVG (clean WebP compression!)
+    for (let gx = 40; gx < W; gx += 40) {
+      const gl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      gl.setAttribute('x1', gx); gl.setAttribute('y1', 0);
+      gl.setAttribute('x2', gx); gl.setAttribute('y2', H);
+      gl.setAttribute('stroke', '#E8E2D8'); gl.setAttribute('stroke-width', '0.6');
+      gl.setAttribute('stroke-opacity', '0.55');
+      leadersSvg.appendChild(gl);
+    }
+    for (let gy = 40; gy < H; gy += 40) {
+      const gl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      gl.setAttribute('x1', 0); gl.setAttribute('y1', gy);
+      gl.setAttribute('x2', W); gl.setAttribute('y2', gy);
+      gl.setAttribute('stroke', '#E8E2D8'); gl.setAttribute('stroke-width', '0.6');
+      gl.setAttribute('stroke-opacity', '0.55');
+      leadersSvg.appendChild(gl);
+    }
+
+    const cardBindings = LAYER_SPECS.map((spec) => {
+      const card = document.createElement('div');
+      card.className = `layer-card ${spec.styleClass}`;
+      card.style.top = `${spec.cardY}px`;
+      card.innerHTML = `
+        <div class="layer-head">
+          <span class="layer-title">${spec.title}</span>
+          <span class="layer-tag">${spec.tag}</span>
+        </div>
+        <div class="layer-tech">${spec.tech}</div>
+      `;
+      cardsEl.appendChild(card);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', spec.styleClass === 'terra-accent' ? '#E8501C' : '#241E1B');
+      line.setAttribute('stroke-width', '1.4');
+      line.setAttribute('stroke-opacity', '0.72');
+      leadersSvg.appendChild(line);
+
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '3.3');
+      dot.setAttribute('fill', spec.styleClass === 'terra-accent' ? '#E8501C' : '#241E1B');
+      leadersSvg.appendChild(dot);
+
+      return { spec, line, dot };
+    });
+
+    const layers = [layer1, layer2, layer3, layer4];
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const loopAngle = t * Math.PI * 2;
+
+      const explodePulse = Math.sin(loopAngle) * 0.11;
+      const offsets = [1.5, 0.5, -0.5, -1.5];
+      layers.forEach((lyr, idx) => {
+        lyr.position.y = lyr.baseY + offsets[idx] * explodePulse + Math.sin(loopAngle + idx * 0.7) * 0.03;
+      });
+
+      stackRoot.rotation.y = Math.sin(loopAngle) * 0.03;
+
+      buses.forEach((b) => {
+        const u = (t + b.phase) % 1.0;
+        const yPos = Math.cos(u * Math.PI * 2) * 1.80;
+        b.orb.position.y = yPos;
+        b.orb.rotation.y = loopAngle * 2;
+        b.orb.rotation.x = loopAngle;
+        const scale = 0.88 + 0.25 * Math.sin(u * Math.PI * 4);
+        b.orb.scale.setScalar(scale);
+
+        b.halo.position.set(b.x, yPos, b.z);
+        b.halo.scale.setScalar(0.8 + 0.45 * ((u * 2) % 1));
+        b.halo.material.opacity = 0.65 * (1 - ((u * 2) % 1));
+      });
+
+      renderer.render(scene, camera);
+
+      const cardLeftX = W - 32 - 452;
+      for (const b of cardBindings) {
+        const worldPt = b.spec.anchorLocal.clone().applyMatrix4(b.spec.layer.matrixWorld);
+        const proj = worldPt.project(camera);
+        const sx = (proj.x * 0.5 + 0.5) * W;
+        const sy = (-proj.y * 0.5 + 0.5) * H;
+        const elbowX = cardLeftX - 34;
+        b.line.setAttribute('points', `${sx.toFixed(1)},${sy.toFixed(1)} ${elbowX.toFixed(1)},${b.spec.cardY} ${cardLeftX},${b.spec.cardY}`);
+        b.dot.setAttribute('cx', sx.toFixed(1));
+        b.dot.setAttribute('cy', sy.toFixed(1));
+      }
+    };
+
+    window.renderFrame(0, 216, 0);
+  </script>
+</body>
+</html>

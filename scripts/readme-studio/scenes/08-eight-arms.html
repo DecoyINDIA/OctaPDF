@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Eight Arms, Endless Possibilities</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1040px;
+      height: 520px;
+      overflow: hidden;
+      background: #FAF7F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #241E1B;
+    }
+    #stage {
+      position: relative;
+      width: 1040px;
+      height: 520px;
+      background: #FAF7F2;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 1040px;
+      height: 520px;
+    }
+    #hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .header {
+      position: absolute;
+      top: 22px;
+      left: 32px;
+    }
+    .eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #E8501C;
+      margin-bottom: 3px;
+    }
+    .title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #241E1B;
+      line-height: 1.15;
+    }
+    .subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: #6E645D;
+      margin-top: 2px;
+    }
+    .footer-meta {
+      position: absolute;
+      bottom: 18px;
+      left: 32px;
+      right: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6E645D;
+      border-top: 1px solid rgba(224, 216, 204, 0.9);
+      padding-top: 7px;
+    }
+    .footer-meta .accent-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #E8501C;
+      margin-right: 7px;
+      vertical-align: 1px;
+    }
+    svg#leaders {
+      position: absolute;
+      inset: 0;
+      width: 1040px;
+      height: 520px;
+    }
+    .callout {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 10px 5px 7px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #E2D9CE;
+      box-shadow: 0 3px 10px rgba(36, 30, 27, 0.06);
+      white-space: nowrap;
+      transform: translateY(-50%);
+    }
+    .callout.align-right {
+      transform: translate(-100%, -50%);
+      flex-direction: row-reverse;
+      padding: 5px 7px 5px 10px;
+    }
+    .callout .num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+      background: #E8501C;
+      padding: 2px 5px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+    }
+    .callout.ceramic .num {
+      background: #241E1B;
+    }
+    .callout .label {
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      color: #241E1B;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="hud">
+      <div class="header">
+        <div class="eyebrow">OctaPDF · Project Origami</div>
+        <div class="title">Eight Arms, Endless Possibilities</div>
+        <div class="subtitle">Generative eight-fold ceramic &amp; archival paper architecture</div>
+      </div>
+      <svg id="leaders" viewBox="0 0 1040 520"></svg>
+      <div id="callouts"></div>
+      <div class="footer-meta">
+        <span><span class="accent-dot"></span>8 Verified Capability Pillars</span>
+        <span>Procedural Origami Kinematics · Local Paper Desk</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = 1040;
+    const H = 520;
+    const stage = document.getElementById('stage');
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.04;
+    stage.insertBefore(renderer.domElement, document.getElementById('hud'));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#FAF7F2');
+    scene.fog = new THREE.Fog('#FAF7F2', 13, 30);
+
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 60);
+    camera.position.set(0, 5.2, 9.75);
+    camera.lookAt(0, 0.45, 0);
+
+    // Lighting — soft gallery studio
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DCD2C5', 1.15);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF7EE', 2.05);
+    keyLight.position.set(5.2, 8.6, 5.4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1.0;
+    keyLight.shadow.camera.far = 24;
+    keyLight.shadow.camera.left = -6.5;
+    keyLight.shadow.camera.right = 6.5;
+    keyLight.shadow.camera.top = 5.5;
+    keyLight.shadow.camera.bottom = -5.5;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight('#FFE4D6', 0.85);
+    rimLight.position.set(-5.5, 4.2, -5.0);
+    scene.add(rimLight);
+
+    const warmCoreLight = new THREE.PointLight('#FF6B35', 1.4, 5.5, 1.8);
+    warmCoreLight.position.set(0, 0.9, 0);
+    scene.add(warmCoreLight);
+
+    // Seamless expansive studio floor matching #FAF7F2 + fog (zero far seam!)
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: '#FAF7F2',
+      roughness: 0.96,
+      metalness: 0.0
+    });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(140, 110), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.35;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: '#DFD6C9',
+      transparent: true,
+      opacity: 0.72
+    });
+    for (const r of [1.55, 2.65, 3.85]) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.012, r + 0.012, 96), ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = -0.346;
+      scene.add(ring);
+    }
+
+    for (let k = 0; k < 8; k++) {
+      const a = k * (Math.PI / 4) + Math.PI / 8;
+      const tickGeo = new THREE.PlaneGeometry(0.018, 2.3);
+      const tick = new THREE.Mesh(tickGeo, ringMat);
+      tick.rotation.x = -Math.PI / 2;
+      tick.rotation.z = -a;
+      tick.position.set(Math.sin(a) * 2.7, -0.345, Math.cos(a) * 2.7);
+      scene.add(tick);
+    }
+
+    // Materials
+    const ceramicMat = new THREE.MeshStandardMaterial({
+      color: '#FFFFFF',
+      roughness: 0.36,
+      metalness: 0.04
+    });
+    const subtleStoneMat = new THREE.MeshStandardMaterial({
+      color: '#F2EBE1',
+      roughness: 0.60,
+      metalness: 0.02
+    });
+    const graphiteMat = new THREE.MeshStandardMaterial({
+      color: '#241E1B',
+      roughness: 0.46,
+      metalness: 0.14
+    });
+    const terracottaMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C',
+      roughness: 0.34,
+      metalness: 0.08
+    });
+    const paperRibbonMat = new THREE.MeshStandardMaterial({
+      color: '#FFFFFF',
+      roughness: 0.44,
+      metalness: 0.02,
+      side: THREE.DoubleSide
+    });
+    const terracottaRibbonMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C',
+      roughness: 0.34,
+      metalness: 0.05,
+      side: THREE.DoubleSide
+    });
+    const warmCreamRibbonMat = new THREE.MeshStandardMaterial({
+      color: '#F5EFE6',
+      roughness: 0.50,
+      metalness: 0.02,
+      side: THREE.DoubleSide
+    });
+
+    // Central Ceramic & Paper Architectural Core
+    const coreGroup = new THREE.Group();
+    scene.add(coreGroup);
+
+    const plinthBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.18, 1.34, 0.24, 8),
+      subtleStoneMat
+    );
+    plinthBase.position.y = -0.22;
+    plinthBase.rotation.y = Math.PI / 8;
+    plinthBase.castShadow = true;
+    plinthBase.receiveShadow = true;
+    coreGroup.add(plinthBase);
+
+    const plinthMid = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.92, 1.05, 0.28, 8),
+      ceramicMat
+    );
+    plinthMid.position.y = 0.04;
+    plinthMid.rotation.y = Math.PI / 8;
+    plinthMid.castShadow = true;
+    plinthMid.receiveShadow = true;
+    coreGroup.add(plinthMid);
+
+    const accentRing = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.95, 0.95, 0.045, 8),
+      terracottaMat
+    );
+    accentRing.position.y = 0.20;
+    accentRing.rotation.y = Math.PI / 8;
+    accentRing.castShadow = true;
+    coreGroup.add(accentRing);
+
+    const coreCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.62, 0.86, 0.26, 8),
+      ceramicMat
+    );
+    coreCap.position.y = 0.35;
+    coreCap.rotation.y = Math.PI / 8;
+    coreCap.castShadow = true;
+    coreCap.receiveShadow = true;
+    coreGroup.add(coreCap);
+
+    // Floating origami octagonal lantern
+    const heartGroup = new THREE.Group();
+    heartGroup.position.y = 0.92;
+    coreGroup.add(heartGroup);
+
+    const outerCrystal = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.46, 0),
+      new THREE.MeshStandardMaterial({
+        color: '#FFFFFF',
+        roughness: 0.24,
+        metalness: 0.06,
+        transparent: true,
+        opacity: 0.95
+      })
+    );
+    outerCrystal.scale.set(1.0, 1.15, 1.0);
+    outerCrystal.castShadow = true;
+    heartGroup.add(outerCrystal);
+
+    const innerPrism = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.25, 0),
+      new THREE.MeshStandardMaterial({
+        color: '#E8501C',
+        emissive: '#E8501C',
+        emissiveIntensity: 0.55,
+        roughness: 0.25
+      })
+    );
+    heartGroup.add(innerPrism);
+
+    const heartCollar = new THREE.Mesh(
+      new THREE.TorusGeometry(0.56, 0.02, 12, 8),
+      graphiteMat
+    );
+    heartCollar.rotation.x = Math.PI / 2;
+    heartCollar.rotation.z = Math.PI / 8;
+    heartGroup.add(heartCollar);
+
+    // Stratified elevations per slotIdx (0..3) guarantee ZERO crossing SVG leader lines!
+    const SLOT_TIP_Y = [1.82, 1.32, 0.78, 0.32];
+
+    const PILLARS = [
+      { num: '01', name: 'Assemble',          angleDeg: -135, slotSide: 'left',  slotIdx: 0, terracotta: true  },
+      { num: '02', name: 'Split & Extract',   angleDeg: -162, slotSide: 'left',  slotIdx: 1, terracotta: false },
+      { num: '03', name: 'Sign & Stamp',      angleDeg: 162,  slotSide: 'left',  slotIdx: 2, terracotta: true  },
+      { num: '04', name: 'View & Annotate',   angleDeg: 132,  slotSide: 'left',  slotIdx: 3, terracotta: false },
+      { num: '05', name: 'Secure & Sanitize', angleDeg: -45,  slotSide: 'right', slotIdx: 0, terracotta: false },
+      { num: '06', name: 'Compress & Repair', angleDeg: -18,  slotSide: 'right', slotIdx: 1, terracotta: true  },
+      { num: '07', name: 'OCR & Enhance',     angleDeg: 18,   slotSide: 'right', slotIdx: 2, terracotta: false },
+      { num: '08', name: 'Convert & Export',  angleDeg: 48,   slotSide: 'right', slotIdx: 3, terracotta: true  }
+    ];
+
+    const SEGMENTS = 56;
+    const VERTS_PER_RING = 3;
+
+    function createRibbonMesh(material) {
+      const vertCount = (SEGMENTS + 1) * VERTS_PER_RING;
+      const positions = new Float32Array(vertCount * 3);
+      const normals = new Float32Array(vertCount * 3);
+      const indices = [];
+
+      for (let s = 0; s < SEGMENTS; s++) {
+        const a = s * 3;
+        const b = (s + 1) * 3;
+        indices.push(a, a + 1, b + 1, a, b + 1, b);
+        indices.push(a + 1, a + 2, b + 2, a + 1, b + 2, b + 1);
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+      geo.setIndex(indices);
+
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function createCreaseEdge() {
+      const positions = new Float32Array((SEGMENTS + 1) * 3);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      return new THREE.Line(
+        geo,
+        new THREE.LineBasicMaterial({ color: '#E8501C', transparent: true, opacity: 0.72 })
+      );
+    }
+
+    function createTipArtifact(idx, isTerracotta) {
+      const g = new THREE.Group();
+      const matPrimary = isTerracotta ? terracottaMat : ceramicMat;
+      const matSecondary = isTerracotta ? ceramicMat : terracottaMat;
+
+      if (idx === 0) {
+        for (let i = 0; i < 3; i++) {
+          const p = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.035, 0.30), i === 1 ? matSecondary : matPrimary);
+          p.position.y = (i - 1) * 0.06;
+          p.rotation.y = (i - 1) * 0.18;
+          g.add(p);
+        }
+      } else if (idx === 1) {
+        const left = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.035, 0.28), matPrimary);
+        left.position.set(-0.1, 0.03, 0);
+        left.rotation.z = 0.22;
+        const right = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.035, 0.28), matSecondary);
+        right.position.set(0.1, -0.03, 0);
+        right.rotation.z = -0.22;
+        g.add(left, right);
+      } else if (idx === 2) {
+        const base = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.03, 0.28), ceramicMat);
+        const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 8), terracottaMat);
+        seal.position.y = 0.04;
+        g.add(base, seal);
+      } else if (idx === 3) {
+        const frame = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 4), graphiteMat);
+        frame.rotation.z = Math.PI / 4;
+        const dot = new THREE.Mesh(new THREE.OctahedronGeometry(0.075, 0), terracottaMat);
+        g.add(frame, dot);
+      } else if (idx === 4) {
+        const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.06, 6), graphiteMat);
+        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), terracottaMat);
+        core.position.y = 0.06;
+        g.add(shield, core);
+      } else if (idx === 5) {
+        for (let i = 0; i < 4; i++) {
+          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.024, 0.06), i % 2 === 0 ? matPrimary : matSecondary);
+          rib.position.z = (i - 1.5) * 0.07;
+          rib.rotation.x = i % 2 === 0 ? 0.35 : -0.35;
+          g.add(rib);
+        }
+      } else if (idx === 6) {
+        const sheet = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.025, 0.22), ceramicMat);
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.03, 0.04), terracottaMat);
+        beam.position.y = 0.04;
+        g.add(sheet, beam);
+      } else {
+        const p1 = new THREE.Mesh(new THREE.TetrahedronGeometry(0.15, 0), terracottaMat);
+        p1.position.x = -0.07;
+        const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), ceramicMat);
+        p2.position.x = 0.09;
+        p2.rotation.set(0.4, 0.6, 0.2);
+        g.add(p1, p2);
+      }
+      g.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+        }
+      });
+      return g;
+    }
+
+    const arms = PILLARS.map((pillar, idx) => {
+      const baseAngle = THREE.MathUtils.degToRad(pillar.angleDeg);
+      const collar = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.14, 0.22),
+        pillar.terracotta ? terracottaMat : graphiteMat
+      );
+      collar.position.set(Math.cos(baseAngle) * 0.88, 0.22, Math.sin(baseAngle) * 0.88);
+      collar.rotation.y = -baseAngle + Math.PI / 2;
+      collar.castShadow = true;
+      coreGroup.add(collar);
+
+      const mat = pillar.terracotta ? terracottaRibbonMat : (idx % 2 === 0 ? warmCreamRibbonMat : paperRibbonMat);
+      const ribbon = createRibbonMesh(mat);
+      scene.add(ribbon);
+
+      const crease = createCreaseEdge();
+      if (!pillar.terracotta) scene.add(crease);
+
+      const tipNode = createTipArtifact(idx, pillar.terracotta);
+      scene.add(tipNode);
+
+      return {
+        pillar,
+        idx,
+        baseAngle,
+        ribbon,
+        crease,
+        tipNode,
+        tipWorld: new THREE.Vector3()
+      };
+    });
+
+    const calloutsContainer = document.getElementById('callouts');
+    const leadersSvg = document.getElementById('leaders');
+
+    const hudItems = arms.map((arm) => {
+      const el = document.createElement('div');
+      el.className = `callout ${arm.pillar.slotSide === 'left' ? 'align-right' : 'align-left'} ${arm.pillar.terracotta ? '' : 'ceramic'}`;
+      el.innerHTML = `<span class="num">${arm.pillar.num}</span><span class="label">${arm.pillar.name}</span>`;
+      calloutsContainer.appendChild(el);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', arm.pillar.terracotta ? '#E8501C' : '#6E645D');
+      line.setAttribute('stroke-width', '1.35');
+      line.setAttribute('stroke-opacity', '0.82');
+      leadersSvg.appendChild(line);
+
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('r', '3.1');
+      dot.setAttribute('fill', arm.pillar.terracotta ? '#E8501C' : '#241E1B');
+      leadersSvg.appendChild(dot);
+
+      return { el, line, dot, arm };
+    });
+
+    const leftSlotsY = [128, 216, 306, 398];
+    const rightSlotsY = [128, 216, 306, 398];
+
+    const upVec = new THREE.Vector3(0, 1, 0);
+    const tangentVec = new THREE.Vector3();
+    const binormalVec = new THREE.Vector3();
+    const normalVec = new THREE.Vector3();
+
+    function updateArmGeometry(arm, loopAngle) {
+      const phase = arm.idx * (Math.PI * 2 / 8);
+      const waveA = Math.sin(loopAngle + phase);
+      const waveB = Math.cos(loopAngle + phase);
+      const harmonic2 = Math.sin(loopAngle * 2 - phase * 0.5);
+
+      const dirX = Math.cos(arm.baseAngle);
+      const dirZ = Math.sin(arm.baseAngle);
+      const latX = -dirZ;
+      const latZ = dirX;
+
+      const tipTargetY = SLOT_TIP_Y[arm.pillar.slotIdx];
+      const reach = 3.45 + waveB * 0.16;
+      const xScale = 1.20;
+      const zScale = 0.70;
+
+      const pts = [
+        new THREE.Vector3(dirX * 0.84, 0.24, dirZ * 0.84),
+        new THREE.Vector3(
+          dirX * 1.46 * xScale + latX * waveA * 0.14,
+          0.54 + (tipTargetY - 0.54) * 0.22 + waveA * 0.16,
+          dirZ * 1.46 * zScale + latZ * waveA * 0.10
+        ),
+        new THREE.Vector3(
+          dirX * 2.22 * xScale - latX * waveB * 0.22,
+          0.74 + (tipTargetY - 0.74) * 0.55 + waveB * 0.18 + harmonic2 * 0.05,
+          dirZ * 2.22 * zScale - latZ * waveB * 0.14
+        ),
+        new THREE.Vector3(
+          dirX * 2.94 * xScale + latX * waveA * 0.18,
+          tipTargetY - 0.10 + waveA * 0.14,
+          dirZ * 2.94 * zScale + latZ * waveA * 0.12
+        ),
+        new THREE.Vector3(
+          dirX * reach * xScale,
+          tipTargetY + waveB * 0.11,
+          dirZ * reach * zScale
+        )
+      ];
+
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+      const posAttr = arm.ribbon.geometry.getAttribute('position');
+      const creaseAttr = arm.crease.geometry.getAttribute('position');
+
+      for (let s = 0; s <= SEGMENTS; s++) {
+        const u = s / SEGMENTS;
+        const center = curve.getPoint(u);
+        curve.getTangent(u, tangentVec).normalize();
+
+        binormalVec.crossVectors(tangentVec, upVec);
+        if (binormalVec.lengthSq() < 1e-4) {
+          binormalVec.set(latX, 0, latZ);
+        }
+        binormalVec.normalize();
+        normalVec.crossVectors(binormalVec, tangentVec).normalize();
+
+        // Fuller, sculptural taper without pinching too thin near the tip
+        const width = (0.35 * Math.sin(Math.PI * (0.16 + 0.72 * u)) + 0.07) * (1.0 - 0.36 * u);
+        const creaseDepth = width * 0.38;
+        const twist = Math.sin(u * Math.PI * 1.5 + loopAngle + phase) * 0.26;
+
+        const cosT = Math.cos(twist);
+        const sinT = Math.sin(twist);
+
+        const rx = binormalVec.x * cosT + normalVec.x * sinT;
+        const ry = binormalVec.y * cosT + normalVec.y * sinT;
+        const rz = binormalVec.z * cosT + normalVec.z * sinT;
+
+        const nx = normalVec.x * cosT - binormalVec.x * sinT;
+        const ny = normalVec.y * cosT - binormalVec.y * sinT;
+        const nz = normalVec.z * cosT - binormalVec.z * sinT;
+
+        const vi = s * 3;
+        posAttr.setXYZ(vi, center.x - rx * width, center.y - ry * width, center.z - rz * width);
+        posAttr.setXYZ(vi + 1, center.x + nx * creaseDepth, center.y + ny * creaseDepth, center.z + nz * creaseDepth);
+        posAttr.setXYZ(vi + 2, center.x + rx * width, center.y + ry * width, center.z + rz * width);
+
+        creaseAttr.setXYZ(s, center.x + nx * (creaseDepth + 0.004), center.y + ny * (creaseDepth + 0.004), center.z + nz * (creaseDepth + 0.004));
+      }
+
+      posAttr.needsUpdate = true;
+      creaseAttr.needsUpdate = true;
+      arm.ribbon.geometry.computeVertexNormals();
+
+      const tipPt = curve.getPoint(1.0);
+      const tipTan = curve.getTangent(1.0).normalize();
+      arm.tipNode.position.copy(tipPt).addScaledVector(tipTan, 0.22);
+      arm.tipNode.rotation.y = loopAngle + phase;
+      arm.tipNode.rotation.x = Math.sin(loopAngle + phase) * 0.24;
+      arm.tipWorld.copy(arm.tipNode.position);
+    }
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const loopAngle = t * Math.PI * 2;
+
+      heartGroup.position.y = 0.92 + Math.sin(loopAngle) * 0.07;
+      outerCrystal.rotation.y = loopAngle * 0.5;
+      innerPrism.rotation.y = -loopAngle;
+      heartCollar.rotation.z = Math.PI / 8 + Math.sin(loopAngle) * 0.16;
+      warmCoreLight.intensity = 1.25 + 0.35 * Math.sin(loopAngle);
+
+      for (const arm of arms) {
+        updateArmGeometry(arm, loopAngle);
+      }
+
+      renderer.render(scene, camera);
+
+      for (const item of hudItems) {
+        const p = item.arm.tipWorld.clone().project(camera);
+        const sx = (p.x * 0.5 + 0.5) * W;
+        const sy = (-p.y * 0.5 + 0.5) * H;
+
+        const isLeft = item.arm.pillar.slotSide === 'left';
+        const anchorX = isLeft ? 176 : 864;
+        const anchorY = isLeft ? leftSlotsY[item.arm.pillar.slotIdx] : rightSlotsY[item.arm.pillar.slotIdx];
+
+        item.el.style.left = `${anchorX}px`;
+        item.el.style.top = `${anchorY}px`;
+
+        const elbowX = isLeft ? Math.min(sx - 24, anchorX + 34) : Math.max(sx + 24, anchorX - 34);
+        item.line.setAttribute('points', `${sx.toFixed(1)},${sy.toFixed(1)} ${elbowX.toFixed(1)},${anchorY} ${anchorX},${anchorY}`);
+        item.dot.setAttribute('cx', sx.toFixed(1));
+        item.dot.setAttribute('cy', sy.toFixed(1));
+      }
+    };
+
+    window.renderFrame(0, 240, 0);
+  </script>
+</body>
+</html>

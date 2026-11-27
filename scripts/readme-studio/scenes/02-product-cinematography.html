@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Product Cinematography</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #FAF7F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .hud-bar {
+      position: fixed; left: 24px; right: 24px; bottom: 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      pointer-events: none; z-index: 10;
+    }
+    .hud-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 16px; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #E8E2D8;
+      box-shadow: 0 6px 20px rgba(36, 30, 27, 0.08);
+      color: #241E1B; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .hud-dot { width: 8px; height: 8px; border-radius: 50%; background: #E8501C; }
+    .hud-step { color: #E8501C; font-family: ui-monospace, monospace; font-size: 12px; }
+    .hud-meta {
+      padding: 7px 14px; border-radius: 999px;
+      background: rgba(36, 30, 27, 0.88); color: #FAF7F2;
+      font-size: 12px; font-weight: 500; letter-spacing: 0.01em;
+    }
+    .progress-track {
+      position: fixed; left: 0; right: 0; bottom: 0; height: 3px;
+      background: rgba(232, 226, 216, 0.65); z-index: 11;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #E8501C, #FF6B35);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-bar">
+    <div class="hud-pill">
+      <span class="hud-dot"></span>
+      <span class="hud-step" id="hudStep">01</span>
+      <span id="hudTitle">Paper Desk Home · Universal Intake Deck</span>
+    </div>
+    <div class="hud-meta">OctaPDF v0.46.2 · Real Browser Capture</div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = window.innerWidth || 1120;
+    const H = window.innerHeight || 630;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.03;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#FAF7F2');
+    scene.fog = new THREE.Fog('#FAF7F2', 14, 26);
+
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 45);
+
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#DDD3C5', 1.15);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF8EE', 1.75);
+    keyLight.position.set(3.5, 6.2, 5.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 22;
+    keyLight.shadow.camera.left = -9;
+    keyLight.shadow.camera.right = 9;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight('#FFE8DA', 0.65);
+    rimLight.position.set(-4.5, 3.0, -3.5);
+    scene.add(rimLight);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(38, 28),
+      new THREE.MeshStandardMaterial({ color: '#F3ECE1', roughness: 0.94, metalness: 0.0 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.35;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const plinthMat = new THREE.MeshStandardMaterial({ color: '#EFE7DA', roughness: 0.85, metalness: 0.02 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: '#E8501C', roughness: 0.42, metalness: 0.05 });
+
+    for (let k = 0; k < 4; k++) {
+      const slab = new THREE.Mesh(
+        new THREE.BoxGeometry(2.6, 3.3, 0.02),
+        new THREE.MeshStandardMaterial({ color: '#F7F2E9', roughness: 0.88 })
+      );
+      slab.position.set(-6.0 + k * 4.0, 0.25 + (k % 2) * 0.2, -3.6 - (k % 2) * 0.5);
+      slab.rotation.y = (k - 1.5) * 0.08;
+      slab.receiveShadow = true;
+      scene.add(slab);
+    }
+
+    const loader = new THREE.TextureLoader();
+    const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    function loadTex(url) {
+      return new Promise((resolve, reject) => {
+        loader.load(url, (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = maxAniso;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          resolve(tex);
+        }, undefined, reject);
+      });
+    }
+
+    function makeDisplayStage(w, h, borderHex = '#E8E2D8') {
+      const group = new THREE.Group();
+      const chassis = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 0.14, h + 0.14, 0.07),
+        new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.55, metalness: 0.03 })
+      );
+      chassis.castShadow = true;
+      chassis.receiveShadow = true;
+      group.add(chassis);
+
+      const bezel = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 0.16, h + 0.16, 0.045),
+        new THREE.MeshStandardMaterial({ color: borderHex, roughness: 0.65, metalness: 0.04 })
+      );
+      bezel.position.z = -0.015;
+      group.add(bezel);
+
+      const screenMat = new THREE.MeshBasicMaterial({ color: '#FFFFFF', toneMapped: false });
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(w, h), screenMat);
+      screen.position.z = 0.038;
+      group.add(screen);
+
+      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.04, 0.02), trimMat);
+      badge.position.set(-w * 0.5 + 0.25, h * 0.5 + 0.085, 0.02);
+      group.add(badge);
+
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.08, 0.65), plinthMat);
+      plinth.position.set(0, -h * 0.5 - 0.22, -0.05);
+      plinth.castShadow = true;
+      plinth.receiveShadow = true;
+      group.add(plinth);
+
+      return { group, screenMat };
+    }
+
+    // 3 stages spaced cleanly so adjacent frames don't intrude during dwells
+    const stageHome = makeDisplayStage(3.2, 2.0);
+    stageHome.group.position.set(-4.5, 0.08, 0.45);
+    stageHome.group.rotation.y = 0.24;
+    scene.add(stageHome.group);
+
+    // Command Palette floating plane in front of Home
+    const paletteMat = new THREE.MeshBasicMaterial({
+      color: '#FFFFFF', transparent: true, opacity: 1.0, toneMapped: false
+    });
+    const paletteCard = new THREE.Mesh(new THREE.PlaneGeometry(2.75, 1.72), paletteMat);
+    paletteCard.position.set(-4.42, 0.08, 0.78);
+    paletteCard.rotation.y = 0.24;
+    const paletteBacking = new THREE.Mesh(
+      new THREE.BoxGeometry(2.82, 1.79, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.96, roughness: 0.4 })
+    );
+    paletteBacking.position.set(0, 0, -0.02);
+    paletteBacking.castShadow = true;
+    paletteCard.add(paletteBacking);
+    scene.add(paletteCard);
+
+    const stageMulti = makeDisplayStage(3.3, 2.06);
+    stageMulti.group.position.set(0.0, 0.08, -0.65);
+    stageMulti.group.rotation.y = 0.0;
+    scene.add(stageMulti.group);
+
+    const stageSign = makeDisplayStage(3.2, 2.0);
+    stageSign.group.position.set(4.5, 0.08, 0.45);
+    stageSign.group.rotation.y = -0.24;
+    scene.add(stageSign.group);
+
+    const multiIndices = [];
+    for (let k = 0; k < 25; k++) multiIndices.push(Math.round((k / 24) * 48));
+    const signIndices = [];
+    for (let k = 0; k < 25; k++) signIndices.push(Math.round((k / 24) * 47));
+
+    const [homeTex, paletteTex, ...seqTex] = await Promise.all([
+      loadTex('/assets/readme/captures/home-light.png'),
+      loadTex('/assets/readme/captures/palette-light.png'),
+      ...multiIndices.map((idx) => loadTex(`/scripts/readme-studio/captures_seq/seq_multitool/frame_${String(idx).padStart(3, '0')}.png`)),
+      ...signIndices.map((idx) => loadTex(`/scripts/readme-studio/captures_seq/seq_sign_theme/frame_${String(idx).padStart(3, '0')}.png`)),
+    ]);
+
+    const multiTextures = seqTex.slice(0, multiIndices.length);
+    const signTextures = seqTex.slice(multiIndices.length);
+
+    stageHome.screenMat.map = homeTex;
+    stageHome.screenMat.needsUpdate = true;
+    paletteMat.map = paletteTex;
+    paletteMat.needsUpdate = true;
+    stageMulti.screenMat.map = multiTextures[0];
+    stageMulti.screenMat.needsUpdate = true;
+    stageSign.screenMat.map = signTextures[0];
+    stageSign.screenMat.needsUpdate = true;
+
+    function smoothstep(a, b, x) {
+      const u = Math.max(0, Math.min(1, (x - a) / (b - a)));
+      return u * u * (3 - 2 * u);
+    }
+
+    const hudStep = document.getElementById('hudStep');
+    const hudTitle = document.getElementById('hudTitle');
+    const progressFill = document.getElementById('progressFill');
+
+    // Centered framing per stage with generous headroom so top & bottom edges never clip
+    const camPosA = new THREE.Vector3(-3.36, 0.32, 5.10);
+    const camPosB = new THREE.Vector3(0.0, 0.32, 4.25);
+    const camPosC = new THREE.Vector3(3.36, 0.32, 5.15);
+
+    const lookA = new THREE.Vector3(-4.46, 0.05, 0.45);
+    const lookB = new THREE.Vector3(0.0, 0.05, -0.65);
+    const lookC = new THREE.Vector3(4.46, 0.05, 0.45);
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      // Piecewise dwell schedule:
+      // 0.00..0.28 -> Window 1 (Home -> Command Palette centered at t=0.25)
+      // 0.28..0.34 -> Snappy transition to Window 2
+      // 0.34..0.62 -> Window 2 (Multi-Tool centered at t=0.50)
+      // 0.62..0.68 -> Snappy transition to Window 3
+      // 0.68..0.93 -> Window 3 (Sign + Live Light/Dark centered at t=0.75)
+      // 0.93..1.00 -> Snappy transition back to Window 1 (exact match at t=0 / t=1)
+      let camPos = new THREE.Vector3();
+      let lookTarget = new THREE.Vector3();
+      let activeStage = 1;
+
+      if (t < 0.28) {
+        camPos.copy(camPosA);
+        lookTarget.copy(lookA);
+        activeStage = 1;
+      } else if (t < 0.34) {
+        const u = smoothstep(0.28, 0.34, t);
+        camPos.lerpVectors(camPosA, camPosB, u);
+        lookTarget.lerpVectors(lookA, lookB, u);
+        activeStage = u < 0.5 ? 1 : 2;
+      } else if (t < 0.62) {
+        camPos.copy(camPosB);
+        lookTarget.copy(lookB);
+        activeStage = 2;
+      } else if (t < 0.68) {
+        const u = smoothstep(0.62, 0.68, t);
+        camPos.lerpVectors(camPosB, camPosC, u);
+        lookTarget.lerpVectors(lookB, lookC, u);
+        activeStage = u < 0.5 ? 2 : 3;
+      } else if (t < 0.93) {
+        camPos.copy(camPosC);
+        lookTarget.copy(lookC);
+        activeStage = 3;
+      } else {
+        const u = smoothstep(0.93, 1.00, t);
+        camPos.lerpVectors(camPosC, camPosA, u);
+        lookTarget.lerpVectors(lookC, lookA, u);
+        activeStage = u < 0.5 ? 3 : 1;
+      }
+
+      // Subtle continuous breathing motion
+      camera.position.copy(camPos);
+      camera.position.x += Math.sin(t * Math.PI * 2) * 0.04;
+      camera.position.y += Math.cos(t * Math.PI * 2) * 0.025;
+      camera.lookAt(lookTarget);
+
+      // Phase A: Command Palette opens over Home during 0.09..0.28 (cleanly visible at t=0.25!)
+      const palReveal = smoothstep(0.08, 0.14, t) * (1 - smoothstep(0.26, 0.30, t));
+      paletteMat.opacity = palReveal;
+      paletteBacking.material.opacity = palReveal * 0.96;
+      paletteCard.visible = palReveal > 0.01;
+      paletteCard.position.set(
+        -4.42 + palReveal * 0.06,
+        0.08 + (1 - palReveal) * -0.04,
+        0.68 + palReveal * 0.24
+      );
+
+      // Phase B: Multi-Tool sequence progresses smoothly across 0.32..0.63
+      const mNorm = Math.max(0, Math.min(1, (t - 0.32) / 0.31));
+      const mIdx = Math.min(multiTextures.length - 1, Math.floor(mNorm * (multiTextures.length - 1)));
+      if (stageMulti.screenMat.map !== multiTextures[mIdx]) {
+        stageMulti.screenMat.map = multiTextures[mIdx];
+        stageMulti.screenMat.needsUpdate = true;
+      }
+
+      // Phase C: Sign + Light-to-Dark sequence progresses smoothly across 0.66..0.94
+      const sNorm = Math.max(0, Math.min(1, (t - 0.66) / 0.28));
+      const sIdx = Math.min(signTextures.length - 1, Math.floor(sNorm * (signTextures.length - 1)));
+      if (stageSign.screenMat.map !== signTextures[sIdx]) {
+        stageSign.screenMat.map = signTextures[sIdx];
+        stageSign.screenMat.needsUpdate = true;
+      }
+
+      if (activeStage === 1) {
+        hudStep.textContent = '01';
+        hudTitle.textContent = palReveal > 0.25 ? 'Command Palette (⌘K) · Instant Workflow Jump' : 'Paper Desk Home · Universal Intake Deck';
+      } else if (activeStage === 2) {
+        hudStep.textContent = '02';
+        hudTitle.textContent = 'PDF Multi-Tool · Visual Reorder, Rotate & Export';
+      } else {
+        hudStep.textContent = '03';
+        hudTitle.textContent = 'Sign PDFs & Live Theme Toggle · Light ↔ Dark';
+      }
+      progressFill.style.width = `${(t * 100).toFixed(2)}%`;
+
+      renderer.render(scene, camera);
+    };
+
+    window.sceneReady = true;
+  </script>
+</body>
+</html>

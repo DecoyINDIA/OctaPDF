@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OctaPDF — Light Meets Dark</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #FAF7F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .overlay-top {
+      position: fixed; top: 18px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    .swatch-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 13px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+      letter-spacing: 0.02em; border: 1px solid transparent;
+    }
+    .swatch-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .anchor-pill {
+      padding: 6px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+      background: rgba(36, 30, 27, 0.94); color: #FF8554;
+      border: 1px solid #E8501C;
+      box-shadow: 0 4px 14px rgba(22, 20, 18, 0.22);
+      font-family: ui-monospace, monospace;
+    }
+    .overlay-bottom {
+      position: fixed; bottom: 14px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10; font-size: 12px; font-weight: 600;
+    }
+    .cap-pill {
+      padding: 6px 13px; border-radius: 999px; border: 1px solid transparent;
+      box-shadow: 0 4px 14px rgba(22, 20, 18, 0.16);
+    }
+    .cap-light {
+      background: rgba(255, 255, 255, 0.95); color: #241E1B; border-color: #D9D0C3;
+    }
+    .cap-dark {
+      background: rgba(26, 23, 20, 0.95); color: #F5EFE6; border-color: #474038;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay-top">
+    <div class="swatch-pill" id="leftBadge" style="background: rgba(255,255,255,0.95); color: #241E1B; border-color: #D9D0C3;">
+      <span class="swatch-dot" style="background: #FAF7F2; border: 1px solid #B8AEA0;"></span>
+      <span>PAPER DESK · #FAF7F2</span>
+    </div>
+    <div class="anchor-pill">TERRACOTTA ANCHOR · #E8501C ↔ #FF6B35</div>
+    <div class="swatch-pill" id="rightBadge" style="background: rgba(26,23,20,0.95); color: #F5EFE6; border-color: #474038;">
+      <span class="swatch-dot" style="background: #161412; border: 1px solid #6E645D;"></span>
+      <span>OBSIDIAN INK · #161412</span>
+    </div>
+  </div>
+  <div class="overlay-bottom">
+    <span class="cap-pill cap-light" id="bottomLeft">Home &amp; Multi-Tool · Light Mode</span>
+    <span class="cap-pill cap-dark" id="bottomRight">Home &amp; Multi-Tool · Dark Mode</span>
+  </div>
+
+  <script type="module">
+    import * as THREE from '/scripts/readme-studio/vendor/three.module.js';
+
+    const W = window.innerWidth || 1120;
+    const H = window.innerHeight || 560;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(W, H, false);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const bgLight = new THREE.Color('#FAF7F2');
+    const bgDark = new THREE.Color('#161412');
+    scene.background = bgLight.clone();
+
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 40);
+
+    // Architectural lighting rig with dedicated warm graphite rim/fill for dark-mode facet definition
+    const hemi = new THREE.HemisphereLight('#FFFDF9', '#D6CEC4', 1.15);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight('#FFF6EA', 2.0);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 4;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const graphiteRim = new THREE.DirectionalLight('#EDE4D8', 0.55);
+    graphiteRim.position.set(-2.4, 2.8, -3.6);
+    scene.add(graphiteRim);
+
+    const frontFill = new THREE.DirectionalLight('#FFF3E6', 0.35);
+    frontFill.position.set(1.6, 1.4, 4.2);
+    scene.add(frontFill);
+
+    // Tight localized point light inside the origami core so it doesn't spill orange onto the Light UI wing
+    const coreGlow = new THREE.PointLight('#FF6B35', 1.4, 2.8, 2.0);
+    coreGlow.position.set(0, 0.15, 0.35);
+    scene.add(coreGlow);
+
+    const floorMat = new THREE.MeshStandardMaterial({ color: '#F2EBE0', roughness: 0.92, metalness: 0.04 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.25;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Central Multi-Faceted Folded Origami Sculpture
+    const origamiGroup = new THREE.Group();
+    const foldMat = new THREE.MeshStandardMaterial({
+      color: '#FFFFFF', roughness: 0.62, metalness: 0.08, flatShading: true
+    });
+    const innerEdgeMat = new THREE.MeshStandardMaterial({
+      color: '#E8501C', emissive: '#E8501C', emissiveIntensity: 0.35, roughness: 0.32, metalness: 0.18
+    });
+
+    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 0), foldMat);
+    core.scale.set(0.88, 1.32, 0.88);
+    core.castShadow = true;
+    core.receiveShadow = true;
+    origamiGroup.add(core);
+
+    const inlay = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.032, 8, 8), innerEdgeMat);
+    inlay.rotation.x = Math.PI / 2;
+    inlay.castShadow = true;
+    origamiGroup.add(inlay);
+
+    const bladeGeom = new THREE.BoxGeometry(0.54, 0.92, 0.024);
+    const blades = [];
+    for (let k = 0; k < 8; k++) {
+      const ang = (k / 8) * Math.PI * 2;
+      const pivot = new THREE.Group();
+      pivot.rotation.y = ang;
+
+      const blade = new THREE.Mesh(bladeGeom, foldMat);
+      blade.position.set(0.54, (k % 2 === 0 ? 0.12 : -0.12), 0);
+      blade.rotation.z = (k % 2 === 0 ? -0.45 : 0.45);
+      blade.rotation.y = 0.32;
+      blade.castShadow = true;
+      blade.receiveShadow = true;
+      pivot.add(blade);
+
+      const crease = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.022, 0.032), innerEdgeMat);
+      crease.position.set(0.42, (k % 2 === 0 ? 0.06 : -0.06), 0);
+      crease.rotation.z = (k % 2 === 0 ? -0.25 : 0.25);
+      pivot.add(crease);
+
+      origamiGroup.add(pivot);
+      blades.push({ blade, k });
+    }
+    origamiGroup.position.set(0, 0.02, 0.25);
+    scene.add(origamiGroup);
+
+    const loader = new THREE.TextureLoader();
+    const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    function loadTex(url) {
+      return new Promise((resolve, reject) => {
+        loader.load(url, (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = maxAniso;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          resolve(tex);
+        }, undefined, reject);
+      });
+    }
+
+    const [homeLight, multiLight, homeDark, multiDark] = await Promise.all([
+      loadTex('/assets/readme/captures/home-light.png'),
+      loadTex('/assets/readme/captures/multitool-light.png'),
+      loadTex('/assets/readme/captures/home-dark.png'),
+      loadTex('/assets/readme/captures/multitool-dark.png'),
+    ]);
+
+    function makeWingPanel(x, rotY, frameColor, texMain, texAlt) {
+      const g = new THREE.Group();
+      const frameMat = new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.72, metalness: 0.04 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.44, 1.53, 0.05), frameMat);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      g.add(body);
+
+      const screenMat = new THREE.MeshBasicMaterial({ map: texMain, toneMapped: false });
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(2.32, 1.45), screenMat);
+      screen.position.z = 0.030;
+      g.add(screen);
+
+      const backMat = new THREE.MeshBasicMaterial({ map: texAlt, toneMapped: false });
+      const backBody = new THREE.Mesh(new THREE.BoxGeometry(2.04, 1.28, 0.04), frameMat);
+      backBody.position.set(x < 0 ? -0.35 : 0.35, 0.34, -0.34);
+      backBody.castShadow = true;
+      const backScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.94, 1.21), backMat);
+      backScreen.position.z = 0.024;
+      backBody.add(backScreen);
+      g.add(backBody);
+
+      g.position.set(x, 0.02, -0.15);
+      g.rotation.y = rotY;
+      scene.add(g);
+      return { g, frameMat };
+    }
+
+    const lightPanel = makeWingPanel(-2.24, 0.32, '#E8E2D8', homeLight, multiLight);
+    const darkPanel = makeWingPanel(2.24, -0.32, '#36312B', homeDark, multiDark);
+
+    const colIvory = new THREE.Color('#FAF7F2');
+    const colWarmGraphite = new THREE.Color('#474038'); // Rich architectural graphite so facets never crush to #000000
+    const colFloorLight = new THREE.Color('#F2EBE0');
+    const colFloorDark = new THREE.Color('#1C1916');
+    const colHemiSkyL = new THREE.Color('#FFFDF9');
+    const colHemiSkyD = new THREE.Color('#786D61');
+    const colHemiGndL = new THREE.Color('#D6CEC4');
+    const colHemiGndD = new THREE.Color('#2E2822');
+    const colTerraL = new THREE.Color('#E8501C');
+    const colTerraD = new THREE.Color('#FF6B35');
+
+    const leftBadge = document.getElementById('leftBadge');
+    const rightBadge = document.getElementById('rightBadge');
+    const bottomLeft = document.getElementById('bottomLeft');
+    const bottomRight = document.getElementById('bottomRight');
+
+    function lerpRgb(c1, c2, u) {
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * u);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * u);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * u);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    window.renderFrame = function renderFrame(i, totalFrames, t) {
+      const theta = t * Math.PI * 2;
+      const darkMix = 0.5 - 0.5 * Math.cos(theta);
+
+      scene.background.lerpColors(bgLight, bgDark, darkMix);
+      floorMat.color.lerpColors(colFloorLight, colFloorDark, darkMix);
+      floorMat.roughness = 0.90 - darkMix * 0.36;
+      floorMat.metalness = 0.04 + darkMix * 0.16;
+
+      // Transform origami sculpture from warm ivory cardstock to sculpted brushed graphite
+      foldMat.color.lerpColors(colIvory, colWarmGraphite, darkMix);
+      foldMat.roughness = 0.62 - darkMix * 0.22;
+      foldMat.metalness = 0.08 + darkMix * 0.24;
+
+      innerEdgeMat.color.lerpColors(colTerraL, colTerraD, darkMix);
+      innerEdgeMat.emissive.lerpColors(colTerraL, colTerraD, darkMix);
+      innerEdgeMat.emissiveIntensity = 0.35 + darkMix * 0.95;
+
+      hemi.color.lerpColors(colHemiSkyL, colHemiSkyD, darkMix);
+      hemi.groundColor.lerpColors(colHemiGndL, colHemiGndD, darkMix);
+      hemi.intensity = 1.15 - darkMix * 0.15;
+
+      const lightAngle = -Math.PI * 0.45 + darkMix * Math.PI * 0.90;
+      keyLight.position.set(Math.sin(lightAngle) * 5.2, 4.8 - darkMix * 0.3, Math.cos(lightAngle) * 4.6);
+      keyLight.intensity = 2.0 - darkMix * 0.25;
+      graphiteRim.intensity = 0.45 + darkMix * 1.45;
+      frontFill.intensity = 0.25 + darkMix * 0.65;
+      coreGlow.intensity = 1.1 + darkMix * 1.5;
+
+      origamiGroup.rotation.y = theta;
+      origamiGroup.rotation.x = Math.sin(theta) * 0.14;
+      blades.forEach(({ blade, k }) => {
+        const baseZ = (k % 2 === 0 ? -0.45 : 0.45);
+        blade.rotation.z = baseZ + Math.sin(theta + k * (Math.PI / 4)) * 0.12;
+      });
+
+      const camX = (darkMix - 0.5) * 1.05;
+      const camZ = 6.35 - Math.sin(darkMix * Math.PI) * 0.35;
+      camera.position.set(camX, 0.46 + Math.sin(theta) * 0.05, camZ);
+      camera.lookAt(camX * 0.42, 0.02, 0);
+
+      lightPanel.g.position.y = 0.02 + (1 - darkMix) * 0.07;
+      darkPanel.g.position.y = 0.02 + darkMix * 0.07;
+
+      leftBadge.style.borderColor = darkMix < 0.5 ? '#E8501C' : '#D9D0C3';
+      rightBadge.style.borderColor = darkMix >= 0.5 ? '#FF6B35' : '#474038';
+      bottomLeft.style.borderColor = darkMix < 0.5 ? '#E8501C' : '#D9D0C3';
+      bottomRight.style.borderColor = darkMix >= 0.5 ? '#FF6B35' : '#474038';
+
+      renderer.render(scene, camera);
+    };
+
+    window.sceneReady = true;
+  </script>
+</body>
+</html>
