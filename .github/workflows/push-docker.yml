@@ -74,7 +74,7 @@ jobs:
             type=sha,format=short
 
       - name: Build Local Image for Vulnerability Scanning (CI-02 / SEC-10)
-        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.17.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -93,7 +93,7 @@ jobs:
 
       - name: Publish Docker Image to GHCR (CI-02)
         id: build-push
-        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.17.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
